@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Users,
   WalletCards,
 } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
@@ -29,22 +30,27 @@ const NAV = {
     { href: "/patient/hospitals", label: "Hospitals", icon: Building2 },
     { href: "/patient/carequest", label: "CareQuest", icon: Sparkles },
     { href: "/patient/care-plans", label: "Care plan", icon: BookOpenCheck },
+    { href: "/network", label: "Network", icon: Users },
   ],
   doctor: [
     { href: "/doctor", label: "Practice", icon: Stethoscope },
     { href: "/doctor/care-plans", label: "Care plans", icon: BookOpenCheck },
     { href: "/doctor/escalations", label: "Handoffs", icon: ClipboardList },
+    { href: "/network", label: "Network", icon: Users },
   ],
   staff: [
     { href: "/staff", label: "Handoffs", icon: ClipboardList },
+    { href: "/network", label: "Network", icon: Users },
   ],
   admin: [
     { href: "/admin/hospital", label: "My hospital", icon: Building2 },
     { href: "/admin/carequest", label: "Program", icon: BarChart3 },
     { href: "/admin/carequest/audit", label: "Audit", icon: ShieldCheck },
+    { href: "/network", label: "Network", icon: Users },
   ],
   platform_admin: [
     { href: "/admin/platform", label: "Network", icon: Building2 },
+    { href: "/network", label: "Directory", icon: Users },
   ],
 };
 

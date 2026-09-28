@@ -19,6 +19,21 @@ const PROTECTED_ROUTES = [
   { prefix: "/doctor/onboarding", roles: ["doctor"] },
   { prefix: "/doctor", roles: ["doctor"] },
   { prefix: "/staff", roles: ["nurse", "coordinator"] },
+  // The network directory lets any signed-in user (a patient, a doctor, an
+  // admin) jump into the network explorer and one-click into another demo
+  // account's dashboard, so it is open to every role but still requires a
+  // session.
+  {
+    prefix: "/network",
+    roles: [
+      "patient",
+      "doctor",
+      "nurse",
+      "coordinator",
+      "hospital_admin",
+      "platform_admin",
+    ],
+  },
   // The master/platform console lives under /admin/platform and is restricted
   // to platform_admin by the page itself. Other /admin pages (a hospital's own
   // program + audit) are hospital_admin, and a platform_admin may also read
