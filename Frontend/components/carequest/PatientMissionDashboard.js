@@ -35,6 +35,7 @@ import ActivitySimulationCard from "@/components/carequest/ActivitySimulationCar
 import BenefitCatalog from "@/components/carequest/BenefitCatalog";
 import PatientReportsTimeline from "@/components/carequest/PatientReportsTimeline";
 import CapsuleIcon from "@/components/carequest/CapsuleIcon";
+import PromptDialog from "@/components/carequest/PromptDialog";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
 
@@ -132,22 +133,25 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
     }
   }
 
-  async function respond(occurrence, response) {
-    let note = "";
-    if (response === "need_help") {
-      note =
-        window.prompt(
-          "Briefly describe what you need help with. Do not use this queue for an emergency."
-        ) || "";
-      if (!note) return;
+  // Mission responses that need a written note use a proper input field
+  // (PromptDialog) rather than the native window.prompt popup.
+  const [notePrompt, setNotePrompt] = useState(null);
+
+  function respond(occurrence, response) {
+    if (response === "need_help" || response === "not_done") {
+      setNotePrompt({ occurrence, response });
+      return;
     }
-    if (response === "not_done") {
-      note =
-        window.prompt(
-          "Optional: tell your care team what made this difficult. You still receive participation credit."
-        ) || "";
-    }
-    await action(
+    action(occurrence._id + response, () =>
+      respondToMission(occurrence._id, response, "", 15),
+      "celebrate"
+    );
+  }
+
+  function confirmNote(note) {
+    const { occurrence, response } = notePrompt;
+    setNotePrompt(null);
+    action(
       occurrence._id + response,
       () => respondToMission(occurrence._id, response, note, 15),
       response === "need_help" ? "alert" : "celebrate"
@@ -578,6 +582,28 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
           </pre>
         ) : null}
       </section>
+      <PromptDialog
+        open={Boolean(notePrompt)}
+        title={
+          notePrompt?.response === "need_help"
+            ? "What do you need help with?"
+            : "What made this difficult?"
+        }
+        description={
+          notePrompt?.response === "need_help"
+            ? "Describe what you need. Your care team and a nurse will see this. Do not use this queue for an emergency."
+            : "Optional: tell your care team what got in the way. You still receive participation credit."
+        }
+        placeholder={
+          notePrompt?.response === "need_help"
+            ? "e.g. I have a side effect from my new medicine"
+            : "e.g. I did not have time today"
+        }
+        required={notePrompt?.response === "need_help"}
+        confirmLabel={notePrompt?.response === "need_help" ? "Send to my care team" : "Submit"}
+        onCancel={() => setNotePrompt(null)}
+        onConfirm={confirmNote}
+      />
     </div>
   );
 }
