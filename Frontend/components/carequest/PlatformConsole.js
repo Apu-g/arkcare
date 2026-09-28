@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
   Activity,
@@ -16,6 +17,7 @@ import {
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
+import { reanchorStaleAuditBatches } from "@/actions/auditActions";
 
 function Stat({ icon: Icon, value, label, tone }) {
   return (
@@ -94,7 +96,35 @@ function HashField({ label, value, hint, tone }) {
  */
 export default function PlatformConsole({ overview }) {
   const [expanded, setExpanded] = useState(null);
+  const router = useRouter();
+  const [reanchor, setReanchor] = useState({ busy: false, message: "", tone: "info" });
   const totals = overview.networkTotals;
+
+  const anchorsStale = (overview.hospitals || []).some(
+    (h) => h.anchorCount > 0 && h.anchorOnChain === false
+  );
+
+  async function handleReanchor() {
+    setReanchor({ busy: true, message: "Checking the chain…", tone: "info" });
+    try {
+      const result = await reanchorStaleAuditBatches();
+      setReanchor({
+        busy: false,
+        message:
+          `Checked ${result.checked} anchor batch(es): ` +
+          `${result.reanchored} re-committed to the chain, ` +
+          `${result.alreadyOnChain} already present. Reload to refresh the hashes.`,
+        tone: result.reanchored > 0 ? "success" : "info",
+      });
+      router.refresh();
+    } catch (error) {
+      setReanchor({
+        busy: false,
+        message: error?.message || "Could not re-anchor the audit batches.",
+        tone: "error",
+      });
+    }
+  }
 
   return (
     <div className="space-y-6 pb-24 lg:pb-4">
@@ -124,6 +154,48 @@ export default function PlatformConsole({ overview }) {
                 ? "all chains valid"
                 : `${totals.brokenChainCount || 0} chain(s) need review`)}
           />
+        </div>
+
+        {/* The local chain is in-memory and resets on every restart, which
+            leaves the stored anchors unverifiable until they are re-committed.
+            This re-commits the SAME merkle roots, so it restores the proof
+            without rewriting any event. */}
+        <div className="mt-4 border-t border-border pt-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleReanchor}
+              disabled={reanchor.busy}
+              className="cq-pixel-label hover:bg-muted disabled:opacity-50"
+            >
+              {reanchor.busy ? "Checking chain..." : "Re-anchor audit proofs to chain"}
+            </button>
+            {anchorsStale ? (
+              <span className="cq-pixel-label border-amber-300 text-amber-700">
+                some anchors are not on the current chain
+              </span>
+            ) : (
+              <span className="cq-pixel-label cq-real-label">
+                all anchors present on chain
+              </span>
+            )}
+          </div>
+          {reanchor.message ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className={
+                "mt-2 rounded-lg border px-3 py-2 text-xs " +
+                (reanchor.tone === "error"
+                  ? "border-red-300 bg-red-50 text-red-900"
+                  : reanchor.tone === "success"
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                    : "border-border bg-white text-muted-foreground")
+              }
+            >
+              {reanchor.message}
+            </div>
+          ) : null}
         </div>
       </section>
 
