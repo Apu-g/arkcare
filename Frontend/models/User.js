@@ -17,8 +17,25 @@ const UserSchema = new mongoose.Schema(
     // Set by actions/userActions.js once the user picks a role on the landing page
     role: {
       type: String,
-      enum: ["patient", "doctor", "nurse", "coordinator", "hospital_admin", null],
+      enum: [
+        "patient",
+        "doctor",
+        "nurse",
+        "coordinator",
+        "hospital_admin",
+        "platform_admin", // master/super view across every hospital
+        null,
+      ],
       default: null,
+    },
+    // The hospital this staff member belongs to. Staff are scoped to their own
+    // organization for data + audit isolation. Left unset for patients (who can
+    // belong to several hospitals) and for the platform admin (who sees all).
+    homeOrganization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+      index: true,
     },
     gender: {
       type: String,

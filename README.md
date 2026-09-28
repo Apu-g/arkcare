@@ -76,10 +76,14 @@ Python virtualenv, contract deploy). Give it a few minutes.
 ### Seed the demo data
 
 ```bash
-cd Frontend && npm run seed:demo
+cd Frontend && npm run seed:demo        # users, appointments, care programs
+cd Frontend && npm run seed:hospitals   # multi-hospital network (admins, doctor assignment)
 ```
 
-This creates synthetic demo users, appointments, and a CareQuest care program.
+`seed:demo` creates synthetic demo users, appointments, and a CareQuest care
+program. `seed:hospitals` creates the hospital network: a **platform (master)
+admin**, one **hospital admin per hospital**, and distributes the demo doctors
+across the hospitals.
 
 ### Open the app
 
@@ -90,7 +94,29 @@ Go to `http://localhost:3000` and sign in with a demo account (password for all:
 | --- | --- |
 | Patient | `demo.patient@arkcare.local` |
 | Doctor | `demo.doctor@arkcare.local` |
-| Hospital admin | `demo.hospital_admin@arkcare.local` |
+| Hospital admin (demo) | `demo.hospital_admin@arkcare.local` |
+| Hospital admin (Sunrise) | `admin@sunrise-care-hospital.local` |
+| **Platform / master admin** | `demo.platform_admin@arkcare.local` |
+
+## Multi-hospital network
+
+ArkCare runs as a network of **independent hospitals**. Each hospital has its own
+Capsule program, doctors, patients, and its own **separate audit chain** — data
+and provenance are isolated per hospital.
+
+- **Patient → Hospitals** (`/patient/hospitals`): browse every hospital, its
+  **reputation**, and confirm its audit chain is valid.
+- **Hospital admin → My hospital** (`/admin/hospital`): your hospital's
+  reputation, per-patient engagement leaderboard, and your own audit head.
+- **Platform (master) admin → Network** (`/admin/platform`): a master console
+  over **every** hospital — reputation, where every audit went, and each
+  hospital's independent chain head / integrity.
+
+> **Reputation, not revenue.** A hospital's reputation is simply the
+> participation its own patients have generated. It is a **quality signal, not a
+> claimable balance** — Capsules are hospital-specific, non-transferable
+> participation units that are never cashed out. The blockchain is a
+> non-clinical proof rail and holds no monetary value.
 
 ---
 

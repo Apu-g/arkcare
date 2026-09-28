@@ -19,7 +19,12 @@ const PROTECTED_ROUTES = [
   { prefix: "/doctor/onboarding", roles: ["doctor"] },
   { prefix: "/doctor", roles: ["doctor"] },
   { prefix: "/staff", roles: ["nurse", "coordinator"] },
-  { prefix: "/admin", roles: ["hospital_admin"] },
+  // The master/platform console lives under /admin/platform and is restricted
+  // to platform_admin by the page itself. Other /admin pages (a hospital's own
+  // program + audit) are hospital_admin, and a platform_admin may also read
+  // them for the network view.
+  { prefix: "/admin/platform", roles: ["platform_admin"] },
+  { prefix: "/admin", roles: ["hospital_admin", "platform_admin"] },
 ];
 
 export default async function middleware(request) {

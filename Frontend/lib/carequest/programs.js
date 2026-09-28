@@ -89,6 +89,88 @@ const PROGRAM_BLUEPRINTS = [
       },
     ],
   },
+  {
+    organization: {
+      name: "Sunrise Care Hospital",
+      slug: "sunrise-care-hospital",
+      settings: {
+        defaultTimezone: "Asia/Kolkata",
+        handoffDueMinutes: 300,
+        simulatedCareBenefitPoolInr: 15000,
+      },
+    },
+    program: {
+      slug: "sunrise-rising",
+      name: "Sunrise Rising",
+      capsuleName: "Sunrise Capsule",
+      capsuleSymbol: "SUNRISE",
+      visualTheme: { accent: "amber", mascot: "guide" },
+      rules: {
+        dailyAwardCap: 9,
+        activityGoalSteps: 4000,
+        activityRewardCapsules: 2,
+      },
+      blockchain: { enabled: true, tokenId: "1003" },
+    },
+    budget: 15000,
+    catalog: [
+      {
+        title: "Community screening voucher",
+        description: "Funded screening support at Sunrise Care Hospital.",
+        category: "screening",
+        costCapsules: 30,
+        programCostInr: 120,
+      },
+      {
+        title: "Family care guide",
+        description: "Caregiver-friendly education for the current journey.",
+        category: "education",
+        costCapsules: 10,
+        programCostInr: 60,
+      },
+    ],
+  },
+  {
+    organization: {
+      name: "Metro Health Clinic",
+      slug: "metro-health-clinic",
+      settings: {
+        defaultTimezone: "Asia/Kolkata",
+        handoffDueMinutes: 210,
+        simulatedCareBenefitPoolInr: 12000,
+      },
+    },
+    program: {
+      slug: "metro-steps",
+      name: "Metro Steps",
+      capsuleName: "Metro Capsule",
+      capsuleSymbol: "METRO",
+      visualTheme: { accent: "teal", mascot: "walker" },
+      rules: {
+        dailyAwardCap: 8,
+        activityGoalSteps: 4500,
+        activityRewardCapsules: 2,
+      },
+      blockchain: { enabled: true, tokenId: "1004" },
+    },
+    budget: 12000,
+    catalog: [
+      {
+        title: "Mobility support pass",
+        description: "Transport/mobility support for a planned visit.",
+        category: "mobility",
+        costCapsules: 25,
+        programCostInr: 100,
+      },
+      {
+        title: "Wellness starter kit",
+        description: "Entry-level wellness bundle for a new patient journey.",
+        category: "education",
+        costCapsules: 6,
+        programCostInr: 40,
+      },
+    ],
+  },
 ];
 
 export async function ensureDemoHospitalPrograms(patient = null) {

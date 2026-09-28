@@ -6,6 +6,7 @@ import {
   Activity,
   BarChart3,
   BookOpenCheck,
+  Building2,
   CalendarDays,
   ClipboardList,
   FileCheck2,
@@ -25,9 +26,9 @@ const NAV = {
   patient: [
     { href: "/patient", label: "Home", icon: Home },
     { href: "/patient/doctors", label: "Doctors", icon: Stethoscope },
+    { href: "/patient/hospitals", label: "Hospitals", icon: Building2 },
     { href: "/patient/carequest", label: "CareQuest", icon: Sparkles },
     { href: "/patient/care-plans", label: "Care plan", icon: BookOpenCheck },
-    { href: "/reports", label: "Reports", icon: FileCheck2 },
   ],
   doctor: [
     { href: "/doctor", label: "Practice", icon: Stethoscope },
@@ -38,8 +39,12 @@ const NAV = {
     { href: "/staff", label: "Handoffs", icon: ClipboardList },
   ],
   admin: [
+    { href: "/admin/hospital", label: "My hospital", icon: Building2 },
     { href: "/admin/carequest", label: "Program", icon: BarChart3 },
     { href: "/admin/carequest/audit", label: "Audit", icon: ShieldCheck },
+  ],
+  platform_admin: [
+    { href: "/admin/platform", label: "Network", icon: Building2 },
   ],
 };
 
@@ -48,6 +53,7 @@ const ROLE_META = {
   doctor: { label: "Clinical workspace", variant: "doctor" },
   staff: { label: "Care operations", variant: "nurse" },
   admin: { label: "Hospital program", variant: "guardian" },
+  platform_admin: { label: "Platform network", variant: "guardian" },
 };
 
 export default function CareQuestShell({
@@ -109,6 +115,14 @@ export default function CareQuestShell({
             <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
               Hospital-specific balances stay separate from clinical decisions.
             </p>
+            {role === "patient" ? (
+              <Link
+                href="/reports"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+              >
+                <FileCheck2 className="h-3 w-3" /> Reports
+              </Link>
+            ) : null}
           </div>
         </div>
       </aside>
