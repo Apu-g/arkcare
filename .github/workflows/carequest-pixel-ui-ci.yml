@@ -1,0 +1,62 @@
+name: CareQuest Pixel UI Validation
+
+on:
+  push:
+    branches:
+      - feature/carequest-light-pixel-ui
+  workflow_dispatch:
+
+concurrency:
+  group: carequest-light-pixel-ui
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: [self-hosted]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Frontend install and production build
+        working-directory: Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Backend syntax
+        shell: bash
+        run: |
+          if command -v python >/dev/null 2>&1; then
+            python -m py_compile Backend/chatbotwithpdf.py
+          else
+            python3 -m py_compile Backend/chatbotwithpdf.py
+          fi
+
+      - name: Install blockchain dependencies
+        working-directory: Blockchain
+        run: npm install
+
+      - name: Local multi-hospital blockchain smoke
+        shell: bash
+        working-directory: Blockchain
+        run: |
+          rm -rf runtime
+          mkdir -p runtime
+          npx hardhat node --hostname 127.0.0.1 --port 8545 > runtime/hardhat-ui-ci.log 2>&1 &
+          EVM_PID=$!
+          trap 'kill $EVM_PID 2>/dev/null || true' EXIT
+          node scripts/wait-for-rpc.js
+          node scripts/deploy.js
+          node scripts/smoke.js
+
+
+      - name: Install CareQuest browser test dependency
+        working-directory: Frontend
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+
+      - name: Multi-hospital CareQuest browser E2E
+        env:
+          CAREQUEST_UI_E2E_BASE_URL: http://127.0.0.1:13002
+        run: node Frontend/tests/carequest-pixel-e2e.cjs

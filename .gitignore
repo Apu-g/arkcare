@@ -1,0 +1,24 @@
+# Root-level generated artifacts
+Blockchain/node_modules/
+Blockchain/runtime/
+Blockchain/cache/
+Blockchain/artifacts/
+*.log
+
+# Local development runtime (pids, logs, local mongo data/binary)
+.runtime/
+
+# Local environment files with real credentials
+Frontend/.env.local
+Frontend/.env
+Backend/.env
+
+# Root-level env files — contain LIVE secrets (Pusher/Razorpay/Cloudinary keys,
+# Agora certificate, Groq/Pinecone keys, MongoDB password, AUTH_SECRET, QStash
+# token). Never committed. Obtain them from the repo owner (see README).
+arkcare.env
+backend.env
+frontend.env
+.env
+.env.*.local
+
