@@ -292,6 +292,19 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
 
   const selectedAppointment = appointmentById.get(String(appointmentId));
 
+  // The latest saved draft for the selected consultation, so the doctor can
+  // publish (approve) it right here without hunting through Plan history.
+  const selectedDraft = useMemo(() => {
+    if (!appointmentId) return null;
+    const plan = (data.plans || []).find(
+      (p) => String(p.sourceAppointment?._id || p.sourceAppointment) === String(appointmentId)
+    );
+    if (!plan) return null;
+    const drafts = (plan.versions || []).filter((v) => v.status === "draft");
+    if (!drafts.length) return null;
+    return drafts.sort((a, b) => b.versionNumber - a.versionNumber)[0];
+  }, [data.plans, appointmentId]);
+
   return (
     <div className="space-y-6 pb-24 lg:pb-4">
         <section className="cq-card cq-reveal p-5 md:p-6">
@@ -597,6 +610,25 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                 >
                   Cancel editing
                 </Button>
+              ) : null}
+
+              {selectedDraft && selectedAppointment?.status === "completed" ? (
+                <Button
+                  onClick={() => approve(selectedDraft._id)}
+                  disabled={busy !== ""}
+                  className="ml-auto"
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {busy === selectedDraft._id
+                    ? "Publishing..."
+                    : `Publish plan to patient (v${selectedDraft.versionNumber})`}
+                </Button>
+              ) : null}
+              {selectedDraft && selectedAppointment?.status !== "completed" ? (
+                <p className="ml-auto self-center text-xs text-amber-300">
+                  Draft v{selectedDraft.versionNumber} saved — mark the consultation
+                  completed to publish it to the patient.
+                </p>
               ) : null}
             </div>
           </CardContent>

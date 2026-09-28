@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getCapsuleGauge } from "@/actions/reportActions";
 import { WalletCards } from "lucide-react";
+import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 
 /**
  * Animated capsule gauge shown in the top-right of the CareQuest shell.
@@ -38,11 +39,16 @@ export default function CapsuleGauge({ max = 2000, refreshSignal = 0 }) {
     load();
     const interval = setInterval(load, 7000);
     const onFocus = () => load();
+    // Any capsule-affecting action (mission Done, lesson, quiz, redeem) fires
+    // this event so the gauge updates instantly instead of waiting for the poll.
+    const onCapsules = () => load();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("arkcare-capsules", onCapsules);
     return () => {
       active = false;
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("arkcare-capsules", onCapsules);
     };
   }, [refreshSignal]);
 
@@ -57,6 +63,7 @@ export default function CapsuleGauge({ max = 2000, refreshSignal = 0 }) {
         >
           <WalletCards className="h-4 w-4 text-primary" />
           <span>{state.balance}</span>
+          <CapsuleIcon size={14} className="text-primary" title="Capsules" />
           <span className="text-[11px] font-bold text-muted-foreground">
             {state.symbol || "CAP"}
           </span>

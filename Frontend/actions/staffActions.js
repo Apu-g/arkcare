@@ -47,9 +47,15 @@ async function getAuthorizedCase(user, caseId) {
     })
       .select("_id")
       .lean();
+    // A doctor can act on (a) cases escalated from their own care plans and
+    // (b) any direct Need-Help request raised in the hospital.
     const handoff = await HandoffCase.findOne({
       _id: caseId,
-      carePlan: { $in: plans.map((plan) => plan._id) },
+      organization: membership.organization._id,
+      $or: [
+        { carePlan: { $in: plans.map((plan) => plan._id) } },
+        { source: { $in: ["direct_help", "report"] } },
+      ],
     });
     if (!handoff) throw new Error("Handoff case not found");
     return handoff;
@@ -81,10 +87,14 @@ export async function getHandoffQueue() {
     })
       .select("_id")
       .lean();
+    // The doctor queue = escalated cases from their plans + every direct
+    // Need-Help request in the hospital (they are the clinical owner).
     query = {
-      carePlan: { $in: plans.map((plan) => plan._id) },
       organization: membership.organization._id,
-      status: "escalated",
+      $or: [
+        { carePlan: { $in: plans.map((plan) => plan._id) }, status: "escalated" },
+        { source: { $in: ["direct_help", "report"] } },
+      ],
     };
   } else {
     throw new Error("Staff access required");
@@ -291,49 +301,90 @@ export async function resolveHandoffCase(caseId, outcome) {
   const cleanOutcome = String(outcome || "").trim().slice(0, 3000);
   if (!cleanOutcome) throw new Error("A case cannot close without a documented outcome or reason");
 
+  // An escalated clinical question is doctor-owned; a direct help request can
+  // be closed by either the nurse/coordinator who handled it or a doctor.
   if (handoff.status === "escalated" && user.role !== "doctor") {
     throw new Error("A doctor must resolve an escalated clinical question");
   }
 
-  handoff.status = "resolved";
-  handoff.outcome = cleanOutcome;
-  handoff.resolvedAt = new Date();
-  await handoff.save();
+  const doctor =
+    user.role === "doctor"
+      ? await Doctor.findOne({ userId: user._id.toString() }).lean()
+      : null;
 
-  await CaseEvent.create({
-    caseId: handoff._id,
-    eventType: "case.resolved",
-    actorUserId: user._id.toString(),
-    actorRole: user.role,
-    note: cleanOutcome,
-  });
-
-  await appendAuditEvent({
-    organizationId: handoff.organization,
+  const { resolveHandoffWithProof } = await import("@/lib/carequest/handoff");
+  const resolved = await resolveHandoffWithProof({
+    handoff,
     actorUserId: user._id,
     actorRole: user.role,
-    eventType: "handoff.resolved",
-    resourceType: "HandoffCase",
-    resourceId: handoff._id,
-    verificationLevel: user.role === "doctor" ? "clinician_approved" : "staff_documented",
-    metadata: { resolutionDocumented: true },
+    actorName: doctor?.name || user.firstName || user.lastName || user.role,
+    outcome: cleanOutcome,
   });
 
-  await emitCareQuestStaff(
-    handoff.organization,
-    "handoff.updated",
-    {
-      caseId: String(handoff._id),
-      status: handoff.status,
-    }
-  );
-
-  return serialize(handoff);
+  return serialize(resolved);
 }
 
 
-export async function submitWorkflowFeedback({
-  duplicateEntryMinutes,
+// ------------------------------------------------------------ direct need-help
+
+/**
+ * Raise a "Need Help" request from the floating button (patient or doctor).
+ * Creates a handoff in the nurse/coordinator queue with an on-chain-hashed
+ * request, and returns the request hash so the asker has visible proof.
+ */
+export async function requestDirectHelp({ problem, category = "general", priority = "normal" }) {
+  const user = await requireUser();
+  await connectDB();
+
+  let patient;
+  if (user.role === "patient") {
+    const Patient = (await import("@/models/Patient")).default;
+    patient = await Patient.findOne({ userId: user._id.toString() });
+    if (!patient) throw new Error("Patient profile not found");
+  } else if (user.role === "doctor") {
+    // A doctor asking for help routes to their own first patient context is not
+    // meaningful; doctors raise help against a specific case elsewhere. For
+    // safety, block doctor self-service here (the report flow covers it).
+    throw new Error("Doctors manage help via patient cases and escalations");
+  } else {
+    throw new Error("Patient access required to request help");
+  }
+
+  const { createDirectHelpRequest } = await import("@/lib/carequest/handoff");
+  const handoff = await createDirectHelpRequest({
+    user,
+    patient,
+    problem,
+    category,
+    priority,
+  });
+
+  return serialize({
+    caseId: String(handoff._id),
+    requestHash: handoff.requestHash,
+    status: handoff.status,
+    dueAt: handoff.dueAt,
+    onChain: handoff.requestBlockchain?.status || "pending",
+  });
+}
+
+/** The current patient's own help requests + their resolution/work-done. */
+export async function getMyHelpRequests() {
+  const user = await requireUser();
+  await connectDB();
+  if (user.role !== "patient") return [];
+  const Patient = (await import("@/models/Patient")).default;
+  const patient = await Patient.findOne({ userId: user._id.toString() }).lean();
+  if (!patient) return [];
+
+  const cases = await HandoffCase.find({ patient: patient._id, source: "direct_help" })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .lean();
+  return serialize(cases);
+}
+
+export async function submitWorkflowFeedback({  duplicateEntryMinutes,
   alertBurden,
   note = "",
 }) {

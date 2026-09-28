@@ -6,8 +6,10 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Clock3,
+  Link2,
   MessageCircle,
   RefreshCw,
+  ShieldCheck,
   UserCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -205,6 +207,41 @@ export default function StaffHandoffQueue({
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
                     {item.summary}
                   </p>
+                  {item.source === "direct_help" ? (
+                    <span className="cq-pixel-label mt-2 inline-flex">
+                      NEED HELP REQUEST
+                    </span>
+                  ) : null}
+                  {item.requestHash ? (
+                    <p className="mt-2 flex items-center gap-1 break-all font-mono text-[10px] text-muted-foreground">
+                      <ShieldCheck className="h-3 w-3 shrink-0" />
+                      request {item.requestHash.slice(0, 22)}…
+                      {item.requestBlockchain?.status === "anchored" ? (
+                        <span className="cq-real-label cq-pixel-label ml-1">
+                          on-chain
+                        </span>
+                      ) : null}
+                    </p>
+                  ) : null}
+                  {item.status === "resolved" && item.resolution ? (
+                    <div className="mt-2 rounded-lg border border-[#cde0d5] bg-success-soft p-2 text-xs">
+                      <div className="flex items-center gap-1 font-bold text-success">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Work done
+                        {item.resolution.blockchain?.status === "anchored" ? (
+                          <span className="ml-1 inline-flex items-center gap-1 font-mono text-[9px]">
+                            <Link2 className="h-3 w-3" /> on-chain
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-muted-foreground">
+                        {item.resolution.outcome}
+                      </p>
+                      <p className="mt-1 break-all font-mono text-[9px] text-muted-foreground">
+                        by {item.resolution.resolvedByName || item.resolution.resolvedByRole}
+                        {" · "}res {item.resolution.outcomeHash?.slice(0, 20)}…
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="grid min-w-[260px] grid-cols-2 gap-2 text-xs">
                   <div className="rounded-lg bg-muted p-3">

@@ -7,6 +7,7 @@ const CaseEventSchema = new mongoose.Schema(
       type: String,
       enum: [
         "case.created",
+        "case.help_requested",
         "case.assigned",
         "case.reassigned",
         "contact.attempted",
@@ -14,6 +15,7 @@ const CaseEventSchema = new mongoose.Schema(
         "contact.unsuccessful",
         "case.escalated",
         "case.resolved",
+        "case.resolution_anchored",
       ],
       required: true,
       index: true,

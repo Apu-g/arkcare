@@ -179,7 +179,7 @@ class ChatbotGraph:
         english_message = state["user_message"]
         prompt = f"""You are a medical triage assistant. Analyze this patient message and determine:
 1. The main illness/symptoms described
-2. Appropriate medical specialties
+2. The single BEST-fitting medical specialty (from the fixed list below)
 3. Whether this is a SERIOUS/URGENT condition requiring immediate medical attention
 
 IMPORTANT: Only flag as SERIOUS if there is genuine medical urgency. Common/mild conditions should NOT be flagged as serious.
@@ -189,7 +189,7 @@ SERIOUS (is_serious: true) — requires immediate medical attention:
 - Difficulty breathing, choking, respiratory distress
 - Stroke symptoms (facial drooping, slurred speech, sudden weakness on one side)
 - Severe uncontrolled bleeding or major trauma
-- Severe allergic reactions (swelling throat, anaphylaxis)
+- Severe allergic reactions (swelling of throat with breathing difficulty, anaphylaxis)
 - Loss of consciousness or seizure
 - Severe abdominal pain with fever/vomiting
 - High fever (>103°F/39.5°C) with confusion or stiff neck
@@ -209,12 +209,34 @@ NOT SERIOUS (is_serious: false) — home care and self-care appropriate:
 - General tiredness, fatigue
 - Mild skin irritation
 
+Choose the specialty from EXACTLY this fixed list (use these exact strings):
+ENT, Cardiology, Dermatology, Endocrinology, Gastroenterology, General Medicine,
+Gynecology, Neurology, Orthopedics, Pediatrics, Psychiatry, Pulmonology
+
+Symptom -> specialty guidance (pick the single best match):
+- Throat pain, sore throat, difficulty swallowing, tonsils, ear pain, nosebleed, sinus, hoarse voice -> ENT
+- Chest pain, palpitations, high blood pressure, cholesterol, heart -> Cardiology
+- Rash, acne, eczema, skin lesion, itching, mole -> Dermatology
+- Diabetes, thyroid, hormone, weight swing -> Endocrinology
+- Stomach pain, acidity, reflux, liver, bowel, diarrhea, indigestion -> Gastroenterology
+- Fever, cough, cold, general weakness, unspecified mild illness -> General Medicine
+- Period/menstrual, pelvic, pregnancy, women's health -> Gynecology
+- Headache, dizziness, numbness, stroke signs, tremor, memory -> Neurology
+- Bone/joint pain, fracture, back pain, sports injury, arthritis -> Orthopedics
+- Child health, vaccination, child fever, growth -> Pediatrics
+- Anxiety, depression, stress, sleep, mood -> Psychiatry
+- Asthma, chronic cough, breathlessness, COPD, wheezing -> Pulmonology
+
+Rules for "specialties":
+- Return the ONE best specialty as the first element. If genuinely unsure between two, put the second as the only additional element.
+- Never invent a specialty outside the fixed list. If nothing fits, use "General Medicine".
+
 Patient message: "{english_message}"
 
 Respond in JSON format ONLY:
 {{
     "illness": "main condition/symptoms identified",
-    "specialties": ["specialty1", "specialty2"],
+    "specialties": ["the single best specialty from the fixed list"],
     "is_serious": true/false,
     "explanation": "brief explanation of why serious or not serious"
 }}"""

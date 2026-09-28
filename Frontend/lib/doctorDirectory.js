@@ -215,7 +215,48 @@ export async function findApprovedDoctorsForAI({
     return String(a.doctor.name).localeCompare(String(b.doctor.name));
   });
 
-  const positive = ranked.filter((entry) => entry.score > 0);
+  // Category gate. When the AI's specialty maps cleanly onto exactly one live
+  // doctor category (e.g. "throat pain" -> ENT), return only that category's
+  // doctors. This is what stops unrelated specialties from being mixed into
+  // the recommendation. We only widen the net if the dominant category has no
+  // bookable doctors.
+  const target = normalize(recommendedSpecialty);
+  let dominantCategory = null;
+  let dominantAffinity = 0;
+  const categoryAffinity = new Map();
+
+  for (const doctor of doctors) {
+    const cat = normalize(doctor.category);
+    if (!cat) continue;
+    let affinity = similarity(recommendedSpecialty, doctor.category) * 10;
+    if (target && (cat === target || cat.includes(target) || target.includes(cat))) {
+      affinity += 8;
+    }
+    // An exact specialty-name match is an even stronger signal.
+    const spec = normalize(doctor.specialization);
+    if (target && (spec === target || spec.includes(target) || target.includes(spec))) {
+      affinity += 6;
+    }
+    categoryAffinity.set(cat, Math.max(categoryAffinity.get(cat) || 0, affinity));
+  }
+
+  for (const [cat, affinity] of categoryAffinity) {
+    if (affinity > dominantAffinity) {
+      dominantAffinity = affinity;
+      dominantCategory = cat;
+    }
+  }
+
+  let pool = ranked;
+  const DOMINANT_THRESHOLD = 8; // a clear single-category match
+  if (dominantCategory && dominantAffinity >= DOMINANT_THRESHOLD) {
+    const inDominant = ranked.filter(
+      ({ doctor }) => normalize(doctor.category) === dominantCategory
+    );
+    if (inDominant.length) pool = inDominant;
+  }
+
+  const positive = pool.filter((entry) => entry.score > 0);
 
   // Never fill recommendation cards with unrelated clinicians. If the AI's
   // specialty intent does not match an active bookable doctor in the live

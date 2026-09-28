@@ -29,6 +29,7 @@ export default function ReportQuizCard({ report, onCompleted }) {
       );
       setResult(graded);
       onCompleted?.(graded);
+      window.dispatchEvent(new Event("arkcare-capsules"));
     } catch (submitError) {
       setError(submitError.message);
     } finally {

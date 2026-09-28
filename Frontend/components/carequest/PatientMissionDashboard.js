@@ -34,6 +34,7 @@ import CarePassport from "@/components/carequest/CarePassport";
 import ActivitySimulationCard from "@/components/carequest/ActivitySimulationCard";
 import BenefitCatalog from "@/components/carequest/BenefitCatalog";
 import PatientReportsTimeline from "@/components/carequest/PatientReportsTimeline";
+import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
 
@@ -118,6 +119,8 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
     try {
       await fn();
       await refresh();
+      // Nudge the capsule gauge to refetch immediately after any reward-affecting action.
+      window.dispatchEvent(new Event("arkcare-capsules"));
       setReaction(mood);
       setTimeout(() => setReaction("idle"), 1300);
     } catch (error) {
@@ -272,6 +275,7 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
             <div className="cq-kicker">CURRENT BALANCE</div>
             <div className="mt-3 flex items-end gap-2">
               <div className="text-4xl font-black">{selectedProgram.balance}</div>
+              <CapsuleIcon size={20} className="pb-1 text-primary" title="Capsules" />
               <div className="pb-1 text-xs font-bold text-muted-foreground">
                 {selectedProgram.program.capsuleSymbol}
               </div>

@@ -196,6 +196,33 @@ button:not(:disabled):active, [role="button"]:active { transform: translateY(1px
 }
 
 /* ---------------------------------------------------- capsule gauge (top bar) */
+.cq-need-help-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 2.35rem;
+  padding: .45rem .8rem;
+  border: 1px solid #d5e3dc;
+  border-radius: .75rem;
+  background: var(--warning-soft);
+  color: #735f38;
+  box-shadow: 2px 2px 0 rgba(82, 105, 96, .08);
+  transition: background .2s ease, transform .2s ease;
+}
+.cq-need-help-btn:hover { background: #f3e7c9; transform: translateY(-1px); }
+.cq-need-help-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 .25rem;
+  border-radius: 999px;
+  background: #b3541e;
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 800;
+}
 .cq-capsule-gauge {
   position: relative;
   min-width: 210px;

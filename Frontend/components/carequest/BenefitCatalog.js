@@ -34,6 +34,7 @@ export default function BenefitCatalog({ programCard, onChanged }) {
           " were recorded as a redemption."
       );
       onChanged?.(result);
+      window.dispatchEvent(new Event("arkcare-capsules"));
     } catch (error) {
       setReaction("alert");
       setMessage(error.message);

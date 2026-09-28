@@ -19,10 +19,12 @@ import {
 import UserMenu from "@/components/UserMenu";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import CapsuleGauge from "@/components/carequest/CapsuleGauge";
+import NeedHelpButton from "@/components/carequest/NeedHelpButton";
 
 const NAV = {
   patient: [
     { href: "/patient", label: "Home", icon: Home },
+    { href: "/patient/doctors", label: "Doctors", icon: Stethoscope },
     { href: "/patient/carequest", label: "CareQuest", icon: Sparkles },
     { href: "/patient/care-plans", label: "Care plan", icon: BookOpenCheck },
     { href: "/reports", label: "Reports", icon: FileCheck2 },
@@ -30,7 +32,7 @@ const NAV = {
   doctor: [
     { href: "/doctor", label: "Practice", icon: Stethoscope },
     { href: "/doctor/care-plans", label: "Care plans", icon: BookOpenCheck },
-    { href: "/doctor/escalations", label: "Escalations", icon: ClipboardList },
+    { href: "/doctor/escalations", label: "Handoffs", icon: ClipboardList },
   ],
   staff: [
     { href: "/staff", label: "Handoffs", icon: ClipboardList },
@@ -124,6 +126,7 @@ export default function CareQuestShell({
             <div className="flex items-center gap-2">
               {actions}
               {role === "patient" ? <CapsuleGauge /> : null}
+              {role === "patient" ? <NeedHelpButton /> : null}
               <UserMenu />
             </div>
           </div>
