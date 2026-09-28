@@ -52,6 +52,10 @@ async function anchorToChain({ batchId, hash, caseId, organization, actorUserId,
   }
   try {
     const result = await anchorAuditRoot({ batchId, merkleRoot: "0x" + hash });
+    // Only treat this as anchored when the bridge returned a real txHash.
+    if (!result?.txHash) {
+      throw new Error("Bridge returned no transaction hash");
+    }
     await appendAuditEvent({
       organizationId: organization,
       actorUserId,
@@ -79,6 +83,27 @@ async function anchorToChain({ batchId, hash, caseId, organization, actorUserId,
   } catch (error) {
     return { status: "failed", batchId, merkleRoot: "0x" + hash, error: clean(error?.message, 200) };
   }
+}
+
+/**
+ * Anchor an existing handoff's request hash (used for mission-sourced
+ * handoffs, which are created in service.js). Keeps the request text provable
+ * so a later resolution can be chained to the exact problem raised.
+ */
+export async function anchorHandoffRequest({ handoff, actorUserId, actorRole }) {
+  if (!handoff?.requestHash || !blockchainEnabled()) return null;
+  const chain = await anchorToChain({
+    batchId: "handoff:" + String(handoff._id) + ":request",
+    hash: handoff.requestHash,
+    caseId: handoff._id,
+    organization: handoff.organization,
+    actorUserId,
+    actorRole,
+    eventType: "handoff.request.anchored",
+  });
+  handoff.requestBlockchain = { ...handoff.requestBlockchain, ...chain };
+  await handoff.save();
+  return chain;
 }
 
 /**

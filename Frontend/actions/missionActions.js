@@ -15,7 +15,7 @@ import {
   recordPatientMissionResponse,
 } from "@/lib/carequest/service";
 import { markOccurrenceDue } from "@/lib/carequest/scheduler";
-import { getProgramForPatient } from "@/lib/carequest/programs";
+import { getProgramForPatient, getPrimaryProgramContext } from "@/lib/carequest/programs";
 
 function serialize(value) {
   return JSON.parse(JSON.stringify(value));
@@ -41,6 +41,18 @@ async function requirePatient() {
 
 export async function getPatientMissionDashboard() {
   const { user, patient } = await requirePatient();
+
+  // Capsules are hospital-specific and only redeemable inside the program they
+  // were earned in. The dashboard balance AND the award history must therefore
+  // be scoped to the patient's active program. A cross-hospital sum (e.g. 60)
+  // advertised a benefit the patient could never redeem, and contradicted the
+  // capsule gauge on the same page (which correctly showed 0).
+  const context = await getPrimaryProgramContext(patient);
+  const programScope = {
+    organization: context.organization._id,
+    program: context.program._id,
+  };
+
   const [occurrences, responses, awards, preference, openHandoffs, balance] =
     await Promise.all([
       ScheduledOccurrence.find({
@@ -56,7 +68,7 @@ export async function getPatientMissionDashboard() {
         .sort({ reportedAt: -1 })
         .limit(100)
         .lean(),
-      CapsuleAward.find({ patient: patient._id })
+      CapsuleAward.find({ patient: patient._id, ...programScope })
         .sort({ createdAt: -1 })
         .limit(50)
         .lean(),
@@ -67,7 +79,7 @@ export async function getPatientMissionDashboard() {
       })
         .sort({ createdAt: -1 })
         .lean(),
-      getCapsuleBalance(patient._id),
+      getCapsuleBalance(patient._id, programScope.program),
     ]);
 
   return serialize({
@@ -87,6 +99,12 @@ export async function getPatientMissionDashboard() {
       }),
     openHandoffs,
     capsuleBalance: balance,
+    capsuleProgram: {
+      organizationId: String(programScope.organization),
+      programId: String(programScope.program),
+      programName: context.program.name,
+      symbol: context.program.capsuleSymbol,
+    },
     simulatedBenefit: getSimulatedBenefitEligibility(balance),
   });
 }

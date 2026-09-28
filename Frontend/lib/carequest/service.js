@@ -29,6 +29,19 @@ export async function createHandoffForOccurrence({
 
   let handoff = await HandoffCase.findOne({ dedupeKey });
   if (!handoff) {
+    // Commit to the problem text up-front, exactly like a direct help request.
+    // Without this the later resolution would be anchored to an empty request
+    // hash, so the stored outcome would not be provably tied to the problem.
+    const { computeRequestHash } = await import("@/lib/carequest/handoff");
+    const { blockchainEnabled } = await import("@/lib/carequest/blockchain");
+    const cleanSummary = String(
+      summary || "Patient requested help with a CareQuest mission"
+    ).slice(0, 2000);
+    const requestHash = computeRequestHash({
+      problem: cleanSummary,
+      category: "mission",
+    });
+
     try {
       handoff = await HandoffCase.create({
         dedupeKey,
@@ -37,14 +50,34 @@ export async function createHandoffForOccurrence({
         carePlan: occurrence.carePlan,
         planVersion: occurrence.planVersion,
         occurrence: occurrence._id,
+        source: "mission",
+        requestedByRole: actorRole,
         priority,
         assignedRole: "coordinator",
         dueAt,
-        summary: String(summary || "Patient requested help with a CareQuest mission").slice(0, 2000),
+        summary: cleanSummary,
+        requestHash,
+        requestBlockchain: {
+          status: blockchainEnabled() ? "pending" : "disabled",
+        },
       });
     } catch (error) {
       if (error?.code === 11000) handoff = await HandoffCase.findOne({ dedupeKey });
       else throw error;
+    }
+
+    // Anchor the mission request text so the resolution can be chained to it.
+    if (handoff?.requestHash && blockchainEnabled()) {
+      const { anchorHandoffRequest } = await import("@/lib/carequest/handoff");
+      try {
+        await anchorHandoffRequest({
+          handoff,
+          actorUserId,
+          actorRole,
+        });
+      } catch {
+        // Non-clinical proof rail: never block creating the handoff.
+      }
     }
 
     await CaseEvent.create({
@@ -294,6 +327,43 @@ export async function completeLearningMission({
   return { occurrence, award: capsule.award, handoff };
 }
 
+/**
+ * Resolve the (organization, program) a hospital-facing Capsule event must be
+ * booked against. The appointment's own program wins; a cold-booked
+ * appointment often has neither, so fall back to the patient's active program
+ * rather than writing an unscoped award that no reputation aggregate counts.
+ */
+async function resolveAppointmentProgram(appointment, occurrence) {
+  const organization = appointment.organization || occurrence?.organization || null;
+  const program = appointment.program || occurrence?.program || null;
+  if (organization && program) {
+    return { organization, program };
+  }
+
+  const { getPrimaryProgramContext } = await import("@/lib/carequest/programs");
+  // `null` here deliberately: we only need the active-program scope, not a
+  // PatientMembership side effect on a clinical status change.
+  const context = await getPrimaryProgramContext(null);
+  return {
+    organization: organization || context.organization._id,
+    program: program || context.program._id,
+  };
+}
+
+/**
+ * A Capsule award is never allowed to break the clinical action that triggered
+ * it. The doctor already saved the appointment / filed the report, so a daily
+ * cap or a duplicate key must not roll that back.
+ */
+async function tryAward(payload, label) {
+  try {
+    return await awardCapsules(payload);
+  } catch (error) {
+    console.error(`CareQuest ${label} Capsule award skipped:`, error?.message || error);
+    return { award: null, created: false, error };
+  }
+}
+
 export async function recordAppointmentBooked(appointment, actorUserId = "appointment-system") {
   const followupQuery = {
     patient: appointment.patient,
@@ -309,70 +379,186 @@ export async function recordAppointmentBooked(appointment, actorUserId = "appoin
     scheduledFor: 1,
   });
 
-  if (!occurrence) return null;
+  // A linked follow-up mission is optional: most appointments are cold-booked
+  // and have none. The audit trail must record the booking either way, so only
+  // the mission-completion + follow_up_booked award is conditional.
+  if (occurrence) {
+    occurrence.linkedAppointment = appointment._id;
+    occurrence.status = "completed";
+    await occurrence.save();
+  }
 
-  occurrence.linkedAppointment = appointment._id;
-  occurrence.status = "completed";
-  await occurrence.save();
+  const scope = await resolveAppointmentProgram(appointment, occurrence);
 
-  const capsule = await awardCapsules({
-    patient: appointment.patient,
-    organization: appointment.organization || occurrence.organization || null,
-    program: appointment.program || occurrence.program || null,
-    ruleId: "follow_up_booked",
-    sourceType: "Appointment",
-    sourceId: appointment._id,
-    actorUserId,
-    actorRole: "patient",
-  });
+  const capsule = occurrence
+    ? await tryAward(
+        {
+          patient: appointment.patient,
+          organization: scope.organization,
+          program: scope.program,
+          ruleId: "follow_up_booked",
+          sourceType: "Appointment",
+          sourceId: appointment._id,
+          actorUserId,
+          actorRole: "patient",
+        },
+        "follow-up booked"
+      )
+    : { award: null, created: false };
 
   await appendAuditEvent({
-    organizationId: appointment.organization || occurrence.organization,
-    programId: appointment.program || occurrence.program,
+    organizationId: scope.organization,
+    programId: scope.program,
     actorUserId,
     actorRole: "patient",
-    eventType: "followup.booked",
+    eventType: "appointment.booked",
     resourceType: "Appointment",
     resourceId: appointment._id,
     verificationLevel: "system_confirmed",
-    metadata: { occurrenceId: String(occurrence._id), capsuleAwardId: String(capsule.award?._id || "") },
+    metadata: {
+      linkedFollowUp: Boolean(occurrence),
+      occurrenceId: occurrence ? String(occurrence._id) : "",
+      capsuleAwardId: String(capsule.award?._id || ""),
+    },
   });
 
-  return { occurrence, award: capsule.award };
+  if (occurrence) {
+    await appendAuditEvent({
+      organizationId: scope.organization,
+      programId: scope.program,
+      actorUserId,
+      actorRole: "patient",
+      eventType: "followup.booked",
+      resourceType: "Appointment",
+      resourceId: appointment._id,
+      verificationLevel: "system_confirmed",
+      metadata: {
+        occurrenceId: String(occurrence._id),
+        capsuleAwardId: String(capsule.award?._id || ""),
+      },
+    });
+  }
+
+  return { occurrence: occurrence || null, award: capsule.award, linkedFollowUp: Boolean(occurrence) };
 }
 
+/**
+ * A doctor marked the appointment `completed`.
+ *
+ * This previously returned `null` unless a follow-up ScheduledOccurrence was
+ * linked to the appointment, so completing an ordinary (cold-booked)
+ * consultation recorded no audit event and awarded nothing. Now every completed
+ * appointment awards and audits, and the follow-up-specific credit is layered
+ * on top when a mission IS linked.
+ *
+ * All idempotency keys derive from the Appointment id, so retrying the status
+ * change (or double-clicking "complete") can never double-award.
+ */
 export async function recordAppointmentCompleted(appointment, actorUserId = "appointment-system") {
   const occurrence = await ScheduledOccurrence.findOne({
     linkedAppointment: appointment._id,
     activityType: "follow_up",
   });
-  if (!occurrence) return null;
 
-  const capsule = await awardCapsules({
-    patient: appointment.patient,
-    organization: appointment.organization || occurrence.organization || null,
-    program: appointment.program || occurrence.program || null,
-    ruleId: "follow_up_attended",
-    sourceType: "Appointment",
-    sourceId: appointment._id,
-    actorUserId,
-    actorRole: "doctor",
-    verificationLevel: "staff_documented",
-  });
+  const scope = await resolveAppointmentProgram(appointment, occurrence);
+
+  // 1) Engagement reward for showing up to the consultation at all.
+  const consultation = await tryAward(
+    {
+      patient: appointment.patient,
+      organization: scope.organization,
+      program: scope.program,
+      ruleId: "consultation_completed",
+      sourceType: "Appointment",
+      sourceId: appointment._id,
+      actorUserId,
+      actorRole: "doctor",
+      verificationLevel: "staff_documented",
+    },
+    "consultation completed"
+  );
+
+  // 2) The doctor's own remark on the appointment. Idempotent per appointment
+  //    (sourceId = appointmentId), so a save-on-keystroke cannot farm capsules.
+  const remarkAwarded = Boolean(String(appointment.notes || "").trim());
+  const remark = remarkAwarded
+    ? await tryAward(
+        {
+          patient: appointment.patient,
+          organization: scope.organization,
+          program: scope.program,
+          ruleId: "remark_added",
+          sourceType: "Appointment",
+          sourceId: appointment._id,
+          actorUserId,
+          actorRole: "doctor",
+          verificationLevel: "staff_documented",
+        },
+        "remark added"
+      )
+    : { award: null, created: false };
+
+  // 3) The follow-up mission credit, only when a mission was actually linked.
+  const followUp = occurrence
+    ? await tryAward(
+        {
+          patient: appointment.patient,
+          organization: scope.organization,
+          program: scope.program,
+          ruleId: "follow_up_attended",
+          sourceType: "Appointment",
+          sourceId: appointment._id,
+          actorUserId,
+          actorRole: "doctor",
+          verificationLevel: "staff_documented",
+        },
+        "follow-up attended"
+      )
+    : { award: null, created: false };
 
   await appendAuditEvent({
-    organizationId: appointment.organization || occurrence.organization,
-    programId: appointment.program || occurrence.program,
+    organizationId: scope.organization,
+    programId: scope.program,
     actorUserId,
     actorRole: "doctor",
-    eventType: "followup.attended",
+    eventType: "consultation.completed",
     resourceType: "Appointment",
     resourceId: appointment._id,
     verificationLevel: "staff_documented",
-    metadata: { occurrenceId: String(occurrence._id), capsuleAwardId: String(capsule.award?._id || "") },
+    metadata: {
+      linkedFollowUp: Boolean(occurrence),
+      occurrenceId: occurrence ? String(occurrence._id) : "",
+      consultationCapsuleAwardId: String(consultation.award?._id || ""),
+      remarkCapsuleAwardId: String(remark.award?._id || ""),
+      remarkAwarded,
+    },
   });
 
-  return { occurrence, award: capsule.award };
+  if (occurrence) {
+    await appendAuditEvent({
+      organizationId: scope.organization,
+      programId: scope.program,
+      actorUserId,
+      actorRole: "doctor",
+      eventType: "followup.attended",
+      resourceType: "Appointment",
+      resourceId: appointment._id,
+      verificationLevel: "staff_documented",
+      metadata: {
+        occurrenceId: String(occurrence._id),
+        capsuleAwardId: String(followUp.award?._id || ""),
+      },
+    });
+  }
+
+  return {
+    occurrence: occurrence || null,
+    linkedFollowUp: Boolean(occurrence),
+    award: consultation.award,
+    consultationAward: consultation.award,
+    remarkAward: remark.award,
+    followUpAward: followUp.award,
+  };
 }
 
 export async function getPatientForUser(user) {

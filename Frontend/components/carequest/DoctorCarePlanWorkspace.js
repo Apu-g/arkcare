@@ -126,6 +126,9 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  // "info" | "success" | "warn" | "error" — a doctor must be able to tell a
+  // confirmed save from a recoverable collision from a real failure.
+  const [messageTone, setMessageTone] = useState("info");
 
   const appointmentById = useMemo(
     () =>
@@ -222,6 +225,8 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
   async function saveDraft() {
     setBusy("save");
     setMessage("");
+    setMessageTone("info");
+    let saved = false;
     try {
       if (editingVersionId) {
         await updateCarePlanDraft(editingVersionId, form);
@@ -231,13 +236,72 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
         await createCarePlanDraft({ ...form, appointmentId });
         setMessage("Draft created. It is not visible to the patient.");
       }
+      saved = true;
       setEditingVersionId(null);
       setForm(emptyForm());
-      await refresh();
     } catch (error) {
-      setMessage(error.message || "Could not save care plan.");
+      // Filing a report auto-creates a plan for that consultation, so "Create
+      // private draft" legitimately collides with an existing plan. That is a
+      // recoverable state, not a dead end: switch the doctor straight into
+      // revision mode on the newest draft instead of showing a wall of text.
+      const raw = error?.message || "Could not save care plan.";
+      if (/already exists for this consultation/i.test(raw)) {
+        const next = await getDoctorCarePlanWorkspace().catch(() => null);
+        if (next) setData(next);
+        const plan = (data.plans || []).find(
+          (p) =>
+            String(p.sourceAppointment?._id || p.sourceAppointment) ===
+            String(appointmentId)
+        );
+        const existingDraft = (plan?.versions || [])
+          .filter((v) => v.status === "draft")
+          .sort((a, b) => b.versionNumber - a.versionNumber)[0];
+        const latestApproved = (plan?.versions || [])
+          .filter((v) => v.status === "approved")
+          .sort((a, b) => b.versionNumber - a.versionNumber)[0];
+        const target = existingDraft || latestApproved;
+
+        if (existingDraft) {
+          setForm(versionToForm(existingDraft));
+          setEditingVersionId(existingDraft._id);
+          setMessage(
+            "This consultation already has a care plan, so a new draft was not created. You are now editing the existing draft — save to update it."
+          );
+        } else if (latestApproved) {
+          setForm(versionToForm(latestApproved));
+          setEditingVersionId(latestApproved._id);
+          setMessage(
+            "This consultation already has an approved care plan. You are now editing the approved version — save to update it."
+          );
+        } else {
+          setMessage(
+            "A care plan already exists for this consultation. Use “Start revision” in Plan history to add a new draft version."
+          );
+        }
+        setMessageTone("warn");
+      } else {
+        setMessage(raw);
+        setMessageTone("error");
+      }
     } finally {
       setBusy("");
+    }
+
+    // Reloading the list is best-effort and must NEVER overwrite the outcome of
+    // the save itself. Previously refresh() sat inside the same try block, so a
+    // transient database timeout told the doctor "Could not save care plan" for
+    // a draft that had in fact been written — and clicking again produced a
+    // confusing "already exists" error.
+    try {
+      await refresh();
+      if (saved) setMessageTone("success");
+    } catch {
+      if (saved) {
+        setMessage(
+          "Draft created, but the plan list could not be refreshed. Reload the page to see it."
+        );
+        setMessageTone("warn");
+      }
     }
   }
 
@@ -331,7 +395,24 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
         </section>
 
         {message ? (
-          <div className="cq-achievement rounded-xl border border-border bg-white px-4 py-3 text-sm text-muted-foreground">
+          <div
+            role="status"
+            aria-live="polite"
+            data-tone={messageTone}
+            className={
+              "cq-achievement rounded-xl border px-4 py-3 text-sm " +
+              (messageTone === "success"
+                ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                : messageTone === "warn"
+                  ? "border-amber-300 bg-amber-50 text-amber-900"
+                  : messageTone === "error"
+                    ? "border-red-300 bg-red-50 text-red-900"
+                    : "border-border bg-white text-muted-foreground")
+            }
+          >
+            {messageTone === "success" ? (
+              <span className="font-bold">Saved. </span>
+            ) : null}
             {message}
           </div>
         ) : null}

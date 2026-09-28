@@ -7,9 +7,11 @@ import Doctor from "@/models/Doctor";
 import Patient from "@/models/Patient";
 import PatientMembership from "@/models/PatientMembership";
 import AuditEvent from "@/models/AuditEvent";
+import AuditAnchorBatch from "@/models/AuditAnchorBatch";
 import Appointment from "@/models/Appointment";
 import HandoffCase from "@/models/HandoffCase";
 import { verifyAuditChain } from "@/lib/carequest/audit";
+import { verifyAnchorOnChain } from "@/lib/carequest/blockchain";
 
 /**
  * Hospital reputation = the total participation Capsules earned by a hospital's
@@ -35,6 +37,40 @@ function reputationTier(totalCapsules) {
   return { label: "New", score: 45 };
 }
 
+/**
+ * Hospital reputation is a SIGNED sum over the hospital's active programs:
+ *
+ *     reputation(hospital) = Σ  amount   for every CapsuleAward row whose
+ *                                           program ∈ that hospital's ACTIVE programs
+ *
+ * i.e. awards are positive, redemptions and REVERSALS are negative, and every
+ * row is counted. There is deliberately no `amount: { $gt: 0 }` filter: a
+ * mis-awarded Capsule that an admin reverses, or a benefit a patient redeems,
+ * genuinely REDUCES the engagement this hospital's cohort has generated.
+ * Filtering to positive rows made reversals invisible, so a hospital's
+ * reputation could never come down and the leaderboard/network totals silently
+ * disagreed with the ledger.
+ *
+ * The number remains a REPUTATION metric: non-monetary, non-cash, and not a
+ * claimable balance for the hospital.
+ */
+function signedCapsuleSumPipeline(programIds) {
+  return [
+    { $match: { program: { $in: programIds } } },
+    { $group: { _id: null, total: { $sum: "$amount" } } },
+  ];
+}
+
+async function activeProgramIdsForOrg(organizationId) {
+  const programs = await HospitalProgram.find({
+    organization: organizationId,
+    status: "active",
+  })
+    .select("_id")
+    .lean();
+  return programs.map((program) => program._id);
+}
+
 async function organizationTotals(organizationId) {
   const programs = await HospitalProgram.find({
     organization: organizationId,
@@ -48,10 +84,7 @@ async function organizationTotals(organizationId) {
   const [capsuleAgg, patientCount, doctorCount, appointmentCount, resolvedCases, openCases] =
     await Promise.all([
       programIds.length
-        ? CapsuleAward.aggregate([
-            { $match: { program: { $in: programIds }, amount: { $gt: 0 } } },
-            { $group: { _id: null, total: { $sum: "$amount" } } },
-          ])
+        ? CapsuleAward.aggregate(signedCapsuleSumPipeline(programIds))
         : [],
       programIds.length ? PatientMembership.countDocuments({ program: { $in: programIds } }) : 0,
       Doctor.countDocuments({
@@ -65,7 +98,7 @@ async function organizationTotals(organizationId) {
       }),
     ]);
 
-  const totalCapsules = capsuleAgg[0]?.total || 0;
+  const totalCapsules = Number(capsuleAgg[0]?.total || 0);
   const tier = reputationTier(totalCapsules);
 
   return {
@@ -106,19 +139,59 @@ export async function getHospitalDirectory() {
     const totals = await organizationTotals(organization._id);
 
     // Per-hospital audit head + integrity: each hospital has its own chain.
+    // No `limit` here on purpose — verifyAuditChain defaults to verifying the
+    // WHOLE chain. Capping at 500 made headHash the 500th event's hash and
+    // reported it as "the chain head", which is both wrong and unverifiable.
     let chainValid = null;
     let headHash = null;
     let chainChecked = 0;
+    let chainTotal = 0;
+    let chainTruncated = false;
     try {
       const verification = await verifyAuditChain({
         organizationId: organization._id,
-        limit: 500,
       });
       chainValid = verification.valid;
-      headHash = verification.headHash;
+      headHash = verification.headHash || null;
       chainChecked = verification.checked;
+      chainTotal = verification.total;
+      chainTruncated = Boolean(verification.truncated);
     } catch {
       chainValid = null;
+    }
+
+    // A chain with zero events verifies vacuously. Reporting that as "chain
+    // valid" would claim an integrity proof that does not exist — there is
+    // nothing to verify. Report it as unknown/no-events instead.
+    if (chainTotal === 0) {
+      chainValid = null;
+    }
+
+    // Newest confirmed on-chain anchor, so the master console can show real
+    // transaction provenance (root + txHash + block) per hospital.
+    const latestAnchor = await AuditAnchorBatch.findOne({
+      organization: organization._id,
+      status: "confirmed",
+      txHash: { $nin: [null, ""] },
+    })
+      .sort({ confirmedAt: -1, createdAt: -1 })
+      .select("batchId merkleRoot txHash eventCount network chainId confirmedAt")
+      .lean();
+
+    const anchorCount = await AuditAnchorBatch.countDocuments({
+      organization: organization._id,
+      status: "confirmed",
+      txHash: { $nin: [null, ""] },
+    });
+
+    // Ask the chain whether the newest commitment is really there. A DB row
+    // saying "confirmed" only proves a transaction hash was once returned; the
+    // in-memory local chain resets on restart, which would otherwise leave the
+    // console showing proofs that no longer exist.
+    let anchorOnChain = null;
+    if (latestAnchor?.batchId) {
+      const check = await verifyAnchorOnChain(latestAnchor.batchId);
+      anchorOnChain = check.anchored === true;
     }
 
     const program = await HospitalProgram.findOne({
@@ -148,10 +221,25 @@ export async function getHospitalDirectory() {
       appointmentCount: totals.appointmentCount,
       resolvedCases: totals.resolvedCases,
       openCases: totals.openCases,
-      // Audit provenance (per-hospital chain head)
+      // Audit provenance (per-hospital chain head + on-chain anchor)
       chainValid,
       chainChecked,
+      chainTotal,
+      chainTruncated,
       headHash: headHash || null,
+      anchorCount,
+      anchorOnChain,
+      latestAnchor: latestAnchor
+        ? {
+            batchId: latestAnchor.batchId,
+            merkleRoot: latestAnchor.merkleRoot,
+            txHash: latestAnchor.txHash,
+            eventCount: latestAnchor.eventCount,
+            network: latestAnchor.network,
+            chainId: latestAnchor.chainId,
+            confirmedAt: latestAnchor.confirmedAt,
+          }
+        : null,
     });
   }
 
@@ -180,15 +268,15 @@ export async function getHospitalProfile(organizationId) {
   );
 
   // Per-patient engagement leaderboard for this hospital (reputation driver).
-  const program = await HospitalProgram.findOne({
-    organization: organizationId,
-    status: "active",
-  });
+  // Signed, and over EVERY active program the hospital runs (not just the first
+  // one), so it uses exactly the same aggregate as organizationTotals: a
+  // reversed award must push a patient DOWN this board, not be ignored.
+  const programIds = await activeProgramIdsForOrg(organizationId);
 
   let leaderboard = [];
-  if (program) {
+  if (programIds.length) {
     const rows = await CapsuleAward.aggregate([
-      { $match: { program: program._id, amount: { $gt: 0 } } },
+      { $match: { program: { $in: programIds } } },
       { $group: { _id: "$patient", capsules: { $sum: "$amount" } } },
       { $sort: { capsules: -1 } },
       { $limit: 10 },
@@ -201,7 +289,7 @@ export async function getHospitalProfile(organizationId) {
     leaderboard = rows.map((row) => ({
       patientId: String(row._id),
       patientName: nameById.get(String(row._id)) || "Patient",
-      capsules: row.capsules,
+      capsules: Number(row.capsules || 0),
     }));
   }
 
@@ -217,29 +305,51 @@ export async function getPlatformOverview() {
 
   const directory = await getHospitalDirectory();
 
-  const [totalAuditEvents, totalCapsuleAwards, totalHandoffs, recentEvents] =
-    await Promise.all([
-      AuditEvent.countDocuments({ schemaVersion: 2 }),
-      CapsuleAward.aggregate([
-        { $match: { amount: { $gt: 0 } } },
-        { $group: { _id: null, total: { $sum: "$amount" } } },
-      ]),
-      HandoffCase.countDocuments({}),
-      AuditEvent.find({ schemaVersion: 2 })
-        .sort({ createdAt: -1 })
-        .limit(40)
-        .populate("organization", "name")
-        .lean(),
-    ]);
+  const [totalAuditEvents, totalHandoffs, recentEvents] = await Promise.all([
+    AuditEvent.countDocuments({ schemaVersion: 2 }),
+    HandoffCase.countDocuments({}),
+    AuditEvent.find({ schemaVersion: 2 })
+      .sort({ createdAt: -1 })
+      .limit(40)
+      .populate("organization", "name")
+      .lean(),
+  ]);
+
+  // The network total is DEFINED as the sum of the per-hospital figures shown
+  // directly above it. The previous `CapsuleAward.aggregate({ amount: { $gt: 0 } })`
+  // summed every award on the platform regardless of program, which
+  // double-counted awards belonging to inactive/retired programs and hid
+  // reversals — so the headline number could never reconcile with the
+  // per-hospital rows, and disagreed with the signed ledger.
+  const networkTotalCapsules = directory.reduce(
+    (sum, row) => sum + Number(row.totalCapsules || 0),
+    0
+  );
+
+  // "All valid" must be a real claim: a hospital whose chain failed to
+  // verify (chainValid === null) is UNKNOWN, not valid. The previous
+  // `!== false` check reported unknown chains as valid.
+  const knownChains = directory.filter((row) => row.chainValid !== null);
+  const brokenChains = directory.filter((row) => row.chainValid === false);
+  const unknownChains = directory.filter((row) => row.chainValid === null);
 
   return {
     hospitals: directory,
     networkTotals: {
       hospitalCount: directory.length,
-      totalCapsules: totalCapsuleAwards[0]?.total || 0,
+      totalCapsules: networkTotalCapsules,
       totalAuditEvents,
       totalHandoffs,
-      allChainsValid: directory.every((row) => row.chainValid !== false),
+      allChainsValid:
+        directory.length > 0 &&
+        brokenChains.length === 0 &&
+        unknownChains.length === 0,
+      brokenChainCount: brokenChains.length,
+      unknownChainCount: unknownChains.length,
+      totalOnChainAnchors: directory.reduce(
+        (sum, row) => sum + (row.anchorCount || 0),
+        0
+      ),
     },
     recentEvents: recentEvents.map((event) => ({
       eventId: event.eventId,
@@ -247,6 +357,10 @@ export async function getPlatformOverview() {
       resourceType: event.resourceType,
       verificationLevel: event.verificationLevel,
       actorRole: event.actorRole,
+      // Expose the per-event hash so the console can show the same provenance
+      // the hospital audit log shows.
+      eventHash: event.eventHash,
+      previousHash: event.previousHash,
       organizationName: event.organization?.name || "Platform",
       organizationId: event.organization ? String(event.organization) : null,
       createdAt: event.createdAt,

@@ -261,7 +261,13 @@ export async function ensureDemoHospitalPrograms(patient = null) {
   }
 
   if (patient && result[0]) {
-    await CapsuleAward.updateMany(
+    // Re-parent legacy unscoped awards into the patient's primary program, then
+    // RECOMPUTE the balance projection from the ledger. Re-parenting without
+    // recomputing left CapsuleBalanceProjection.balance permanently out of
+    // sync with the ledger (the UI showed one number, redemption checked
+    // another, and blockchain sync hard-failed).
+    const { recomputeBalanceProjection } = await import("@/lib/carequest/capsules");
+    const moved = await CapsuleAward.updateMany(
       {
         patient: patient._id,
         $or: [
@@ -278,6 +284,14 @@ export async function ensureDemoHospitalPrograms(patient = null) {
         },
       }
     );
+
+    if (moved.modifiedCount > 0) {
+      await recomputeBalanceProjection({
+        patient: patient._id,
+        organization: result[0].organization._id,
+        program: result[0].program._id,
+      });
+    }
   }
 
   return result;

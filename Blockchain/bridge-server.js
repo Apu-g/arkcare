@@ -53,6 +53,39 @@ function saveState(state) {
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 }
 
+/**
+ * Is a cached transaction still present on the live chain?
+ *
+ * The local Hardhat network is in-memory and RESETS to block 0 on every start,
+ * but bridge-state.json lives on disk. Without this check, after a restart the
+ * bridge replayed cached transaction hashes that no longer existed, reporting
+ * anchors as "confirmed" and `duplicate: true` while the chain held no such
+ * proof at all. A cached reference is only honoured when the chain still has
+ * the transaction behind it.
+ */
+async function isReferenceLive(txHash) {
+  if (!txHash || typeof txHash !== "string") return false;
+  try {
+    const receipt = await provider.getTransactionReceipt(txHash);
+    return Boolean(receipt && receipt.status === 1);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Return the cached transaction hash for a key, but only if the chain still
+ * holds it. Prunes the dead entry so the caller re-does the work.
+ */
+async function liveReference(state, key) {
+  const txHash = state.references[key];
+  if (!txHash) return null;
+  if (await isReferenceLive(txHash)) return txHash;
+  delete state.references[key];
+  saveState(state);
+  return null;
+}
+
 function json(response, status, body) {
   response.writeHead(status, {
     "Content-Type": "application/json",
@@ -131,10 +164,11 @@ const server = http.createServer(async (request, response) => {
       if (!payload.reference) return json(response, 400, { error: "reference required" });
 
       const state = loadState();
-      if (state.references[payload.reference]) {
+      const cached = await liveReference(state, payload.reference);
+      if (cached) {
         return json(response, 200, {
           duplicate: true,
-          txHash: state.references[payload.reference],
+          txHash: cached,
         });
       }
 
@@ -164,10 +198,11 @@ const server = http.createServer(async (request, response) => {
       if (!payload.reference) return json(response, 400, { error: "reference required" });
 
       const state = loadState();
-      if (state.references[payload.reference]) {
+      const cached = await liveReference(state, payload.reference);
+      if (cached) {
         return json(response, 200, {
           duplicate: true,
-          txHash: state.references[payload.reference],
+          txHash: cached,
         });
       }
 
@@ -227,10 +262,11 @@ const server = http.createServer(async (request, response) => {
 
       const state = loadState();
       const key = "hospital-mint:" + payload.reference;
-      if (state.references[key]) {
+      const cached = await liveReference(state, key);
+      if (cached) {
         return json(response, 200, {
           duplicate: true,
-          txHash: state.references[key],
+          txHash: cached,
           tokenId,
         });
       }
@@ -270,10 +306,11 @@ const server = http.createServer(async (request, response) => {
 
       const state = loadState();
       const key = "hospital-burn:" + payload.reference;
-      if (state.references[key]) {
+      const cached = await liveReference(state, key);
+      if (cached) {
         return json(response, 200, {
           duplicate: true,
-          txHash: state.references[key],
+          txHash: cached,
           tokenId,
         });
       }
@@ -304,16 +341,31 @@ const server = http.createServer(async (request, response) => {
       }
       const batchKey = "anchor:" + payload.batchId;
       const state = loadState();
-      if (state.references[batchKey]) {
+      const cached = await liveReference(state, batchKey);
+      if (cached) {
         return json(response, 200, {
           duplicate: true,
-          txHash: state.references[batchKey],
+          txHash: cached,
           network: deployment.network,
           chainId: deployment.chainId,
         });
       }
 
       const batchId = ethers.id(payload.batchId);
+      const existingRoot = await audit.roots(batchId).catch(() => ethers.ZeroHash);
+      if (existingRoot && existingRoot !== ethers.ZeroHash) {
+        // The chain already holds this commitment (e.g. the local reference
+        // file was pruned but the chain survived). Report it as a duplicate
+        // rather than re-mining — the contract rejects a second anchor.
+        return json(response, 200, {
+          duplicate: true,
+          alreadyOnChain: true,
+          merkleRoot: existingRoot,
+          network: deployment.network,
+          chainId: deployment.chainId,
+        });
+      }
+
       const tx = await audit.anchor(batchId, payload.merkleRoot);
       const receipt = await tx.wait();
       state.references[batchKey] = receipt.hash;
@@ -323,6 +375,22 @@ const server = http.createServer(async (request, response) => {
         blockNumber: receipt.blockNumber,
         network: deployment.network,
         chainId: deployment.chainId,
+      });
+    }
+
+    // Read an anchor back off the chain. This is the authoritative check that
+    // a commitment really is on-chain, rather than trusting a local file.
+    if (request.method === "GET" && url.pathname === "/anchor") {
+      const batchId = url.searchParams.get("batchId");
+      if (!batchId) return json(response, 400, { error: "batchId required" });
+      const root = await audit.roots(ethers.id(batchId)).catch(() => ethers.ZeroHash);
+      return json(response, 200, {
+        batchId,
+        merkleRoot: root && root !== ethers.ZeroHash ? root : null,
+        anchored: Boolean(root && root !== ethers.ZeroHash),
+        network: deployment.network,
+        chainId: deployment.chainId,
+        blockNumber: await provider.getBlockNumber(),
       });
     }
 

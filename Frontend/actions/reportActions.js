@@ -16,7 +16,7 @@ import { publishDoctorReport, getDoctorReports, getPatientReports } from "@/lib/
 import { selectQuizQuestions, toPatientSafeQuiz } from "@/lib/carequest/quiz";
 import { awardCapsules, getCapsuleBalance, CAPSULE_DISPLAY_MAX } from "@/lib/carequest/capsules";
 import { appendAuditEvent } from "@/lib/carequest/audit";
-import { getPrimaryProgramContext } from "@/lib/carequest/programs";
+import { getPrimaryProgramContext, getProgramContextForDoctor } from "@/lib/carequest/programs";
 
 function serialize(value) {
   return JSON.parse(JSON.stringify(value));
@@ -110,12 +110,44 @@ export async function submitDoctorReport(input) {
     doctorName: doctor.name,
   });
 
+  // Engagement reward for the PATIENT, triggered by a clinician-approved report.
+  //
+  // The award lives here, at the call site, rather than inside
+  // publishDoctorReport: the ledger row must be written even for a report that
+  // a patient never opens a quiz on, and it must never be able to roll back the
+  // already-persisted (and on-chain anchored) report. Idempotency key is
+  // derived from the report id
+  // (patient:org:program:<reportId>:report_filed:v2) so re-submitting the same
+  // report can never double-award.
+  let reportFiledCapsuleAwardId = "";
+  if (created) {
+    try {
+      const filed = await awardCapsules({
+        patient: appointment.patient,
+        organization: report.organization || appointment.organization || null,
+        program: report.program || appointment.program || null,
+        ruleId: "report_filed",
+        sourceType: "DoctorReport",
+        sourceId: report._id,
+        actorUserId: user._id,
+        actorRole: "doctor",
+        verificationLevel: "clinician_approved",
+      });
+      reportFiledCapsuleAwardId = String(filed.award?._id || "");
+    } catch (error) {
+      // The report is filed, anchored and audited. A daily-cap refusal must not
+      // fail the clinician's save; the miss is logged instead.
+      console.error("CareQuest report_filed Capsule award skipped:", error?.message || error);
+    }
+  }
+
   return serialize({
     created,
     reportId: String(report._id),
     revision: report.revision,
     contentHash: report.contentHash,
     blockchain: report.blockchain,
+    reportFiledCapsuleAwardId,
     warnings: ai.warnings,
     needsReview: Boolean(ai.parsed.needsReview),
     plan: plan
@@ -160,6 +192,17 @@ export async function getDoctorReportWorkspace() {
 
   const validPatientIds = patientIds.filter((id) => mongoose.isValidObjectId(id));
 
+  // Capsule ledgers are HOSPITAL-SPECIFIC. A doctor works in one hospital, so
+  // this workspace must only ever read awards earned in that doctor's own
+  // program — otherwise the report workspace aggregates another hospital's
+  // patients' capsules into this doctor's numbers (and into the reputation
+  // card shown beside them).
+  const doctorContext = await getProgramContextForDoctor(doctor);
+  const capsuleScope = {
+    organization: doctorContext.organization._id,
+    program: doctorContext.program._id,
+  };
+
   const [occurrences, awards, capsuleTotals] = await Promise.all([
     ScheduledOccurrence.find({
       ownerDoctor: doctor._id,
@@ -167,18 +210,32 @@ export async function getDoctorReportWorkspace() {
     })
       .select("patient status activityType scheduledFor currentResponse")
       .lean(),
-    CapsuleAward.find({ patient: { $in: validPatientIds } })
-      .select("patient amount ruleId createdAt")
-      .sort({ createdAt: -1 })
-      .lean(),
+    validPatientIds.length
+      ? CapsuleAward.find({
+          patient: { $in: validPatientIds },
+          ...capsuleScope,
+        })
+          .select("patient amount ruleId createdAt")
+          .sort({ createdAt: -1 })
+          .lean()
+      : Promise.resolve([]),
     validPatientIds.length
       ? CapsuleAward.aggregate([
-          { $match: { patient: { $in: validPatientIds.map((id) => new mongoose.Types.ObjectId(id)) } } },
+          {
+            $match: {
+              patient: {
+                $in: validPatientIds.map((id) => new mongoose.Types.ObjectId(id)),
+              },
+              ...capsuleScope,
+            },
+          },
+          // Signed sum: a reversal/redemption row must reduce this doctor's
+          // cohort total, not be invisible to it.
           { $group: { _id: null, total: { $sum: "$amount" } } },
         ])
       : Promise.resolve([]),
   ]);
-  const capsulesOnChain = capsuleTotals[0]?.total || 0;
+  const capsulesOnChain = Math.max(0, Number(capsuleTotals[0]?.total || 0));
 
   const now = Date.now();
   const byPatient = new Map();
@@ -238,7 +295,13 @@ export async function getDoctorReportWorkspace() {
     const id = String(award.patient);
     if (!byPatient.has(id)) continue;
     const row = byPatient.get(id);
-    row.capsulesEarned += Math.max(0, Number(award.amount || 0));
+    // Signed accumulation: a reversed award must reduce this patient's total
+    // here too, exactly as it reduces the balance and the hospital reputation.
+    row.capsulesEarned += Number(award.amount || 0);
+  }
+
+  for (const row of byPatient.values()) {
+    row.capsulesEarned = Math.max(0, row.capsulesEarned);
   }
 
   const rows = [...byPatient.values()].sort(

@@ -31,6 +31,16 @@ export async function POST(request) {
       return NextResponse.json(pusherServer.authorizeChannel(socketId, channelName));
     }
 
+    // Per-user notification channel. Without this branch the client could never
+    // subscribe, so notifications were only ever delivered on refresh.
+    if (channelName.startsWith("private-user-")) {
+      const targetUserId = channelName.slice("private-user-".length);
+      if (targetUserId !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      return NextResponse.json(pusherServer.authorizeChannel(socketId, channelName));
+    }
+
     if (channelName.startsWith("private-carequest-staff-")) {
       if (!["doctor", "nurse", "coordinator"].includes(user.role)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });

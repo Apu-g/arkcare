@@ -63,26 +63,35 @@ export async function sendMessage(chatId, message) {
 
     const senderName = await resolveSenderName(user);
 
-    // Save message to database
+    // Save message to database (authoritative). A non-clinician staff member
+    // with a patient profile is still a chat participant, but the Message
+    // enum only allows doctor|patient, so map the role rather than writing
+    // user.role and risking a ValidationError that loses the message.
     const newMessage = await Message.create({
       chatId,
       senderId,
-      senderType: user.role,
+      senderType: user.role === "doctor" ? "doctor" : "patient",
       senderName,
       message: cleanMessage,
       messageType: "text",
     });
 
-    // Send via Pusher - THIS IS KEY!
-    await pusherServer.trigger(`private-chat-${chatId}`, "new-message", {
-      _id: newMessage._id.toString(),
-      chatId: newMessage.chatId,
-      senderId: newMessage.senderId,
-      senderType: newMessage.senderType,
-      senderName: newMessage.senderName,
-      message: newMessage.message,
-      createdAt: newMessage.createdAt,
-    });
+    // Realtime delivery is ADVISORY. The message is already durably saved; a
+    // Pusher failure must not fail the request, otherwise the client keeps the
+    // text in the box and re-sending creates a duplicate clinical record.
+    try {
+      await pusherServer.trigger(`private-chat-${chatId}`, "new-message", {
+        _id: newMessage._id.toString(),
+        chatId: newMessage.chatId,
+        senderId: newMessage.senderId,
+        senderType: newMessage.senderType,
+        senderName: newMessage.senderName,
+        message: newMessage.message,
+        createdAt: newMessage.createdAt,
+      });
+    } catch (error) {
+      console.error("Realtime delivery failed (message still saved):", error);
+    }
 
     return JSON.parse(JSON.stringify(newMessage));
   } catch (error) {
@@ -121,9 +130,11 @@ export async function createOrGetChat(appointmentId) {
       throw new Error("Unauthorized access");
     }
 
-    // Check if appointment is confirmed
-    if (appointment.status !== "confirmed") {
-      throw new Error("Chat only available for confirmed appointments");
+    // Chat stays available after the visit so the doctor can file the
+    // consultation report and the patient can still read it. Cancelled
+    // appointments close the thread.
+    if (!["confirmed", "completed"].includes(appointment.status)) {
+      throw new Error("Chat is not available for this appointment");
     }
 
     // Atomically resolve one chat room for the appointment. Patient and doctor
@@ -166,17 +177,21 @@ export async function createOrGetChat(appointmentId) {
   }
 }
 
-export async function getChatMessages(chatId) {
+export async function getChatMessages(chatId, { limit = 100, before = null } = {}) {
   try {
     const user = await requireUser();
     const userId = user._id.toString();
 
     await connectDB();
 
-    // Verify access to chat
+    // Same guards as assertChatParticipant: a malformed id or a chat whose
+    // doctor/patient document is missing must not 500.
+    if (!/^[0-9a-fA-F]{24}$/.test(String(chatId || ""))) {
+      throw new Error("Invalid chat");
+    }
     const chat = await Chat.findById(chatId).populate("doctorId patientId");
 
-    if (!chat) {
+    if (!chat || !chat.doctorId || !chat.patientId) {
       throw new Error("Chat not found");
     }
 
@@ -187,12 +202,21 @@ export async function getChatMessages(chatId) {
       throw new Error("Unauthorized access");
     }
 
-    // Get messages
-    const messages = await Message.find({ chatId })
-      .sort({ createdAt: 1 })
-      .limit(100);
+    // Return the LATEST `limit` messages (ascending), not the oldest — the old
+    // sort(+1).limit(100) permanently hid everything after the 100th message.
+    const query = { chatId };
+    if (before) {
+      const cursor = await Message.findOne({ _id: before }).select("createdAt").lean();
+      if (cursor) query.createdAt = { $lt: cursor.createdAt };
+    }
+    const capped = Math.min(Math.max(Number(limit) || 100, 1), 200);
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(capped);
 
-    return JSON.parse(JSON.stringify(messages));
+    return JSON.parse(
+      JSON.stringify(messages.reverse())
+    );
   } catch (error) {
     console.error("Error getting chat messages:", error);
     throw error;
@@ -208,28 +232,56 @@ export async function sendImageMessage(chatId, imageUrl, imagePublicId) {
 
     await assertChatParticipant(chatId, senderId);
 
+    // Only accept a Cloudinary-hosted URL that this app actually produced. A
+    // participant-supplied arbitrary URL would be rendered as <img> and opened
+    // via window.open inside a clinical thread, leaking the reader's IP/UA.
+    const cleanImageUrl = String(imageUrl || "").trim();
+    if (!cleanImageUrl) throw new Error("An image URL is required");
+    if (cleanImageUrl.length > 600) throw new Error("Image URL is too long");
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(cleanImageUrl);
+    } catch {
+      throw new Error("Image URL is not valid");
+    }
+    const allowedHost = process.env.CLOUDINARY_CLOUD_NAME;
+    if (parsedUrl.protocol !== "https:" || !allowedHost) {
+      throw new Error("Image must be an https Cloudinary upload");
+    }
+    if (parsedUrl.hostname !== "res.cloudinary.com") {
+      throw new Error("Image must be hosted on Cloudinary");
+    }
+    if (!parsedUrl.hostname.includes(allowedHost)) {
+      throw new Error("Image does not belong to this Cloudinary account");
+    }
+
     const senderName = await resolveSenderName(user);
 
     const newMessage = await Message.create({
       chatId,
       senderId,
-      senderType: user.role,
+      senderType: user.role === "doctor" ? "doctor" : "patient",
       senderName,
-      imageUrl,
-      imagePublicId,
+      imageUrl: cleanImageUrl,
+      imagePublicId: String(imagePublicId || "").slice(0, 200),
       messageType: "image",
     });
 
-    await pusherServer.trigger(`private-chat-${chatId}`, "new-message", {
-      _id: newMessage._id.toString(),
-      chatId: newMessage.chatId,
-      senderId: newMessage.senderId,
-      senderType: newMessage.senderType,
-      senderName: newMessage.senderName,
-      imageUrl: newMessage.imageUrl,
-      messageType: newMessage.messageType,
-      createdAt: newMessage.createdAt,
-    });
+    // Realtime is advisory; the image message is already saved.
+    try {
+      await pusherServer.trigger(`private-chat-${chatId}`, "new-message", {
+        _id: newMessage._id.toString(),
+        chatId: newMessage.chatId,
+        senderId: newMessage.senderId,
+        senderType: newMessage.senderType,
+        senderName: newMessage.senderName,
+        imageUrl: newMessage.imageUrl,
+        messageType: newMessage.messageType,
+        createdAt: newMessage.createdAt,
+      });
+    } catch (error) {
+      console.error("Realtime delivery failed (image message still saved):", error);
+    }
 
     return JSON.parse(JSON.stringify(newMessage));
   } catch (error) {

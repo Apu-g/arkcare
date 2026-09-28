@@ -28,6 +28,65 @@ function Stat({ icon: Icon, value, label, tone }) {
 }
 
 /**
+ * Full, untruncated hash with a copy button. The master console is the
+ * operator's window into the proof rail, so the value shown here must be the
+ * complete hash (not an ellipsised prefix) and must be copyable so it can be
+ * checked against the chain.
+ */
+function HashField({ label, value, hint, tone }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Clipboard blocked (insecure context / permission): the hash is still
+      // visible in full and selectable, so this is not a dead end.
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-white p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        {value ? (
+          <button
+            type="button"
+            onClick={copy}
+            className="cq-pixel-label hover:bg-muted"
+            aria-label={"Copy " + label}
+          >
+            {copied ? "copied" : "copy"}
+          </button>
+        ) : null}
+      </div>
+      {value ? (
+        <div
+          className={
+            "mt-1 break-all font-mono text-[11px] leading-4 " +
+            (tone || "text-foreground")
+          }
+        >
+          {value}
+        </div>
+      ) : (
+        <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+          not yet generated
+        </div>
+      )}
+      {hint ? (
+        <div className="mt-1 text-[10px] text-muted-foreground">{hint}</div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * The platform (master) console. Shows every hospital in the network, each
  * hospital's reputation (capsules earned by its patients — a non-cash metric),
  * and the per-hospital audit head so an operator can see exactly where every
@@ -60,8 +119,10 @@ export default function PlatformConsole({ overview }) {
             variant="guardian"
             mood="idle"
             size={92}
-            speech={`${totals.hospitalCount} hospitals · all chains ` +
-              (totals.allChainsValid ? "valid" : "need review")}
+            speech={`${totals.hospitalCount} hospitals · ` +
+              (totals.allChainsValid
+                ? "all chains valid"
+                : `${totals.brokenChainCount || 0} chain(s) need review`)}
           />
         </div>
       </section>
@@ -87,8 +148,12 @@ export default function PlatformConsole({ overview }) {
         <Stat
           icon={ShieldCheck}
           value={totals.allChainsValid ? "VALID" : "CHECK"}
-          label="All audit chains consistent"
-          tone="text-[#416457]"
+          label={
+            totals.unknownChainCount
+              ? "Audit chains (" + totals.unknownChainCount + " unverified)"
+              : "All audit chains consistent"
+          }
+          tone={totals.allChainsValid ? "text-[#416457]" : "text-[#b3541e]"}
         />
       </section>
 
@@ -181,11 +246,82 @@ export default function PlatformConsole({ overview }) {
                       </div>
                     </div>
 
-                    <div className="break-all rounded-lg border border-border bg-white p-3 text-[10px] text-muted-foreground">
-                      <div className="font-bold text-foreground">
-                        Audit chain head ({hospital.chainChecked} events verified)
+                    {/* Full hash provenance, same as the hospital audit log. */}
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                        <span
+                          className={
+                            "cq-pixel-label " +
+                            (hospital.chainValid
+                              ? "cq-real-label"
+                              : hospital.chainValid === false
+                                ? "border-red-300 text-red-700"
+                                : "")
+                          }
+                        >
+                          {hospital.chainValid
+                            ? "chain verified"
+                            : hospital.chainValid === false
+                              ? "chain inconsistent"
+                              : hospital.chainTotal === 0
+                                ? "no audit events yet"
+                                : "chain not verified"}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {hospital.chainChecked} of {hospital.chainTotal} events
+                          checked
+                          {hospital.chainTruncated ? " (truncated)" : ""}
+                        </span>
+                        <span className="text-muted-foreground">
+                          · {hospital.anchorCount} on-chain anchor
+                          {hospital.anchorCount === 1 ? "" : "s"}
+                        </span>
+                        {hospital.anchorCount > 0 &&
+                        hospital.anchorOnChain === false ? (
+                          <span className="cq-pixel-label border-amber-300 text-amber-700">
+                            anchor not on current chain
+                          </span>
+                        ) : null}
+                        {hospital.anchorOnChain === true ? (
+                          <span className="cq-pixel-label cq-real-label">
+                            anchor verified on chain
+                          </span>
+                        ) : null}
                       </div>
-                      <div className="mt-1 font-mono">{hospital.headHash || "—"}</div>
+
+                      <HashField
+                        label="Audit chain head (latest event hash)"
+                        value={hospital.headHash}
+                        hint="Final link in this hospital's hash chain. Changing any earlier event breaks the link back to the genesis head."
+                      />
+
+                      <HashField
+                        label="Latest merkle root (anchored on-chain)"
+                        value={hospital.latestAnchor?.merkleRoot}
+                        hint={
+                          hospital.latestAnchor
+                            ? "Batch of " +
+                              hospital.latestAnchor.eventCount +
+                              " event hashes, committed to the chain in one transaction."
+                            : undefined
+                        }
+                      />
+
+                      <HashField
+                        label="Anchor transaction hash"
+                        value={hospital.latestAnchor?.txHash}
+                        tone="text-[#416457]"
+                        hint={
+                          hospital.latestAnchor
+                            ? "Block " +
+                              (hospital.latestAnchor.chainId ?? "—") +
+                              " network · anchored " +
+                              new Date(
+                                hospital.latestAnchor.confirmedAt
+                              ).toLocaleString()
+                            : undefined
+                        }
+                      />
                     </div>
                   </div>
                 ) : null}
@@ -206,14 +342,20 @@ export default function PlatformConsole({ overview }) {
           {overview.recentEvents.map((event) => (
             <div
               key={event.eventId}
-              className="flex flex-col gap-1 rounded-lg border border-border bg-white p-3 text-xs md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-2 rounded-lg border border-border bg-white p-3 text-xs md:flex-row md:items-start md:justify-between"
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <strong>{event.eventType}</strong>
-                <span className="text-muted-foreground">{event.resourceType}</span>
-                <Badge variant="outline">{event.actorRole}</Badge>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <strong>{event.eventType}</strong>
+                  <span className="text-muted-foreground">{event.resourceType}</span>
+                  <Badge variant="outline">{event.actorRole}</Badge>
+                </div>
+                {/* Per-event hash, matching the hospital audit log view. */}
+                <div className="mt-1.5 break-all font-mono text-[10px] text-muted-foreground">
+                  {event.eventHash || "no hash"}
+                </div>
               </div>
-              <div className="text-muted-foreground">
+              <div className="shrink-0 text-muted-foreground">
                 {event.organizationName} ·{" "}
                 {new Date(event.createdAt).toLocaleString()}
               </div>

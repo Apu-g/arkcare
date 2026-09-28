@@ -124,7 +124,7 @@ export async function appendAuditEvent({
 
 export async function verifyAuditChain({
   organizationId = null,
-  limit = 500,
+  limit = 0, // 0 = verify the WHOLE chain (no silent truncation)
   includeLegacy = false,
 } = {}) {
   const organization = objectIdOrNull(organizationId);
@@ -134,40 +134,83 @@ export async function verifyAuditChain({
       ? {}
       : { organization: null, schemaVersion: 2 };
 
-  const events = await AuditEvent.find(query)
-    .sort({ createdAt: 1, _id: 1 })
-    .limit(limit)
-    .lean();
+  // Count first so the UI can show real coverage, and so a truncated
+  // verification is never presented as a complete one.
+  const total = await AuditEvent.countDocuments(query);
 
+  // Stream the full chain in bounded pages. Verifying only the oldest N
+  // events let tampering/deletion beyond that window go unnoticed.
+  const PAGE = 2000;
+  const hardCap = limit > 0 ? limit : Number.POSITIVE_INFINITY;
+
+  let checked = 0;
   let expectedPrevious = "";
+  let headHash = "";
+  let previousCreatedAt = null;
+  let previousId = null;
   const errors = [];
 
-  for (const event of events) {
-    if (event.previousHash !== expectedPrevious) {
-      errors.push({
-        eventId: event.eventId,
-        reason: "previous_hash_mismatch",
-      });
+  while (checked < hardCap) {
+    const pageSize = Math.min(PAGE, hardCap - checked);
+    const pageQuery = { ...query };
+    if (previousCreatedAt) {
+      pageQuery.createdAt = { $gt: previousCreatedAt };
     }
 
-    const canonical =
-      event.schemaVersion === 2 ? v2Canonical(event) : v1Canonical(event);
-    const recalculated = digest(canonical);
-    if (recalculated !== event.eventHash) {
-      errors.push({
-        eventId: event.eventId,
-        reason: "event_hash_mismatch",
-      });
+    const events = await AuditEvent.find(pageQuery)
+      .sort({ createdAt: 1, _id: 1 })
+      .limit(pageSize)
+      .lean();
+
+    if (!events.length) break;
+
+    for (const event of events) {
+      // Tie-break on _id within the same millisecond so we never skip or
+      // reorder two events written in the same tick.
+      if (
+        previousCreatedAt &&
+        event.createdAt.getTime() === previousCreatedAt.getTime() &&
+        String(event._id) <= String(previousId)
+      ) {
+        continue;
+      }
+
+      if (event.previousHash !== expectedPrevious) {
+        errors.push({
+          eventId: event.eventId,
+          reason: "previous_hash_mismatch",
+        });
+      }
+
+      const canonical =
+        event.schemaVersion === 2 ? v2Canonical(event) : v1Canonical(event);
+      if (digest(canonical) !== event.eventHash) {
+        errors.push({
+          eventId: event.eventId,
+          reason: "event_hash_mismatch",
+        });
+      }
+
+      expectedPrevious = event.eventHash;
+      headHash = event.eventHash;
+      checked += 1;
+      previousCreatedAt = event.createdAt;
+      previousId = String(event._id);
     }
 
-    expectedPrevious = event.eventHash;
+    if (events.length < pageSize) break;
   }
 
+  const truncated = checked < total;
+
   return {
-    checked: events.length,
-    valid: errors.length === 0,
+    checked,
+    total,
+    truncated,
+    // A truncated verification is NOT a valid claim of integrity.
+    valid: errors.length === 0 && !truncated,
     errors,
-    headHash: expectedPrevious,
+    headHash,
     organizationId: organization ? String(organization) : null,
   };
 }

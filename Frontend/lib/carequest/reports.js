@@ -174,10 +174,15 @@ export async function publishDoctorReport({
         batchId,
         merkleRoot: "0x" + contentHash,
       });
-      report.blockchain.status = result.duplicate ? "anchored" : "anchored";
+      // Only claim "anchored" when the bridge actually returned a transaction.
+      if (!result?.txHash) {
+        throw new Error("Bridge returned no transaction hash");
+      }
+
+      report.blockchain.status = "anchored";
       report.blockchain.batchId = batchId;
       report.blockchain.merkleRoot = "0x" + contentHash;
-      report.blockchain.txHash = result.txHash || "";
+      report.blockchain.txHash = result.txHash;
       report.blockchain.blockNumber = result.blockNumber ?? null;
       report.blockchain.anchoredAt = new Date();
       report.blockchain.error = "";

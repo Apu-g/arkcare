@@ -81,7 +81,22 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
   useEffect(() => {
     if (chatId) {
       setRealtimeReady(false);
-      const channel = pusherClient.subscribe(`private-chat-${chatId}`);
+
+      // pusherClient.subscribe() THROWS synchronously when the client is not
+      // configured (missing NEXT_PUBLIC_PUSHER_*). Unguarded, that throw
+      // escaped the effect and tore down the whole dashboard. Degrade to
+      // "realtime unavailable" instead of crashing.
+      let channel;
+      try {
+        channel = pusherClient.subscribe(`private-chat-${chatId}`);
+      } catch (error) {
+        console.error("Realtime is unavailable:", error);
+        setRtcNotice(
+          "Live updates are unavailable in this configuration. Messages and calls are disabled; reload after configuring Pusher."
+        );
+        setRealtimeReady(false);
+        return undefined;
+      }
 
       channel.bind("pusher:subscription_succeeded", async () => {
         setRealtimeReady(true);

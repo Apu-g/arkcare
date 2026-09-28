@@ -76,13 +76,15 @@ export async function anchorPendingAuditEvents() {
     existing.flatMap((batch) => batch.eventIds || [])
   );
 
+  // No hard .limit() here: previously this read only the oldest 500 events, so
+  // once a hospital's chain passed 500 events the remaining events could never
+  // be selected and anchoring silently stalled forever.
   const events = (
     await AuditEvent.find({
       organization: organizationId,
       schemaVersion: 2,
     })
       .sort({ createdAt: 1, _id: 1 })
-      .limit(500)
       .lean()
   )
     .filter((event) => !anchored.has(event.eventId))
@@ -117,9 +119,13 @@ export async function anchorPendingAuditEvents() {
     if (result.disabled) {
       batch.status = "pending";
       batch.error = "Blockchain disabled; batch prepared locally";
+    } else if (!result?.txHash) {
+      // No transaction hash means the commitment never reached the chain.
+      batch.status = "failed";
+      batch.error = "Bridge returned no transaction hash";
     } else {
       batch.status = "confirmed";
-      batch.txHash = result.txHash || null;
+      batch.txHash = result.txHash;
       batch.network = result.network || "carequest-local-evm";
       batch.chainId = result.chainId || 31337;
       batch.confirmedAt = new Date();

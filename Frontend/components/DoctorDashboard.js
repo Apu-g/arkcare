@@ -19,13 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Activity, Calendar, Clock, User, MessageCircle, Sparkles } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getDoctorAppointments,
   updateAppointmentStatus,
+  requestDoctorSupport,
 } from "@/actions/appointmentActions";
 import ChatModal from "./ChatModal";
+import NotificationBell from "./NotificationBell";
 import { AlertCircle } from "lucide-react";
+
+// Lightweight freshness window for the appointment list. Long enough to be
+// cheap, short enough that a doctor does not sit on a stale schedule.
+const REFRESH_MS = 30000;
+
 export default function DoctorDashboard({ doctor }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,35 +43,144 @@ export default function DoctorDashboard({ doctor }) {
     useState(null);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
 
+  // Support request state (the "Contact Support" action)
+  const [supportSending, setSupportSending] = useState(false);
+  const [supportResult, setSupportResult] = useState(null);
+  const [supportError, setSupportError] = useState("");
+
+  const fetchAppointments = useCallback(async ({ silent = false } = {}) => {
+    try {
+      const data = await getDoctorAppointments();
+      // Store original notes to compare onBlur. A silent poll must not clobber
+      // notes the doctor is mid-way through typing, so only adopt the server
+      // value for rows that are not currently focused.
+      setAppointments((previous) => {
+        const editing = new Set(
+          previous.filter((apt) => apt.notes !== apt.originalNotes).map((apt) => apt._id)
+        );
+        const next = (data || []).map((apt) => ({ ...apt, originalNotes: apt.notes || "" }));
+        return next.map((apt) =>
+          editing.has(apt._id)
+            ? previous.find((item) => item._id === apt._id) || apt
+            : apt
+        );
+      });
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (doctor.status === "approved") {
       fetchAppointments();
     }
-  }, [doctor.status]);
+  }, [doctor.status, fetchAppointments]);
 
-  const fetchAppointments = async () => {
-    try {
-      const data = await getDoctorAppointments();
-      // Store original notes to compare onBlur
-      setAppointments(
-        data.map((apt) => ({ ...apt, originalNotes: apt.notes || "" }))
-      );
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Poll so a booking that lands while this tab is open actually shows up.
+  useEffect(() => {
+    if (doctor.status !== "approved") return undefined;
+    const timer = setInterval(
+      () => fetchAppointments({ silent: true }),
+      REFRESH_MS
+    );
+    return () => clearInterval(timer);
+  }, [doctor.status, fetchAppointments]);
 
-  const handleStatusUpdate = async (appointmentId, status, notes = "") => {
+  // Live nudge: refresh as soon as the notification channel fires, so a new
+  // booking appears in seconds rather than at the next poll. Guarded because
+  // subscribe() throws synchronously when Pusher is not configured.
+  useEffect(() => {
+    if (doctor.status !== "approved") return undefined;
+
+    let cancelled = false;
+    let client = null;
+    const channelRef = { current: null };
+
+    (async () => {
+      try {
+        const [{ pusherClient }, { getSessionPayload }] = await Promise.all([
+          import("@/lib/pusher"),
+          import("@/lib/session"),
+        ]);
+        const payload = await getSessionPayload();
+        if (!payload?.sub || cancelled) return;
+
+        client = pusherClient;
+        const channel = pusherClient.subscribe(
+          "private-carequest-user-" + payload.sub
+        );
+        channelRef.current = channel;
+        channel.bind("appointment.booked", () =>
+          fetchAppointments({ silent: true })
+        );
+        channel.bind("notification.created", () =>
+          fetchAppointments({ silent: true })
+        );
+      } catch (error) {
+        // Realtime unavailable; the poll above still keeps the list fresh.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channelRef.current && client) {
+        try {
+          client.unsubscribe(channelRef.current.name);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [doctor.status, fetchAppointments]);
+
+  // Reload when the tab becomes visible again (a doctor switching back from
+  // another app should not stare at a stale schedule).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && doctor.status === "approved") {
+        fetchAppointments({ silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [doctor.status, fetchAppointments]);
+
+  const handleStatusUpdate = async (appointmentId, status, notes) => {
     setUpdatingAppointment(appointmentId);
     try {
-      await updateAppointmentStatus(appointmentId, status, notes);
-      await fetchAppointments();
+      // `notes` is passed through ONLY when the caller actually has notes to
+      // save. Omitting it keeps the server from touching the clinical record.
+      if (notes === undefined) {
+        await updateAppointmentStatus(appointmentId, status);
+      } else {
+        await updateAppointmentStatus(appointmentId, status, notes);
+      }
+      await fetchAppointments({ silent: true });
     } catch (error) {
       console.error("Error updating appointment:", error);
     } finally {
       setUpdatingAppointment(null);
+    }
+  };
+
+  const handleContactSupport = async () => {
+    setSupportSending(true);
+    setSupportError("");
+    setSupportResult(null);
+    try {
+      const result = await requestDoctorSupport({
+        problem: `My doctor profile is ${doctor.status} and I need help with my ArkCare doctor account.`,
+        category: "profile_review",
+      });
+      setSupportResult(result);
+    } catch (error) {
+      setSupportError(
+        error?.message || "Could not reach support. Please try again."
+      );
+    } finally {
+      setSupportSending(false);
     }
   };
 
@@ -117,11 +233,11 @@ export default function DoctorDashboard({ doctor }) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <NotificationBell />
                 <span className="hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-zinc-300 sm:inline-flex sm:items-center sm:gap-2">
                   <Sparkles className="h-4 w-4 text-cyan-200" />
                   Milestone layer ready
                 </span>
-                
               </div>
             </div>
           </div>
@@ -153,7 +269,7 @@ export default function DoctorDashboard({ doctor }) {
                   <CardHeader className="pb-4">
                     <CardTitle className="text-white flex items-center space-x-3">
                       <Calendar className="h-6 w-6 text-green-400" />
-                      <span>Today's Appointments</span>
+                      <span>Today&apos;s Appointments</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -270,12 +386,11 @@ export default function DoctorDashboard({ doctor }) {
                           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                             <Select
                               value={appointment.status}
+                              // No notes argument here on purpose: a status change
+                              // must never write over the clinical record. Notes are
+                              // saved only from the textarea's onBlur.
                               onValueChange={(value) =>
-                                handleStatusUpdate(
-                                  appointment._id,
-                                  value,
-                                  appointment.notes
-                                )
+                                handleStatusUpdate(appointment._id, value)
                               }
                               disabled={updatingAppointment === appointment._id}
                             >
@@ -308,7 +423,9 @@ export default function DoctorDashboard({ doctor }) {
                                 </SelectItem>
                               </SelectContent>
                             </Select>
-                            {appointment.status === "confirmed" && (
+                            {["confirmed", "completed"].includes(
+                              appointment.status
+                            ) && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -317,6 +434,11 @@ export default function DoctorDashboard({ doctor }) {
                               >
                                 <MessageCircle className="h-5 w-5 mr-2" />
                                 Chat
+                                {appointment.status === "completed" ? (
+                                  <span className="ml-2 text-[10px] text-emerald-300">
+                                    + Report
+                                  </span>
+                                ) : null}
                               </Button>
                             )}
                             <div className="flex-1 w-full">
@@ -344,7 +466,8 @@ export default function DoctorDashboard({ doctor }) {
                                   }
                                 }}
                                 rows={3}
-                                className="bg-muted/80 border-border text-white focus:border-green-500/50 focus:ring-green-500/20 placeholder-zinc-500 text-md h-24"
+                                disabled={appointment.status === "cancelled"}
+                                className="bg-muted/80 border-border text-white focus:border-green-500/50 focus:ring-green-500/20 placeholder-zinc-500 text-md h-24 disabled:opacity-60"
                               />
                             </div>
                           </div>
@@ -467,14 +590,36 @@ export default function DoctorDashboard({ doctor }) {
               </h3>
               <p className="text-zinc-300 text-lg mb-6">
                 Thank you for submitting your profile. Our team is reviewing
-                your application and will notify you once it's approved.
+                your application and will notify you once it&apos;s approved.
               </p>
-              <Button
-                variant="outline"
-                className="bg-muted hover:bg-muted text-white border-border hover:border-green-500 px-8 py-3 text-md"
-              >
-                Contact Support
-              </Button>
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleContactSupport}
+                  disabled={supportSending}
+                  className="bg-muted hover:bg-muted text-white border-border hover:border-green-500 px-8 py-3 text-md disabled:opacity-60"
+                >
+                  {supportSending ? "Sending request..." : "Contact Support"}
+                </Button>
+
+                {supportResult && (
+                  <p className="text-sm text-emerald-300">
+                    Support request sent. Reference{" "}
+                    <span className="font-mono text-xs">
+                      {supportResult.requestHash?.slice(0, 12)}
+                    </span>
+                    {supportResult.notifiedStaff > 0
+                      ? ` — ${supportResult.notifiedStaff} coordinator${
+                          supportResult.notifiedStaff === 1 ? "" : "s"
+                        } notified`
+                      : ""}
+                    .
+                  </p>
+                )}
+                {supportError && (
+                  <p className="text-sm text-rose-300">{supportError}</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}

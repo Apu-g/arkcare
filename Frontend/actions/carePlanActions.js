@@ -464,7 +464,11 @@ export async function createCarePlanDraft(input) {
       eventType: "careplan.draft.created",
       resourceType: "PlanVersion",
       resourceId: version._id,
-      verificationLevel: "clinician_approved",
+      // A draft is doctor-authored but NOT reviewed or published. Recording it
+      // as clinician_approved put unpublished drafts at the same trust level as
+      // careplan.approved, so an auditor could not tell a published plan from a
+      // discarded one.
+      verificationLevel: "staff_documented",
       metadata: {
         carePlanId: String(carePlan._id),
         organizationId: String(carePlan.organization || ""),

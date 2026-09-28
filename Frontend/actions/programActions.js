@@ -12,7 +12,7 @@ import PatientMembership from "@/models/PatientMembership";
 import CapsuleBalanceProjection from "@/models/CapsuleBalanceProjection";
 import { ensureDemoHospitalPrograms, getProgramForPatient } from "@/lib/carequest/programs";
 import { appendAuditEvent } from "@/lib/carequest/audit";
-import { ensureCapsuleBalanceProjection } from "@/lib/carequest/capsules";
+import { ensureCapsuleBalanceProjection, redeemCapsules } from "@/lib/carequest/capsules";
 
 function serialize(value) {
   return JSON.parse(JSON.stringify(value));
@@ -201,24 +201,18 @@ export async function redeemCareBenefit(programId, catalogItemId, requestKey) {
       programCostInr: item.programCostInr,
     });
 
-    await CapsuleAward.create({
+    // Record the spend through the audited ledger path. A raw
+    // CapsuleAward.create here wrote a negative row with NO audit event, so the
+    // authoritative ledger and the audit chain could disagree with no trace.
+    await redeemCapsules({
       patient: patient._id,
       organization: context.organization._id,
       program: context.program._id,
-      ruleId: "benefit_redemption",
-      ruleVersion: 1,
-      sourceType: "Redemption",
-      sourceId: String(redemption._id),
-      amount: -Math.abs(item.costCapsules),
-      verificationLevel: "system_confirmed",
-      idempotencyKey: "redemption:" + requestKey,
-      eventType: "redemption",
-      blockchain: {
-        status:
-          process.env.CAREQUEST_BLOCKCHAIN_ENABLED === "true"
-            ? "pending"
-            : "disabled",
-      },
+      redemption,
+      redemptionKey: requestKey,
+      capsulesSpent: item.costCapsules,
+      actorUserId: user._id,
+      actorRole: user.role,
     });
   } catch (error) {
     const compensation = [

@@ -14,6 +14,8 @@ import {
   slotIsOccupied,
 } from "@/lib/bookingSlots";
 import { ensureCareQuestMembership } from "@/lib/carequest/permissions";
+import { appendAuditEvent } from "@/lib/carequest/audit";
+import { createNotification } from "@/lib/carequest/notifications";
 import { refundBookedAppointment } from "@/lib/razorpayBooking";
 
 function assertPatient(user) {
@@ -380,7 +382,20 @@ export async function getDoctorAppointments() {
   }
 }
 
-export async function updateAppointmentStatus(appointmentId, status, notes = "") {
+/**
+ * Change an appointment's status.
+ *
+ * `notes` is deliberately NOT defaulted. A default of `""` made the
+ * `notes !== undefined` guard below always true, so a plain status change wrote
+ * an empty string over the doctor's clinical notes — and a cancel wrote the
+ * cancellation reason straight into `appointment.notes`, destroying the
+ * consultation record with no audit trail. Callers that mean to change notes
+ * pass them; callers that don't must leave the argument out.
+ *
+ * `notes` is also refused on cancel: a cancellation reason belongs in
+ * `cancellationReason` (audited below), never in the clinical record.
+ */
+export async function updateAppointmentStatus(appointmentId, status, notes) {
   const allowedStatuses = new Set(["confirmed", "completed", "cancelled"]);
   if (!allowedStatuses.has(status)) throw new Error("Invalid appointment status");
 
@@ -453,18 +468,31 @@ export async function updateAppointmentStatus(appointmentId, status, notes = "")
     }
   }
 
+  const previousStatus = appointment.status;
+  const suppliedNotes =
+    notes === undefined || notes === null
+      ? null
+      : String(notes).trim().slice(0, 4000);
+
+  // On a cancel, `notes` is the cancellation REASON. Keep it out of the
+  // clinical record so the doctor's notes survive the cancellation.
+  const cancellationReason =
+    status === "cancelled"
+      ? String(suppliedNotes || "doctor_cancelled_appointment")
+          .trim()
+          .slice(0, 1000)
+      : appointment.cancellationReason;
+
   appointment.status = status;
   if (status === "cancelled") {
     appointment.cancelledAt = new Date();
     appointment.cancelledByRole = "doctor";
-    appointment.cancellationReason = String(
-      notes || "doctor_cancelled_appointment"
-    )
-      .trim()
-      .slice(0, 1000);
+    appointment.cancellationReason = cancellationReason;
   }
-  if (notes !== undefined) {
-    appointment.notes = String(notes || "").trim().slice(0, 4000);
+  // Only ever write notes when the caller actually supplied some, and never on
+  // a cancel. The doctor's clinical record is append-only in practice.
+  if (suppliedNotes !== null && status !== "cancelled") {
+    appointment.notes = suppliedNotes;
   }
 
   try {
@@ -474,6 +502,74 @@ export async function updateAppointmentStatus(appointmentId, status, notes = "")
       throw new Error("That appointment slot is already occupied");
     }
     throw error;
+  }
+
+  // Audit the status change itself. The clinical notes are NOT copied into the
+  // metadata (that would put PHI in a broadly-readable chain entry); the
+  // metadata records only that notes were supplied.
+  try {
+    await appendAuditEvent({
+      organizationId: appointment.organization || null,
+      programId: appointment.program || null,
+      actorUserId: user._id,
+      actorRole: "doctor",
+      eventType: "appointment.status_changed",
+      resourceType: "Appointment",
+      resourceId: appointment._id,
+      verificationLevel: "clinician_approved",
+      metadata: {
+        organizationId: String(appointment.organization || ""),
+        programId: String(appointment.program || ""),
+        appointmentId: String(appointment._id),
+        doctorId: String(doctor._id),
+        previousStatus,
+        newStatus: status,
+        notesSupplied: suppliedNotes !== null,
+        cancellationReason: status === "cancelled" ? cancellationReason : "",
+        refunded: Boolean(refund?.refunded),
+        refundId: refund?.refundId || null,
+      },
+    });
+  } catch (error) {
+    // The status change is already committed; a chain-head contention must not
+    // be reported to the doctor as a failed clinical action.
+    console.error("Appointment status audit failed:", error);
+  }
+
+  // Tell the patient their appointment changed. Best-effort: a notification
+  // failure never blocks the doctor's own clinical action.
+  if (status === "completed" || status === "cancelled") {
+    try {
+      const patient = await Patient.findById(appointment.patient)
+        .select("userId name")
+        .lean();
+
+      if (patient?.userId) {
+        const cancelled = status === "cancelled";
+        await createNotification({
+          recipientUserId: patient.userId,
+          recipientRole: "patient",
+          type: cancelled ? "appointment_cancelled" : "appointment_completed",
+          title: cancelled
+            ? "Appointment cancelled"
+            : "Appointment completed",
+          body: cancelled
+            ? `Your consultation was cancelled${
+                cancellationReason ? `: ${cancellationReason}` : ""
+              }.`
+            : "Your consultation is complete. Your report will appear here once published.",
+          organizationId: appointment.organization || null,
+          data: {
+            appointmentId: String(appointment._id),
+            doctorId: String(doctor._id),
+            status,
+            appointmentDate: new Date(appointment.appointmentDate).toISOString(),
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Appointment status notification failed:", error);
+    }
   }
 
   if (status === "completed") {
@@ -496,5 +592,173 @@ export async function updateAppointmentStatus(appointmentId, status, notes = "")
           currency: refund.currency || "INR",
         }
       : null,
+  };
+}
+
+// ------------------------------------------------------------------ notifications
+
+/**
+ * Server actions backing the NotificationBell. The bell is a plain poll over
+ * these (it never trusts a socket to be the only delivery path), so they are
+ * the durable read model of the notification inbox.
+ */
+export async function getMyNotifications(limit = 15) {
+  const user = await requireUser();
+  await connectDB();
+
+  const { getNotifications } = await import("@/lib/carequest/notifications");
+  return getNotifications(user._id.toString(), { limit });
+}
+
+export async function getMyUnreadNotificationCount() {
+  const user = await requireUser();
+  await connectDB();
+
+  const { getUnreadCount } = await import("@/lib/carequest/notifications");
+  return getUnreadCount(user._id.toString());
+}
+
+export async function markMyNotificationsRead() {
+  const user = await requireUser();
+  await connectDB();
+
+  const { markAllNotificationsRead } = await import(
+    "@/lib/carequest/notifications"
+  );
+  return markAllNotificationsRead(user._id.toString());
+}
+
+// ------------------------------------------------------------- doctor support
+
+/**
+ * Back the dashboard's "Contact Support" button with a real, persisted request
+ * so the doctor's message reaches the hospital coordinator queue instead of
+ * going nowhere.
+ *
+ * A doctor has no Patient document, and HandoffCase.patient is required, so this
+ * raises the request as a `carequest_alert` notification on the hospital's
+ * coordinator/nurse/admin staff plus the live staff channel — the same queue the
+ * floating "Need Help" button feeds, minus the patient linkage that a
+ * doctor-initiated support ticket does not have. The request is hashed and
+ * anchored so the text is provable, exactly like a direct help request.
+ */
+export async function requestDoctorSupport({ problem, category = "profile_review" }) {
+  const user = await requireUser();
+  if (user.role !== "doctor") throw new Error("Doctor access required");
+
+  const cleanProblem = String(problem || "").trim().slice(0, 2000);
+  if (cleanProblem.length < 4) {
+    throw new Error("Please describe what you need help with");
+  }
+
+  await connectDB();
+
+  const doctor = await Doctor.findOne({ userId: user._id.toString() });
+  if (!doctor) throw new Error("Doctor profile not found");
+
+  const membership = await ensureCareQuestMembership(user, "doctor");
+  const organizationId = membership?.organization?._id || null;
+
+  const { computeRequestHash } = await import("@/lib/carequest/handoff");
+  const { emitCareQuestStaff } = await import("@/lib/carequest/realtime");
+  const { anchorAuditRoot, blockchainEnabled } = await import(
+    "@/lib/carequest/blockchain"
+  );
+  const CareQuestMembership = (await import("@/models/CareQuestMembership")).default;
+
+  const requestHash = computeRequestHash({ problem: cleanProblem, category });
+
+  // The request text is anchored so what the doctor actually typed is provable.
+  let chain = { status: blockchainEnabled() ? "pending" : "disabled" };
+  if (blockchainEnabled()) {
+    try {
+      const result = await anchorAuditRoot({
+        batchId: "support:" + user._id.toString() + ":" + requestHash.slice(0, 16),
+        merkleRoot: "0x" + requestHash,
+      });
+      if (!result?.txHash) throw new Error("Bridge returned no transaction hash");
+      chain = {
+        status: "anchored",
+        batchId:
+          "support:" + user._id.toString() + ":" + requestHash.slice(0, 16),
+        merkleRoot: "0x" + requestHash,
+        txHash: result.txHash,
+        blockNumber: result.blockNumber ?? null,
+        anchoredAt: new Date(),
+      };
+    } catch (error) {
+      chain = {
+        status: "failed",
+        error: String(error?.message || "anchor failed").slice(0, 300),
+      };
+    }
+  }
+
+  let notified = 0;
+  if (organizationId) {
+    const memberships = await CareQuestMembership.find({
+      organization: organizationId,
+      role: { $in: ["coordinator", "nurse", "hospital_admin"] },
+      active: true,
+    })
+      .select("user role")
+      .lean();
+
+    for (const staff of memberships) {
+      try {
+        await createNotification({
+          recipientUserId: staff.user,
+          recipientRole: staff.role,
+          type: "carequest_alert",
+          title: "Doctor support request",
+          body: `Dr ${doctor.name} (${doctor.specialization}) needs help: ${cleanProblem}`,
+          organizationId,
+          data: {
+            category,
+            requestHash,
+            doctorUserId: user._id.toString(),
+            doctorName: doctor.name,
+            anchorStatus: chain.status,
+          },
+        });
+        notified += 1;
+      } catch (error) {
+        console.error("Support request notification failed:", error);
+      }
+    }
+
+    await emitCareQuestStaff(organizationId, "handoff.updated", {
+      source: "doctor_support",
+      doctorUserId: user._id.toString(),
+      requestHash,
+    });
+  }
+
+  try {
+    await appendAuditEvent({
+      organizationId,
+      actorUserId: user._id,
+      actorRole: "doctor",
+      eventType: "support.requested",
+      resourceType: "Doctor",
+      resourceId: doctor._id,
+      verificationLevel: "self_report",
+      metadata: {
+        organizationId: String(organizationId || ""),
+        category,
+        requestHash,
+        anchorStatus: chain.status,
+        notifiedStaff: notified,
+      },
+    });
+  } catch (error) {
+    console.error("Support request audit failed:", error);
+  }
+
+  return {
+    success: true,
+    requestHash,
+    anchorStatus: chain.status,
+    notifiedStaff: notified,
   };
 }
