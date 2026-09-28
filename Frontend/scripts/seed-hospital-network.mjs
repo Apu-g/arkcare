@@ -146,14 +146,28 @@ async function main() {
   });
   console.log("Platform: demo.platform_admin@arkcare.local");
 
-  // Distribute a few doctors per hospital so each has a portfolio.
+  // Distribute ALL doctors across the hospitals so every clinician belongs to
+  // a hospital (and every hospital has a portfolio). Doctors are mapped by
+  // their specialty so the roster reads sensibly, and any doctor not named
+  // explicitly is distributed round-robin so none are left unassigned.
   const doctors = await db.collection("doctors").find({}).toArray();
   const assignments = [
-    { slug: "arkcare-demo-hospital", emails: ["demo.doctor@arkcare.local", "demo.doctor.general@arkcare.local"] },
-    { slug: "lotus-heart-demo", emails: ["demo.doctor.cardiology2@arkcare.local", "demo.doctor.endocrinology@arkcare.local"] },
-    { slug: "sunrise-care-hospital", emails: ["demo.doctor.pediatrics@arkcare.local", "demo.doctor.dermatology@arkcare.local"] },
-    { slug: "metro-health-clinic", emails: ["demo.doctor.neurology@arkcare.local", "demo.doctor.orthopedics@arkcare.local"] },
+    { slug: "arkcare-demo-hospital", emails: ["demo.doctor@arkcare.local", "demo.doctor.general@arkcare.local", "demo.doctor.psychiatry@arkcare.local"] },
+    { slug: "lotus-heart-demo", emails: ["demo.doctor.cardiology2@arkcare.local", "demo.doctor.endocrinology@arkcare.local", "demo.doctor.gastro@arkcare.local"] },
+    { slug: "sunrise-care-hospital", emails: ["demo.doctor.pediatrics@arkcare.local", "demo.doctor.dermatology@arkcare.local", "demo.doctor.gynecology@arkcare.local"] },
+    { slug: "metro-health-clinic", emails: ["demo.doctor.neurology@arkcare.local", "demo.doctor.orthopedics@arkcare.local", "demo.doctor.ent@arkcare.local", "demo.doctor.pulmonology@arkcare.local"] },
   ];
+
+  // Any doctor not named above is assigned round-robin so none are left
+  // unassigned (every clinician must belong to a hospital).
+  const namedEmails = new Set(assignments.flatMap((a) => a.emails));
+  const leftover = doctors.filter((d) => !namedEmails.has(d.email));
+  leftover.forEach((doctor, index) => {
+    assignments[index % assignments.length].emails.push(doctor.email);
+  });
+  if (leftover.length) {
+    console.log(`  distributed ${leftover.length} leftover doctor(s) round-robin`);
+  }
 
   for (const assignment of assignments) {
     const organization = organizations.find((o) => o.slug === assignment.slug);
@@ -189,6 +203,15 @@ async function main() {
       const doctorUser = await db
         .collection("users")
         .findOne({ _id: new mongoose.Types.ObjectId(doctor.userId) });
+      // Remove any doctor-role membership in a DIFFERENT hospital (a leftover
+      // demo-org fallback) so the doctor belongs to exactly one hospital.
+      await db
+        .collection("carequestmemberships")
+        .deleteMany({
+          user: new mongoose.Types.ObjectId(doctor.userId),
+          role: "doctor",
+          organization: { $ne: organization._id },
+        });
       await ensureMembership(db, doctorUser, organization, "doctor");
     }
 
@@ -221,6 +244,38 @@ async function main() {
     console.log(
       `  ${organization.name}: admin=${admin.email} doctors=${assignment.emails.length}`
     );
+  }
+
+  // Print the final distribution so the operator can verify capsules land in
+  // the right hospital.
+  console.log("");
+  console.log("DOCTOR -> HOSPITAL and CAPSULE ALLOCATION");
+  const finalDocs = await db.collection("doctors").find({}).toArray();
+  for (const organization of organizations.sort((a, b) => a.name.localeCompare(b.name))) {
+    const program = programs.find((p) => String(p.organization) === String(organization._id));
+    const roster = [];
+    for (const doctor of finalDocs) {
+      const user = await db
+        .collection("users")
+        .findOne({ _id: new mongoose.Types.ObjectId(doctor.userId) });
+      if (user?.homeOrganization && String(user.homeOrganization) === String(organization._id)) {
+        roster.push(doctor.name);
+      }
+    }
+    const agg = program
+      ? await db
+          .collection("capsuleawards")
+          .aggregate([
+            { $match: { program: program._id, amount: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ])
+          .toArray()
+      : [];
+    console.log(
+      `  ${organization.name} (${program?.capsuleSymbol || "?"}): ` +
+        `${roster.length} doctors, ${agg[0]?.total || 0} capsules`
+    );
+    for (const name of roster) console.log(`      - ${name}`);
   }
 
   console.log("Hospital network seeded.");
