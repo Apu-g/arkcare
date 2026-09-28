@@ -133,7 +133,7 @@ export async function submitDoctorReport(input) {
  * filed, and a per-patient activity/engagement summary.
  */
 export async function getDoctorReportWorkspace() {
-  const { doctor } = await requireApprovedDoctor();
+  const { doctor, membership } = await requireApprovedDoctor();
 
   const [reports, appointments, plans] = await Promise.all([
     getDoctorReports({ doctorId: doctor._id, limit: 100 }),
@@ -245,13 +245,40 @@ export async function getDoctorReportWorkspace() {
     (a, b) => (b.lastReportAt || 0) - (a.lastReportAt || 0)
   );
 
+  // Attach the doctor's own hospital + its reputation score so the doctor (and
+  // an auditor) can verify which hospital's reputation the reported capsules
+  // roll up to, alongside the patient they consulted.
+  let hospital = { name: null, slug: null, reputationScore: null, reputationLabel: null, totalCapsules: null };
+  try {
+    const { getHospitalProfile } = await import("@/lib/carequest/hospitals");
+    const profile = await getHospitalProfile(membership.organization._id);
+    if (profile) {
+      hospital = {
+        name: profile.name,
+        slug: profile.slug,
+        reputationScore: profile.reputationScore,
+        reputationLabel: profile.reputationLabel,
+        totalCapsules: profile.totalCapsules,
+      };
+    }
+  } catch {
+    // reputation is informational; never block the report list
+  }
+
   return serialize({
-    doctor: { name: doctor.name, specialization: doctor.specialization },
+    doctor: {
+      name: doctor.name,
+      specialization: doctor.specialization,
+      hospital: hospital.name,
+    },
+    hospital,
     patients: rows,
     reports: reports.map((r) => ({
       _id: r._id,
       patientId: String(r.patient?._id || r.patient),
       patientName: r.patient?.name,
+      hospitalName: hospital.name,
+      hospitalReputationScore: hospital.reputationScore,
       appointmentDate: r.appointment?.appointmentDate,
       revision: r.revision,
       clinicalSummary: r.clinicalSummary,

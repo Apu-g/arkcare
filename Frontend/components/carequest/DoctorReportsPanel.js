@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDoctorReportWorkspace } from "@/actions/reportActions";
-import { Link2, Loader2, Pill, RefreshCw, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { Building2, Link2, Loader2, Pill, RefreshCw, ShieldCheck, Stethoscope, Users } from "lucide-react";
 
 /**
  * The doctor's "patients I've seen" workspace: every patient they interacted
@@ -54,6 +55,22 @@ export default function DoctorReportsPanel() {
               {data.totals.patients} patients · {data.totals.reports} reports filed ·{" "}
               {data.totals.capsulesOnChain} capsules earned by your patients
             </p>
+            {data.hospital?.name ? (
+              <p className="mt-1 inline-flex flex-wrap items-center gap-2 text-xs">
+                <span className="cq-pixel-label">
+                  <Building2 className="mr-1 h-3 w-3" /> {data.hospital.name}
+                </span>
+                <span className="cq-pixel-label cq-real-label">
+                  reputation {data.hospital.reputationScore}/100 · {data.hospital.reputationLabel}
+                </span>
+                <Link
+                  href="/patient/hospitals"
+                  className="font-semibold text-primary hover:underline"
+                >
+                  check hospital reputation
+                </Link>
+              </p>
+            ) : null}
           </div>
           <Button variant="outline" onClick={load} disabled={busy}>
             {busy ? (
@@ -133,9 +150,24 @@ export default function DoctorReportsPanel() {
                           <Badge variant="outline">needs review</Badge>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-muted-foreground">
-                        {report.remarkSummary || report.clinicalSummary?.slice(0, 120)}
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+                        <span>consulted {report.patientName || "patient"}</span>
+                        {report.hospitalName ? (
+                          <>
+                            <span>· at {report.hospitalName}</span>
+                            {typeof report.hospitalReputationScore === "number" ? (
+                              <span className="cq-pixel-label cq-real-label">
+                                rep {report.hospitalReputationScore}
+                              </span>
+                            ) : null}
+                          </>
+                        ) : null}
+                      </div>
+                      {report.remarkSummary || report.clinicalSummary ? (
+                        <p className="mt-1 text-muted-foreground">
+                          {report.remarkSummary || report.clinicalSummary?.slice(0, 120)}
+                        </p>
+                      ) : null}
                       {report.medications?.length ? (
                         <div className="mt-1 flex items-center gap-1 text-muted-foreground">
                           <Pill className="h-3 w-3" />

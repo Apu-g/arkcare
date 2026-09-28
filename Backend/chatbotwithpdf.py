@@ -18,6 +18,7 @@ from uuid import uuid4
 from pathlib import Path
 from io import BytesIO
 from datetime import datetime
+import subprocess
 
 import numpy as np
 import matplotlib
@@ -1212,8 +1213,54 @@ OCR_MAX_CHARS = 4000
 TESSERACT_BIN = os.getenv("TESSERACT_BIN", "tesseract")
 
 
+def _preprocess_for_ocr(data: bytes):
+    """Grayscale + 2x upscale makes small printed drug names far more legible
+    to tesseract than the raw image."""
+    try:
+        img = PI.open(BytesIO(data)).convert("L")
+        w, h = img.size
+        img = img.resize((w * 2, h * 2), PI.LANCZOS)
+        buf = BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception:
+        return data
+
+
+def _tesseract_run(png_path: str, psm: str):
+    text_proc = subprocess.run(
+        [TESSERACT_BIN, png_path, "stdout", "-l", "eng", "--psm", psm],
+        capture_output=True, timeout=60,
+    )
+    if text_proc.returncode != 0:
+        return "", 0.0
+    text = text_proc.stdout.decode("utf-8", "ignore")
+
+    confidence = 0.0
+    tsv_proc = subprocess.run(
+        [TESSERACT_BIN, png_path, "stdout", "-l", "eng", "--psm", psm, "tsv"],
+        capture_output=True, timeout=60,
+    )
+    if tsv_proc.returncode == 0:
+        values = []
+        for line in tsv_proc.stdout.decode("utf-8", "ignore").splitlines()[1:]:
+            parts = line.split("\t")
+            if len(parts) < 12:
+                continue
+            try:
+                conf = float(parts[10])
+            except ValueError:
+                continue
+            if conf >= 0:
+                values.append(conf)
+        if values:
+            confidence = round(sum(values) / len(values), 2)
+    return text.strip(), confidence
+
+
 def _ocr_image_bytes(data: bytes) -> tuple[str, float]:
-    """Run tesseract on image bytes. Returns (text, mean_confidence 0-100)."""
+    """Run tesseract on an upscaled image, trying several page-segmentation
+    modes and keeping the most confident result. Returns (text, mean_conf)."""
     import subprocess
     import shutil
 
@@ -1223,48 +1270,30 @@ def _ocr_image_bytes(data: bytes) -> tuple[str, float]:
             "Ask the doctor to type the prescription text instead."
         )
 
+    processed = _preprocess_for_ocr(data)
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-        tmp.write(data)
+        tmp.write(processed)
         tmp_path = tmp.name
 
     try:
-        # Tesseract writes plain text to stdout and per-word confidences to TSV.
-        text_proc = subprocess.run(
-            [TESSERACT_BIN, tmp_path, "stdout", "-l", "eng"],
-            capture_output=True,
-            timeout=60,
-        )
-        if text_proc.returncode != 0:
-            raise RuntimeError(
-                (text_proc.stderr or b"").decode("utf-8", "ignore")[:300]
-                or "tesseract failed"
-            )
-        text = text_proc.stdout.decode("utf-8", "ignore")
-
-        confidence = 0.0
-        tsv_proc = subprocess.run(
-            [TESSERACT_BIN, tmp_path, "stdout", "-l", "eng", "tsv"],
-            capture_output=True,
-            timeout=60,
-        )
-        if tsv_proc.returncode == 0:
-            values: list[float] = []
-            for line in tsv_proc.stdout.decode("utf-8", "ignore").splitlines()[1:]:
-                parts = line.split("\t")
-                if len(parts) < 12:
-                    continue
-                try:
-                    conf = float(parts[10])
-                except ValueError:
-                    continue
-                if conf >= 0:
-                    values.append(conf)
-            if values:
-                confidence = round(sum(values) / len(values), 2)
-
-        # Tesseract reads handwriting poorly; below this the caller should treat
-        # the result as unverified and require the doctor to confirm the text.
-        return text.strip()[:OCR_MAX_CHARS], confidence
+        best_text, best_conf = "", -1.0
+        for psm in ("6", "3", "4", "11"):
+            try:
+                text, conf = _tesseract_run(tmp_path, psm)
+            except Exception:
+                continue
+            if conf > best_conf and text:
+                best_text, best_conf = text, conf
+        if not best_text:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as raw:
+                raw.write(data)
+                raw_path = raw.name
+            try:
+                best_text, best_conf = _tesseract_run(raw_path, "3")
+            finally:
+                if os.path.exists(raw_path):
+                    os.unlink(raw_path)
+        return best_text[:OCR_MAX_CHARS], max(best_conf, 0.0)
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
