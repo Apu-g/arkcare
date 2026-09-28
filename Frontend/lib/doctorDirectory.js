@@ -68,17 +68,19 @@ function serializeDoctor(doctor) {
 }
 
 async function activeDoctorUserIds(organizationId) {
-  if (!organizationId) return null;
-
+  // A patient may consult ANY approved, bookable doctor in the network, not
+  // only the ones sharing their single primary hospital. So we collect every
+  // doctor with an active doctor membership in ANY organization. (The
+  // organizationId argument is kept for signature compatibility but the
+  // directory is intentionally network-wide.)
   const memberships = await CareQuestMembership.find({
-    organization: organizationId,
     role: "doctor",
     active: true,
   })
     .select("user")
     .lean();
 
-  return memberships.map((membership) => String(membership.user));
+  return [...new Set(memberships.map((membership) => String(membership.user)))];
 }
 
 async function bookableDoctorQuery(organizationId = null) {
