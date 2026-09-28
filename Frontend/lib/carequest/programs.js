@@ -306,3 +306,46 @@ export async function getProgramForPatient(patient, programId) {
 
   return { ...match, membership };
 }
+
+/**
+ * Resolve the hospital (organization + its active Capsule program) a doctor
+ * belongs to. An appointment booked with a doctor is owned by THAT doctor's
+ * hospital, not the patient's primary hospital — otherwise a booking with a
+ * doctor from another hospital would not surface in that doctor's (or that
+ * hospital's) dashboard, breaking chat/calls and care-plan routing.
+ *
+ * Falls back to the demo hospital for doctors with no homeOrganization.
+ */
+export async function getProgramContextForDoctor(doctor) {
+  const programs = await ensureDemoHospitalPrograms(null);
+  if (!programs.length) throw new Error("No active CareQuest hospital program");
+
+  // 1) The doctor's assigned hospital (User.homeOrganization). This is the
+  // authoritative home for a doctor in the network.
+  const { default: User } = await import("@/models/User");
+  const doctorUser = await User.findById(doctor.userId).lean();
+  if (doctorUser?.homeOrganization) {
+    const owned = programs.find(
+      (item) => String(item.organization._id) === String(doctorUser.homeOrganization)
+    );
+    if (owned) return owned;
+  }
+
+  // 2) Fall back to a doctor membership's organization.
+  const { default: CareQuestMembership } = await import("@/models/CareQuestMembership");
+  const membership = await CareQuestMembership.findOne({
+    user: doctor.userId,
+    role: "doctor",
+    active: true,
+    organization: { $in: programs.map((p) => p.organization._id) },
+  });
+  if (membership?.organization) {
+    const owned = programs.find(
+      (item) => String(item.organization._id) === String(membership.organization)
+    );
+    if (owned) return owned;
+  }
+
+  // 3) Default to the first (demo) program.
+  return programs[0];
+}

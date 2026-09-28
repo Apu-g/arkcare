@@ -9,7 +9,8 @@
     "lint": "eslint",
     "dev:https": "next dev --turbopack --hostname 0.0.0.0 --experimental-https",
     "seed:demo": "node scripts/seed-carequest-demo.mjs",
-    "seed:hospitals": "node scripts/seed-hospital-network.mjs"
+    "seed:hospitals": "node scripts/seed-hospital-network.mjs",
+    "seed:fix-routing": "node scripts/fix-appointment-routing.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",

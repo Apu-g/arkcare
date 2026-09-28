@@ -5,7 +5,7 @@ import connectDB from "@/lib/db";
 import Patient from "@/models/Patient";
 import BookingPayment from "@/models/BookingPayment";
 import { requireUser } from "@/lib/auth";
-import { getPrimaryProgramContext } from "@/lib/carequest/programs";
+import { getPrimaryProgramContext, getProgramContextForDoctor } from "@/lib/carequest/programs";
 import { resolveHospitalSlot } from "@/lib/bookingSlots";
 import { getBookableDoctorById } from "@/lib/doctorDirectory";
 import {
@@ -67,8 +67,13 @@ export async function createPaymentOrder(input) {
       "Doctor is no longer approved, assigned to your hospital, or bookable. Refresh the live doctor list."
     );
   }
+
+  // The booking (and its audit) belongs to the DOCTOR's hospital, so it shows up
+  // in that doctor's dashboard and that hospital's data regardless of the
+  // patient's primary program.
+  const doctorContext = await getProgramContextForDoctor(doctor);
   const timezone =
-    programContext.organization?.settings?.defaultTimezone || "Asia/Kolkata";
+    doctorContext.organization?.settings?.defaultTimezone || "Asia/Kolkata";
 
   const appointmentDate =
     payload.appointmentDay && payload.appointmentTime
@@ -91,7 +96,7 @@ export async function createPaymentOrder(input) {
     doctor,
     appointmentDate,
     reason: payload.reason,
-    programContext,
+    programContext: doctorContext,
   });
 }
 

@@ -7,7 +7,7 @@ import BookingPayment from "@/models/BookingPayment";
 import Patient from "@/models/Patient";
 import Doctor from "@/models/Doctor";
 import { requireUser } from "@/lib/auth";
-import { getPrimaryProgramContext } from "@/lib/carequest/programs";
+import { getPrimaryProgramContext, getProgramContextForDoctor } from "@/lib/carequest/programs";
 import {
   doctorOffersSlot,
   expirePendingHoldForSlot,
@@ -49,13 +49,18 @@ export async function createAppointment(appointmentData) {
   }
 
   const programContext = await getPrimaryProgramContext(patient);
+  // The appointment is owned by the DOCTOR's hospital, so it surfaces in that
+  // doctor's dashboard and that hospital's data/audit, regardless of the
+  // patient's primary program. This is what makes bookings with doctors from
+  // other hospitals work end-to-end (dashboard, chat, calls, care plans).
+  const doctorContext = await getProgramContextForDoctor(doctor);
   const appointmentDate = new Date(appointmentData.appointmentDate);
   if (Number.isNaN(appointmentDate.getTime()) || appointmentDate <= new Date()) {
     throw new Error("Choose a valid future appointment time");
   }
 
   const timezone =
-    programContext.organization?.settings?.defaultTimezone || "Asia/Kolkata";
+    doctorContext.organization?.settings?.defaultTimezone || "Asia/Kolkata";
   if (!doctorOffersSlot(doctor, appointmentDate, timezone)) {
     throw new Error("That time is outside the doctor's current availability");
   }
@@ -79,8 +84,8 @@ export async function createAppointment(appointmentData) {
   let appointment;
   try {
     appointment = await Appointment.create({
-      organization: programContext.organization._id,
-      program: programContext.program._id,
+      organization: doctorContext.organization._id,
+      program: doctorContext.program._id,
       patient: patient._id,
       doctor: doctor._id,
       appointmentDate,
@@ -101,8 +106,8 @@ export async function createAppointment(appointmentData) {
     { appointment: appointment._id },
     {
       $setOnInsert: {
-        organization: programContext.organization._id,
-        program: programContext.program._id,
+        organization: doctorContext.organization._id,
+        program: doctorContext.program._id,
         appointment: appointment._id,
         provider: "demo",
         providerPaymentId: null,
