@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { submitReportQuiz } from "@/actions/reportActions";
 import { CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
+import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 
 /**
  * The report's 4-question RAG knowledge check. The correct answers are never
@@ -119,8 +120,42 @@ export default function ReportQuizCard({ report, onCompleted }) {
       {result ? (
         <div className="well space-y-2">
           <div className="text-[12.5px] font-semibold text-[var(--text-strong)]">
-            You scored {result.correctCount}/{result.total} · +{result.awardedCapsules} Capsules
+            You scored {result.correctCount}/{result.total} ·{" "}
+            {result.awardedCapsules > 0
+              ? `+${result.awardedCapsules} Capsules`
+              : "no new capsules"}
           </div>
+          {/* Idempotency is per report, so a re-attempt credits nothing. Saying
+              that plainly is better than showing a gain the balance never saw. */}
+          {result.alreadyAwarded ? (
+            <p className="text-[11.5px] leading-5 text-[var(--text-muted)]">
+              These capsules were already credited for this report, so your
+              balance is unchanged.
+            </p>
+          ) : null}
+          {/* The score is always saved; only the reward can be capped. Say so
+              plainly rather than letting a capped reward look like a failure. */}
+          {result.awardBlockedReason ? (
+            <p className="text-[11.5px] leading-5 text-[var(--warning)]">
+              Your score is saved. {result.awardBlockedReason}
+            </p>
+          ) : null}
+          {/* Capsules are credited to the hospital that filed the report, which
+              is not always the program the patient is currently viewing. Saying
+              so explicitly is what stops the award looking like it vanished. */}
+          {result.awardedCapsules > 0 && result.awardedProgramSymbol ? (
+            <p className="flex items-start gap-1.5 text-[11.5px] leading-5 text-[var(--text-muted)]">
+              <CapsuleIcon size={13} className="mt-0.5 shrink-0" />
+              <span>
+                Added to your{" "}
+                <strong className="font-semibold text-[var(--text-strong)]">
+                  {result.awardedProgramName || result.awardedProgramSymbol}
+                </strong>{" "}
+                balance. This also raises that hospital&apos;s reputation. You can
+                switch to it under &ldquo;Hospital program&rdquo; above.
+              </span>
+            </p>
+          ) : null}
           <ul className="space-y-1.5 text-[11.5px] leading-5 text-[var(--text-muted)]">
             {(result.graded || []).map((item, index) => (
               <li key={item.questionId} className="flex items-start gap-1.5">

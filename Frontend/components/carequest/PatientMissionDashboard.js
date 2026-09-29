@@ -49,6 +49,31 @@ function formatWhen(value) {
   return new Date(value).toLocaleString();
 }
 
+/* Plain-language labels for the reward feed, so the patient reads "Knowledge
+   check" rather than a rule id. Unknown rules fall back to the raw id. */
+const AWARD_LABEL = {
+  lesson_completed: "Completed a lesson",
+  scheduled_response: "Responded to a mission",
+  follow_up_booked: "Booked a follow-up",
+  follow_up_attended: "Attended a follow-up",
+  activity_goal: "Activity goal reached",
+  quiz_completed: "Knowledge check",
+  report_filed: "Doctor filed a consultation report",
+  consultation_completed: "Consultation completed",
+  remark_added: "Doctor added a clinical note",
+  benefit_redemption: "Redeemed a benefit",
+};
+
+const AWARD_SOURCE = {
+  ScheduledOccurrence: "CareQuest mission",
+  Appointment: "Appointment",
+  DoctorReport: "Consultation report",
+  Redemption: "Benefit",
+  SeedActivity: "CareQuest activity",
+  DeviceEvidenceSimulation: "Activity simulation",
+  CapsuleAwardCorrection: "Correction",
+};
+
 export default function PatientMissionDashboard({ initialData, initialPassport }) {
   const [data, setData] = useState(initialData);
   const [passport, setPassport] = useState(initialPassport);
@@ -94,7 +119,6 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
         pusherClient.unsubscribe("private-carequest-user-" + initialData.userId);
       } catch {}
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData.userId]);
 
   // Reports are not part of the server-provided initial payload, so load them
@@ -119,6 +143,21 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
+
+  // A capsule can be awarded from outside this component — finishing a report's
+  // knowledge check, for example. That only fires the global "arkcare-capsules"
+  // event, which the header gauge listens for but this page did not, so the
+  // rewards feed stayed stale after a quiz and the award looked like it had
+  // never been granted.
+  useEffect(() => {
+    const onCapsules = () => {
+      getPatientMissionDashboard()
+        .then((next) => setData(next))
+        .catch(() => {});
+    };
+    window.addEventListener("arkcare-capsules", onCapsules);
+    return () => window.removeEventListener("arkcare-capsules", onCapsules);
+  }, []);
 
   async function action(key, fn, mood = "celebrate") {
     setBusy(key);
@@ -232,6 +271,38 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
         !["completed", "cancelled", "expired"].includes(item.status)
     ) || null;
 
+  // Split the missions by what the patient can DO vs what is already done.
+  //
+  // Previously every mission went into one list sorted by scheduledFor, which
+  // for a patient with a few hundred scheduled reminders buried the handful of
+  // items that actually need attention today. "What should I do" has to be
+  // answerable at a glance, so it gets its own section.
+  const DONE_STATUSES = ["responded", "completed", "cancelled", "expired"];
+  const actionableOccurrences = selectedOccurrences
+    .filter((item) => !DONE_STATUSES.includes(item.status))
+    .sort((a, b) => {
+      // due now first, then by due time
+      const rank = { due: 0, scheduled: 1 };
+      const ra = rank[a.status] ?? 2;
+      const rb = rank[b.status] ?? 2;
+      if (ra !== rb) return ra - rb;
+      return new Date(a.scheduledFor) - new Date(b.scheduledFor);
+    });
+  const completedOccurrences = selectedOccurrences
+    .filter((item) => DONE_STATUSES.includes(item.status))
+    .sort((a, b) => new Date(b.scheduledFor) - new Date(a.scheduledFor));
+
+  // Capsule awards for the program currently in view. This is the "what did I
+  // earn, and when" feed — it used to have no UI at all, so every award was
+  // invisible the moment it was granted.
+  const selectedAwards = (data.awards || []).filter((item) => {
+    if (item.program) return String(item.program) === String(selectedProgramId);
+    return String(selectedProgramId) === String(primaryProgramId);
+  });
+  const totalEarnedHere = selectedAwards
+    .filter((a) => Number(a.amount) > 0)
+    .reduce((sum, a) => sum + Number(a.amount), 0);
+
   const openMissionCount = selectedOccurrences.filter(
     (item) => !["responded", "completed", "cancelled", "expired"].includes(item.status)
   ).length;
@@ -239,6 +310,134 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
   const journeyProgress = selectedOccurrences.length
     ? Math.round((answeredMissionCount / selectedOccurrences.length) * 100)
     : 0;
+
+  // One mission renderer, shared by the "what to do" list and the collapsed
+  // history. Previously every mission - actionable and finished - went into a
+  // single chronological list, so for a patient with a hundred scheduled
+  // reminders the few items that actually needed attention were buried.
+  function renderMission(occurrence) {
+    const final = DONE_STATUSES.includes(occurrence.status);
+    return (
+                  <article
+                    key={occurrence._id}
+                    className="timeline-item"
+                    data-tone={final ? "muted" : undefined}
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="timeline-time">
+                        <Clock3
+                          className="mr-1 inline h-[13px] w-[13px]"
+                          strokeWidth={1.75}
+                        />
+                        {formatWhen(occurrence.scheduledFor)} · {occurrence.timezone}
+                      </span>
+                      <Badge variant="outline">{occurrence.activityType}</Badge>
+                      <Badge variant={final ? "secondary" : "info"}>{occurrence.status}</Badge>
+                      {occurrence.deliveryStatus === "failed" ? (
+                        <SimulationBadge>DELIVERY FAILED</SimulationBadge>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-1.5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-6">
+                      <div className="min-w-0">
+                        <h3 className="timeline-title">{occurrence.title}</h3>
+                        <p className="timeline-body max-w-2xl">
+                          {occurrence.instructions}
+                        </p>
+                        {occurrence.currentResponse ? (
+                          <p className="mt-1.5 text-[12px] font-semibold text-[var(--text-strong)]">
+                            You reported: {occurrence.currentResponse.replace("_", " ")}
+                          </p>
+                        ) : null}
+                        {occurrence.safetyText ? (
+                          <div className="mt-2.5 rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11.5px] leading-5 text-[var(--warning)]">
+                            {occurrence.safetyText}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 lg:w-[250px] lg:justify-end">
+                        {occurrence.activityType === "lesson" && !final ? (
+                          <>
+                            <Button
+                              disabled={busy !== ""}
+                              onClick={() =>
+                                action(occurrence._id + "understood", () =>
+                                  completeLessonMission(occurrence._id, "understood")
+                                )
+                              }
+                            >
+                              <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+                              I understand{rewardsEnabled ? " +2 CAP" : ""}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              disabled={busy !== ""}
+                              onClick={() =>
+                                action(
+                                  occurrence._id + "question",
+                                  () => completeLessonMission(occurrence._id, "needs_clarification"),
+                                  "alert"
+                                )
+                              }
+                            >
+                              <HelpCircle className="h-4 w-4" strokeWidth={1.75} />
+                              I have a question{rewardsEnabled ? " +2 CAP" : ""}
+                            </Button>
+                          </>
+                        ) : null}
+
+                        {occurrence.activityType === "activity" && !final ? (
+                          <span className="cq-pixel-label">
+                            Complete in the activity panel above
+                          </span>
+                        ) : null}
+
+                        {occurrence.activityType === "follow_up" && !occurrence.linkedAppointment ? (
+                          <Link
+                            href="/patient"
+                            className="nm-btn-secondary"
+                          >
+                            Book through appointments
+                          </Link>
+                        ) : null}
+
+                        {occurrence.activityType === "quiz" && !final ? (
+                          <Button
+                            disabled={busy !== ""}
+                            onClick={() => openReport(occurrence.sourceReport)}
+                          >
+                            <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+                            Take knowledge check
+                          </Button>
+                        ) : null}
+
+                        {!final &&
+                        occurrence.status === "due" &&
+                        !["lesson", "follow_up", "activity", "quiz"].includes(occurrence.activityType) ? (
+                          <>
+                            <Button disabled={busy !== ""} onClick={() => respond(occurrence, "done")}>
+                              <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />
+                              Done{rewardsEnabled ? " +1" : ""}
+                            </Button>
+                            <Button variant="outline" disabled={busy !== ""} onClick={() => respond(occurrence, "not_done")}>
+                              <XCircle className="h-4 w-4" strokeWidth={1.75} />
+                              Not done{rewardsEnabled ? " +1" : ""}
+                            </Button>
+                            <Button variant="outline" disabled={busy !== ""} onClick={() => respond(occurrence, "need_help")}>
+                              <HelpCircle className="h-4 w-4" strokeWidth={1.75} />
+                              Need help{rewardsEnabled ? " +1" : ""}
+                            </Button>
+                            <Button variant="outline" disabled={busy !== ""} onClick={() => respond(occurrence, "snooze")}>
+                              Snooze
+                            </Button>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  </article>
+    );
+  }
 
   return (
     <div className="nm-dash">
@@ -330,154 +529,113 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
               </span>
             ) : null}
 
-            {/* Missions are a chronological narrative, so they read as a timeline
-                rather than one card per mission. */}
-            {selectedOccurrences.length ? (
-              <div className="timeline">
-                {selectedOccurrences.map((occurrence) => {
-                  const final = ["responded", "completed", "cancelled", "expired"].includes(
-                    occurrence.status
-                  );
-                  return (
-                    <article
-                      key={occurrence._id}
-                      className="timeline-item"
-                      data-tone={final ? "muted" : undefined}
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="timeline-time">
-                          <Clock3
-                            className="mr-1 inline h-[13px] w-[13px]"
-                            strokeWidth={1.75}
-                          />
-                          {formatWhen(occurrence.scheduledFor)} · {occurrence.timezone}
-                        </span>
-                        <Badge variant="outline">{occurrence.activityType}</Badge>
-                        <Badge variant={final ? "secondary" : "info"}>{occurrence.status}</Badge>
-                        {occurrence.deliveryStatus === "failed" ? (
-                          <SimulationBadge>DELIVERY FAILED</SimulationBadge>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-1.5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-6">
-                        <div className="min-w-0">
-                          <h3 className="timeline-title">{occurrence.title}</h3>
-                          <p className="timeline-body max-w-2xl">
-                            {occurrence.instructions}
-                          </p>
-                          {occurrence.currentResponse ? (
-                            <p className="mt-1.5 text-[12px] font-semibold text-[var(--text-strong)]">
-                              You reported: {occurrence.currentResponse.replace("_", " ")}
-                            </p>
-                          ) : null}
-                          {occurrence.safetyText ? (
-                            <div className="mt-2.5 rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11.5px] leading-5 text-[var(--warning)]">
-                              {occurrence.safetyText}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 lg:w-[250px] lg:justify-end">
-                          {occurrence.activityType === "lesson" && !final ? (
-                            <>
-                              <Button
-                                disabled={busy !== ""}
-                                onClick={() =>
-                                  action(occurrence._id + "understood", () =>
-                                    completeLessonMission(occurrence._id, "understood")
-                                  )
-                                }
-                              >
-                                <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-                                I understand{rewardsEnabled ? " +2 CAP" : ""}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                disabled={busy !== ""}
-                                onClick={() =>
-                                  action(
-                                    occurrence._id + "question",
-                                    () => completeLessonMission(occurrence._id, "needs_clarification"),
-                                    "alert"
-                                  )
-                                }
-                              >
-                                <HelpCircle className="h-4 w-4" strokeWidth={1.75} />
-                                I have a question{rewardsEnabled ? " +2 CAP" : ""}
-                              </Button>
-                            </>
-                          ) : null}
-
-                          {occurrence.activityType === "activity" && !final ? (
-                            <span className="cq-pixel-label">
-                              Complete in the activity panel above
-                            </span>
-                          ) : null}
-
-                          {occurrence.activityType === "follow_up" && !occurrence.linkedAppointment ? (
-                            <Link
-                              href="/patient"
-                              className="nm-btn-secondary"
-                            >
-                              Book through appointments
-                            </Link>
-                          ) : null}
-
-                          {occurrence.activityType === "quiz" && !final ? (
-                            <Button
-                              disabled={busy !== ""}
-                              onClick={() => openReport(occurrence.sourceReport)}
-                            >
-                              <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-                              Take knowledge check
-                            </Button>
-                          ) : null}
-
-                          {!final &&
-                          occurrence.status === "due" &&
-                          !["lesson", "follow_up", "activity", "quiz"].includes(occurrence.activityType) ? (
-                            <>
-                              <Button disabled={busy !== ""} onClick={() => respond(occurrence, "done")}>
-                                <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />
-                                Done{rewardsEnabled ? " +1" : ""}
-                              </Button>
-                              <Button variant="outline" disabled={busy !== ""} onClick={() => respond(occurrence, "not_done")}>
-                                <XCircle className="h-4 w-4" strokeWidth={1.75} />
-                                Not done{rewardsEnabled ? " +1" : ""}
-                              </Button>
-                              <Button variant="outline" disabled={busy !== ""} onClick={() => respond(occurrence, "need_help")}>
-                                <HelpCircle className="h-4 w-4" strokeWidth={1.75} />
-                                Need help{rewardsEnabled ? " +1" : ""}
-                              </Button>
-                              <Button variant="outline" disabled={busy !== ""} onClick={() => respond(occurrence, "snooze")}>
-                                Snooze
-                              </Button>
-                            </>
-                          ) : null}
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+            {/* ----------------------------------------------------------------
+                What to do now. Actionable missions only, so the answer to
+                "what should I do?" is never buried under a hundred finished
+                reminders.
+            ---------------------------------------------------------------- */}
+            <section className="plain-panel">
+              <div className="section-rule">To do</div>
+              <div className="section-head">
+                <h2 className="section-title">What you should do</h2>
+                <p className="section-lede">
+                  {actionableOccurrences.length
+                    ? `${actionableOccurrences.length} open mission${
+                        actionableOccurrences.length === 1 ? "" : "s"
+                      } for ${selectedProgram?.program?.capsuleSymbol || "this program"}.`
+                    : "Nothing outstanding — you are up to date."}
+                </p>
               </div>
-            ) : (
-              <div className="plain-panel">
-                <div className="flex items-center gap-4 py-6">
-                  <PixelCharacter variant="walker" mood="idle" size={62} />
-                  <div>
-                    <h3 className="nm-card-title text-[14px]">Independent hospital journey</h3>
-                    <p className="mt-1 text-[12.5px] leading-6 text-[var(--text-muted)]">
-                      This hospital journey has its own membership, Capsule wallet, activity
-                      program, benefits and clinician-approved missions. Nothing is borrowed
-                      from another hospital&apos;s clinical plan.
+
+              {actionableOccurrences.length ? (
+                <div className="ledger">
+                  {actionableOccurrences.map(renderMission)}
+                </div>
+              ) : (
+                <p className="well text-[13px] text-[var(--text-muted)]">
+                  No open missions in this program. Switch programs above, or ask
+                  your doctor for a new care plan.
+                </p>
+              )}
+            </section>
+
+            {/* ----------------------------------------------------------------
+                What was earned. This feed did not exist, so a capsule award
+                was granted and then never shown to the patient anywhere.
+            ---------------------------------------------------------------- */}
+            <section className="plain-panel">
+              <div className="section-rule">Rewards</div>
+              <div className="section-head">
+                <h2 className="section-title">Capsules you have earned</h2>
+                <p className="section-lede">
+                  {totalEarnedHere > 0
+                    ? `${totalEarnedHere} capsule${
+                        totalEarnedHere === 1 ? "" : "s"
+                      } earned in ${selectedProgram?.program?.capsuleSymbol || "this program"}. These also raise the hospital's reputation.`
+                    : "No capsules in this program yet."}
+                </p>
+              </div>
+
+              {selectedAwards.length ? (
+                <div className="ledger">
+                  <div className="ledger-head">
+                    <span>Activity</span>
+                    <span className="ledger-actions">Capsules</span>
+                  </div>
+                  {selectedAwards.slice(0, 20).map((award) => (
+                    <div key={award._id} className="ledger-row">
+                      <div className="min-w-0">
+                        <div className="ledger-title">
+                          {AWARD_LABEL[award.ruleId] || award.ruleId}
+                        </div>
+                        <div className="ledger-meta">
+                          {formatWhen(award.createdAt)} ·{" "}
+                          {AWARD_SOURCE[award.sourceType] || award.sourceType}
+                        </div>
+                      </div>
+                      <div className="ledger-actions">
+                        <Badge
+                          variant={
+                            Number(award.amount) > 0
+                              ? "success"
+                              : Number(award.amount) < 0
+                                ? "destructive"
+                                : "secondary"
+                          }
+                        >
+                          {Number(award.amount) > 0 ? "+" : ""}
+                          {award.amount}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {selectedAwards.length > 20 ? (
+                    <p className="ledger-meta pt-3">
+                      Showing the 20 most recent of {selectedAwards.length}.
                     </p>
-                    <p className="mt-3 text-[13px] text-[var(--text-muted)]">
-                      No missions yet. A doctor must approve a CareQuest plan first.
-                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="well text-[13px] text-[var(--text-muted)]">
+                  Complete a mission, a lesson, or a knowledge check and the
+                  capsules you earn will appear here.
+                </p>
+              )}
+            </section>
+
+            {/* Full mission history, collapsed so it does not dominate the page. */}
+            {completedOccurrences.length ? (
+              <details className="plain-panel group">
+                <summary className="section-title cursor-pointer list-none text-[14px]">
+                  Mission history ({completedOccurrences.length})
+                </summary>
+                <div className="mt-4">
+                  <div className="timeline">
+                    {completedOccurrences.map(renderMission)}
                   </div>
                 </div>
-              </div>
-            )}
+              </details>
+            ) : null}
           </section>
         </Reveal>
 

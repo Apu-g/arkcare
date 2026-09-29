@@ -9,6 +9,7 @@ import Appointment from "@/models/Appointment";
 import DoctorReport from "@/models/DoctorReport";
 import ScheduledOccurrence from "@/models/ScheduledOccurrence";
 import CapsuleAward from "@/models/CapsuleAward";
+import HospitalProgram from "@/models/HospitalProgram";
 import PatientResponse from "@/models/PatientResponse";
 import { ensureCareQuestMembership } from "@/lib/carequest/permissions";
 import { parseConsultationReport } from "@/lib/carequest/reportParser";
@@ -410,7 +411,23 @@ export async function submitReportQuiz(reportId, answers) {
   const report = await DoctorReport.findOne({ _id: reportId, patient: patient._id });
   if (!report) throw new Error("Report not found");
   if (report.quiz?.result?.submittedAt) {
-    return serialize({ duplicate: true, ...report.quiz.result });
+    // Already graded. Return the same shape as a fresh submission, including
+    // which hospital program holds the capsules, so a double-click or a reload
+    // cannot make the award line disappear.
+    const seenProgram = report.program
+      ? await HospitalProgram.findById(report.program)
+          .select("capsuleSymbol name")
+          .lean()
+      : null;
+    return serialize({
+      duplicate: true,
+      ...report.quiz.result,
+      // Already graded: nothing is credited a second time.
+      alreadyAwarded: true,
+      awardedProgramId: report.program ? String(report.program) : null,
+      awardedProgramSymbol: seenProgram?.capsuleSymbol || null,
+      awardedProgramName: seenProgram?.name || null,
+    });
   }
 
   const items = report.quiz?.items || [];
@@ -432,29 +449,61 @@ export async function submitReportQuiz(reportId, answers) {
   });
 
   // Participation credit + one capsule per correct answer.
+  //
+  // The reward must never block the record. `awardCapsules` throws when the
+  // daily cap is reached, and letting that propagate meant a patient who had
+  // simply earned enough today could not save their quiz answers at all — the
+  // whole submission failed and the score was lost. The quiz is the clinical
+  // artefact; the capsule is the incentive. So the award is attempted, and any
+  // failure is recorded and surfaced rather than thrown.
   const awarded = 1 + correctCount;
-  const capsule = await awardCapsules({
-    patient: patient._id,
-    organization: report.organization || null,
-    program: report.program || null,
-    ruleId: "quiz_completed",
-    sourceType: "DoctorReport",
-    sourceId: report._id,
-    actorUserId: user._id,
-    actorRole: user.role,
-    verificationLevel: "system_confirmed",
-    amount: awarded,
-  });
+  let capsule = { award: null, created: false };
+  let awardBlockedReason = "";
+  try {
+    capsule = await awardCapsules({
+      patient: patient._id,
+      organization: report.organization || null,
+      program: report.program || null,
+      ruleId: "quiz_completed",
+      sourceType: "DoctorReport",
+      sourceId: report._id,
+      actorUserId: user._id,
+      actorRole: user.role,
+      verificationLevel: "system_confirmed",
+      amount: awarded,
+    });
+  } catch (awardError) {
+    awardBlockedReason = String(awardError?.message || awardError).slice(0, 300);
+  }
+
+  // `awardCapsules` is idempotent per (patient, program, report, rule) and, on
+  // a collision, returns the EXISTING award with created:false. Reading
+  // `capsule.award.amount` unconditionally therefore reported a capsule gain
+  // for a submission that credited nothing — the quiz would say "+5 Capsules"
+  // while the balance never moved, which is exactly the "capsules did not
+  // update" symptom. Only a freshly created award counts as a gain here.
+  const creditedNow = capsule.created ? Number(capsule.award?.amount || 0) : 0;
 
   report.quiz.result = {
     submittedAt: new Date(),
     answers: graded.map((g) => g.picked),
     correctCount,
     total: items.length,
-    awardedCapsules: capsule.award ? capsule.award.amount : 0,
+    awardedCapsules: creditedNow,
     capsuleAwardId: capsule.award ? String(capsule.award._id) : "",
   };
   await report.save();
+
+  // Which hospital program actually received the capsules. Capsules are
+  // per-hospital by design, and the report belongs to the hospital that filed
+  // it — which is NOT necessarily the program the patient is currently viewing.
+  // Without saying so, a correct answer credits a hospital the patient cannot
+  // see, and the award looks like it never happened.
+  const awardedProgram = report.program
+    ? await HospitalProgram.findById(report.program)
+        .select("capsuleSymbol name organization")
+        .lean()
+    : null;
 
   // Mark the linked quiz mission complete so the timeline reflects it.
   const occurrence = await ScheduledOccurrence.findOne({
@@ -503,7 +552,15 @@ export async function submitReportQuiz(reportId, answers) {
     duplicate: false,
     correctCount,
     total: items.length,
-    awardedCapsules: report.quiz.result.awardedCapsules,
+    awardedCapsules: creditedNow,
+    // True when the capsules for this report were already granted on an
+    // earlier attempt, so the UI can say so instead of showing a phantom gain.
+    alreadyAwarded: !capsule.created && !awardBlockedReason,
+    // Set when the daily cap prevented the reward. The score is still saved.
+    awardBlockedReason,
+    awardedProgramId: report.program ? String(report.program) : null,
+    awardedProgramSymbol: awardedProgram?.capsuleSymbol || null,
+    awardedProgramName: awardedProgram?.name || null,
     graded: graded.map((g) => ({
       questionId: g.questionId,
       isCorrect: g.isCorrect,

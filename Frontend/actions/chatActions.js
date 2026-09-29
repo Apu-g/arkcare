@@ -232,26 +232,38 @@ export async function sendImageMessage(chatId, imageUrl, imagePublicId) {
 
     await assertChatParticipant(chatId, senderId);
 
-    // Only accept a Cloudinary-hosted URL that this app actually produced. A
+    // Only accept a Cloudinary-hosted URL that THIS app actually produced. A
     // participant-supplied arbitrary URL would be rendered as <img> and opened
     // via window.open inside a clinical thread, leaking the reader's IP/UA.
+    //
+    // A Cloudinary delivery URL is
+    //   https://res.cloudinary.com/<cloud_name>/image/upload/<public_id>
+    // so the cloud name is the FIRST PATH SEGMENT, not part of the hostname.
+    // Checking the hostname against the cloud name (as an earlier revision
+    // did) can never match, which rejected every legitimate upload.
     const cleanImageUrl = String(imageUrl || "").trim();
     if (!cleanImageUrl) throw new Error("An image URL is required");
     if (cleanImageUrl.length > 600) throw new Error("Image URL is too long");
+
     let parsedUrl;
     try {
       parsedUrl = new URL(cleanImageUrl);
     } catch {
       throw new Error("Image URL is not valid");
     }
-    const allowedHost = process.env.CLOUDINARY_CLOUD_NAME;
-    if (parsedUrl.protocol !== "https:" || !allowedHost) {
+
+    const cloudName = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+    if (parsedUrl.protocol !== "https:") {
       throw new Error("Image must be an https Cloudinary upload");
     }
     if (parsedUrl.hostname !== "res.cloudinary.com") {
       throw new Error("Image must be hosted on Cloudinary");
     }
-    if (!parsedUrl.hostname.includes(allowedHost)) {
+    if (!cloudName) {
+      throw new Error("Image upload is not configured on this server");
+    }
+    const segments = parsedUrl.pathname.split("/").filter(Boolean);
+    if (segments.length < 2 || segments[0] !== cloudName) {
       throw new Error("Image does not belong to this Cloudinary account");
     }
 
