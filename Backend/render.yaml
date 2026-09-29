@@ -2,9 +2,12 @@ services:
   - type: web
     name: medical-ai-backend
     runtime: python
+    rootDir: Backend
     pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn chatbotwithpdf:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: GROQ_API_KEY
         sync: false
@@ -14,7 +17,11 @@ services:
         sync: false
       - key: CHARACTER_ID
         sync: false
+      # Public origin of THIS service, e.g. https://medical-ai-backend.onrender.com
       - key: AI_SERVER_URL
         sync: false
+      # Shared secret. Must be identical to AI_INTERNAL_TOKEN in Vercel.
       - key: AI_INTERNAL_TOKEN
         sync: false
+      - key: TESSERACT_BIN
+        value: tesseract
