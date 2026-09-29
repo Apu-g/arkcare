@@ -26,3 +26,16 @@ frontend.env
 .env
 .env.*.local
 
+
+# Curl cookie jars and network captures. These were committed by accident and
+# carry real session cookies, so they must never be tracked again. Scoped to
+# the scratch names we actually use — a blanket *.txt would also exclude
+# Backend/requirements.txt and Backend/runtime.txt.
+t.txt
+ta.txt
+tb.txt
+tc.txt
+td.txt
+tp.txt
+cookies.txt
+*.har

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDate";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -332,7 +333,7 @@ export default function AuditDashboard({ initialData }) {
                         <span className="cq-kicker">
                           {batch.eventCount} event
                           {batch.eventCount === 1 ? "" : "s"} ·{" "}
-                          {new Date(batch.createdAt).toLocaleString()}
+                          {formatDateTime(batch.createdAt)}
                         </span>
                       </div>
                       {/* Receipt metadata is key/value, so it is a definition
@@ -346,7 +347,7 @@ export default function AuditDashboard({ initialData }) {
                         <dt>Confirmed</dt>
                         <dd>
                           {batch.confirmedAt
-                            ? new Date(batch.confirmedAt).toLocaleString()
+                            ? formatDateTime(batch.confirmedAt)
                             : "not yet confirmed"}
                         </dd>
                       </dl>
@@ -400,7 +401,7 @@ export default function AuditDashboard({ initialData }) {
             {data.events.map((event) => (
               <article key={event.eventId} className="timeline-item" data-tone="copper">
                 <div className="timeline-time">
-                  {event.createdAt ? new Date(event.createdAt).toLocaleString() : "—"}
+                  {event.createdAt ? formatDateTime(event.createdAt) : "—"}
                 </div>
                 <div className="timeline-title flex flex-wrap items-center gap-2">
                   {event.eventType}

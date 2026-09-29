@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/lib/formatDate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -301,7 +302,7 @@ export default function DoctorDashboard({ doctor }) {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-[var(--text-muted)]">
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {new Date(appointment.appointmentDate).toLocaleDateString()}
+              {formatDate(appointment.appointmentDate)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />

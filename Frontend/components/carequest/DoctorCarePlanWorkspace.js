@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDate";
 import { useMemo, useState } from "react";
 import {
   approveCarePlanVersion,
@@ -452,7 +453,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   {(data.appointments || []).map((appointment) => (
                     <option key={appointment._id} value={appointment._id}>
                       {appointment.patient?.name || "Patient"} —{" "}
-                      {new Date(appointment.appointmentDate).toLocaleString()} —{" "}
+                      {formatDateTime(appointment.appointmentDate)} —{" "}
                       {appointment.status}
                     </option>
                   ))}
@@ -796,9 +797,9 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   <p className="ledger-meta mt-1">
                     Consultation{" "}
                     {plan.sourceAppointment?.appointmentDate
-                      ? new Date(
+                      ? formatDateTime(
                           plan.sourceAppointment.appointmentDate
-                        ).toLocaleString()
+                        )
                       : "unknown"}{" "}
                     · {plan.sourceAppointment?.status}
                   </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
@@ -142,8 +143,8 @@ export default function ActivitySimulationCard({
         <div className="stat-inline">
           <dt>Steps</dt>
           <dd>
-            {steps.toLocaleString()}
-            <small> of {goal.toLocaleString()}</small>
+            {Number(steps).toLocaleString("en-IN")}
+            <small> of {Number(goal).toLocaleString("en-IN")}</small>
           </dd>
         </div>
         <div className="stat-inline">
@@ -188,7 +189,7 @@ export default function ActivitySimulationCard({
         <div className="well mt-5 text-[12.5px] leading-6 text-[var(--text-muted)]">
           This activity is approved but scheduled for{" "}
           <strong className="text-[var(--text-strong)]">
-            {new Date(activityOccurrence.scheduledFor).toLocaleString()}
+            {formatDateTime(activityOccurrence.scheduledFor)}
           </strong>
           . Use the demo clock only when demonstrating the scheduler.
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDate";
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
@@ -349,7 +350,7 @@ export default function StaffHandoffQueue({
                 <dt>Owner</dt>
                 <dd>{item.assignedTo?.name || "Unowned"}</dd>
                 <dt>Due</dt>
-                <dd>{new Date(item.dueAt).toLocaleString()}</dd>
+                <dd>{formatDateTime(item.dueAt)}</dd>
               </dl>
 
               <div className="col-span-full flex flex-wrap gap-2">
@@ -461,7 +462,7 @@ export default function StaffHandoffQueue({
                       data-tone={event.blockchain?.status === "anchored" ? "copper" : "muted"}
                     >
                       <div className="timeline-time">
-                        {new Date(event.createdAt).toLocaleString()}
+                        {formatDateTime(event.createdAt)}
                       </div>
                       <div className="timeline-title">{event.eventType}</div>
                       {event.note ? (

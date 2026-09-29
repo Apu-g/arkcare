@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/formatDate";
 import { CalendarDays, ShieldCheck, Stethoscope } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Reveal from "@/components/motion/Reveal";
@@ -105,14 +106,14 @@ export default function PatientCarePlans({ plans }) {
                   <div className="stat-inline">
                     <dt>Valid from</dt>
                     <dd>
-                      {new Date(version.validFrom).toLocaleDateString()}
+                      {formatDate(version.validFrom)}
                     </dd>
                   </div>
                   <div className="stat-inline">
                     <dt>Valid to</dt>
                     <dd className="text-[14px]">
                       {version.validTo
-                        ? new Date(version.validTo).toLocaleDateString()
+                        ? formatDate(version.validTo)
                         : "Until clinician revision"}
                     </dd>
                   </div>

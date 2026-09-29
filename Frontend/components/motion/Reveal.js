@@ -22,7 +22,10 @@ export default function Reveal({
   className = "",
   delay = 0,
   stagger = 0,
-  threshold = 0.12,
+  // 0 = reveal on any intersection. See useRevealOnScroll: a fractional
+  // threshold is measured against the ELEMENT, so a section taller than the
+  // viewport could never satisfy it and stayed invisible.
+  threshold = 0,
   margin = 120,
   disabled = false,
   ...rest

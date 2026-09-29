@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/formatDate";
 import Link from "next/link";
 import { ArrowUpRight, Building2, ShieldCheck } from "lucide-react";
 import Reveal from "@/components/motion/Reveal";
@@ -155,7 +156,7 @@ export default function ServiceImprovementDashboard({ data }) {
           <Figure label="Benefit redemptions" value={r.redemptionCount} />
           <Figure
             label="Budget remaining"
-            value={"₹" + r.remainingBudgetInr.toLocaleString()}
+            value={"₹" + Number(r.remainingBudgetInr || 0).toLocaleString("en-IN")}
           />
         </dl>
 
@@ -222,7 +223,7 @@ export default function ServiceImprovementDashboard({ data }) {
           />
           <Figure
             label="Recorded paid amount"
-            value={"₹" + f.recordedPaidInr.toLocaleString()}
+            value={"₹" + Number(f.recordedPaidInr || 0).toLocaleString("en-IN")}
           />
           <Figure label="Refunds imported" value={f.refundsRecordedInCareQuest} />
           <Figure
@@ -234,7 +235,7 @@ export default function ServiceImprovementDashboard({ data }) {
             definition list beside the headline figures. */}
         <dl className="dl-grid mt-4">
           <dt>Recorded refunds</dt>
-          <dd>₹{Number(f.recordedRefundInr || 0).toLocaleString()}</dd>
+          <dd>₹{Number(f.recordedRefundInr || 0).toLocaleString("en-IN")}</dd>
           <dt>Included in totals</dt>
           <dd>PaymentEvidence records only</dd>
         </dl>

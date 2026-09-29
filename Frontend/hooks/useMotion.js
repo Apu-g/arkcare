@@ -46,8 +46,14 @@ export function usePrefersReducedMotion() {
  * @param options.margin  px of viewport below the fold to count as "pending"
  */
 export function useRevealOnScroll({
-  threshold = 0.12,
-  rootMargin = "0px 0px -6% 0px",
+  // threshold 0 = reveal as soon as ANY part of the element enters the
+  // viewport. A non-zero threshold is a trap here: it is a fraction OF THE
+  // ELEMENT, not of the screen, so a section taller than the viewport can
+  // never satisfy it. A 22,000px section at threshold 0.12 needs 2,659px
+  // visible inside a ~900px viewport — impossible — and it stayed at
+  // opacity:0 forever, which silently blanked most of the page.
+  threshold = 0,
+  rootMargin = "0px 0px -4% 0px",
   margin = 120,
   once = true,
   disabled = false,
@@ -72,12 +78,16 @@ export function useRevealOnScroll({
 
     setPending(true);
 
+    const reveal = () => {
+      setRevealed(true);
+      setPending(false);
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setRevealed(true);
-            setPending(false);
+            reveal();
             if (once) observer.unobserve(entry.target);
           } else if (!once) {
             setRevealed(false);
@@ -89,7 +99,21 @@ export function useRevealOnScroll({
     );
 
     observer.observe(node);
-    return () => observer.disconnect();
+
+    // SAFETY NET. Content must never be permanently invisible because an
+    // observer misbehaved. Anything still pending after a bounded time is
+    // shown regardless. This is a backstop only — the observer normally wins.
+    const failsafe = window.setTimeout(() => {
+      setPending((stillPending) => {
+        if (stillPending) reveal();
+        return false;
+      });
+    }, 4000);
+
+    return () => {
+      window.clearTimeout(failsafe);
+      observer.disconnect();
+    };
   }, [threshold, rootMargin, margin, once, disabled]);
 
   return { ref, revealed, pending };

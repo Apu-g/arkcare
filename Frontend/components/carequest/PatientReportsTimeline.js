@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/lib/formatDate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Reveal from "@/components/motion/Reveal";
@@ -82,7 +83,7 @@ export default function PatientReportsTimeline({
                   {report.appointmentDate ? (
                     <p className="ledger-meta mt-0.5">
                       Consultation date{" "}
-                      {new Date(report.appointmentDate).toLocaleDateString()}
+                      {formatDate(report.appointmentDate)}
                     </p>
                   ) : null}
                   {report.followUpWindow ? (

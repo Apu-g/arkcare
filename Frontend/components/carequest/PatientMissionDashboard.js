@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -46,7 +47,7 @@ import PixelCharacter from "@/components/carequest/PixelCharacter";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
 
 function formatWhen(value) {
-  return new Date(value).toLocaleString();
+  return formatDateTime(value);
 }
 
 /* Plain-language labels for the reward feed, so the patient reads "Knowledge

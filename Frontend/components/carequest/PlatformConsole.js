@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDate";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -551,7 +552,7 @@ export default function PlatformConsole({ overview }) {
                                   " · " +
                                   (hospital.latestAnchor.network || "local EVM") +
                                   " · anchored " +
-                                  new Date(hospital.latestAnchor.confirmedAt).toLocaleString()
+                                  formatDateTime(hospital.latestAnchor.confirmedAt)
                                 : undefined
                             }
                           />
@@ -586,7 +587,7 @@ export default function PlatformConsole({ overview }) {
             {overview.recentEvents.map((event) => (
               <article key={event.eventId} className="timeline-item" data-tone="copper">
                 <div className="timeline-time">
-                  {new Date(event.createdAt).toLocaleString()}
+                  {formatDateTime(event.createdAt)}
                 </div>
                 <div className="timeline-title flex flex-wrap items-center gap-2">
                   {event.eventType}

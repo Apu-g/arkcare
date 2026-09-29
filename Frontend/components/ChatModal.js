@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/lib/formatDate";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -601,7 +602,7 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                   <DialogDescription className="truncate">
                     <span className="glass-data inline-flex items-center gap-1.5 rounded-[10px] px-2 py-0.5">
                       Appointment on{" "}
-                      {new Date(appointment.appointmentDate).toLocaleDateString()}
+                      {formatDate(appointment.appointmentDate)}
                     </span>
                   </DialogDescription>
                 </div>
