@@ -3,7 +3,6 @@ services:
     name: medical-ai-backend
     runtime: python
     rootDir: Backend
-    pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn chatbotwithpdf:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
@@ -25,3 +24,6 @@ services:
         sync: false
       - key: TESSERACT_BIN
         value: tesseract
+      # Blueprint has no pythonVersion field; the runtime version is pinned here.
+      - key: PYTHON_VERSION
+        value: "3.11.9"
