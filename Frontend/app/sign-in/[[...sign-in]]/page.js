@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, HeartPulse, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import InstantSignIn from "@/components/InstantSignIn";
+import MaskedText from "@/components/motion/MaskedText";
+import Reveal from "@/components/motion/Reveal";
 
 function SignInForm() {
   const router = useRouter();
@@ -40,7 +42,7 @@ function SignInForm() {
   return (
     <main className="flex min-h-screen items-center px-4 py-10 md:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[.9fr_1.1fr]">
-        <section className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
+        <Reveal as="section" className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
           <div>
             <Link
               href="/"
@@ -50,13 +52,14 @@ function SignInForm() {
               Back to ArkCare
             </Link>
             <div className="mt-16">
-              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold text-white/80">
+              <span className="cq-pixel-label !bg-white/10 !text-white/80">
                 Session checkpoint
               </span>
-              <h1 className="mt-6 text-[34px] font-bold leading-[1.1] tracking-[-0.02em] text-white">
-                Resume your
-                <span className="text-white/60"> care journey.</span>
-              </h1>
+              <MaskedText
+                as="h1"
+                lines={["Resume your", "care journey."]}
+                className="mt-6 text-[30px] font-bold leading-[1.15] tracking-[-0.02em] text-white"
+              />
               <p className="mt-4 max-w-md text-[13px] leading-relaxed text-[#B7B7BE]">
                 Your role, appointments, reports, conversations, and care tools continue
                 from one secure session.
@@ -81,14 +84,14 @@ function SignInForm() {
               </div>
             ))}
           </div>
-        </section>
+        </Reveal>
 
-        <section className="cq-card p-5 md:p-8 lg:p-10">
+        <Reveal as="section" delay={90} className="cq-card p-5 md:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-white shadow-[0_6px_14px_rgba(16,14,26,0.18)]">
-                  <HeartPulse className="h-5 w-5" strokeWidth={2} />
+                <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-cta)]">
+                  <HeartPulse className="h-5 w-5" strokeWidth={1.75} />
                 </div>
                 <div>
                   <div className="text-[14px] font-semibold text-[var(--text-strong)]">
@@ -105,9 +108,12 @@ function SignInForm() {
 
             <div className="mb-7">
               <p className="cq-kicker">Welcome back</p>
-              <h2 className="mt-2 text-[22px] font-bold tracking-[-0.01em] text-[var(--text-strong)]">
+              <MaskedText
+                as="h2"
+                className="mt-2 text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]"
+              >
                 Enter your care space
-              </h2>
+              </MaskedText>
               <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-muted)]">
                 Use your account or jump into the hackathon demo below.
               </p>
@@ -157,7 +163,7 @@ function SignInForm() {
               {error ? (
                 <p
                   role="alert"
-                  className="rounded-[14px] border border-[rgba(235,90,90,0.2)] bg-[rgba(235,90,90,0.12)] px-4 py-3 text-[13px] text-[var(--destructive)]"
+                  className="rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] px-4 py-3 text-[13px] text-[var(--destructive)]"
                 >
                   {error}
                 </p>
@@ -191,7 +197,7 @@ function SignInForm() {
               Hackathon demo profiles contain synthetic demo data only.
             </div>
           </div>
-        </section>
+        </Reveal>
       </div>
     </main>
   );

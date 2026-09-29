@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -484,11 +485,11 @@ function BookAppointmentModal({
                 {doctor.name} · {doctor.specialization}
               </p>
             </div>
-            <div className="cq-card-soft shrink-0 px-4 py-3 text-right">
+            <div className="glass-data shrink-0 rounded-[16px] px-4 py-3 text-right">
               <div className="text-[11px] font-semibold text-[var(--text-muted)]">
                 Consultation fee
               </div>
-              <div className="mt-1 text-[20px] font-bold text-[var(--text-strong)]">
+              <div className="mt-1 text-[20px] font-bold tabular-nums text-[var(--text-strong)]">
                 ₹{Number(doctor.consultationFee || 0).toLocaleString("en-IN")}
               </div>
             </div>
@@ -510,14 +511,15 @@ function BookAppointmentModal({
             </p>
 
             {paymentResult && !paymentResult.demoBooking ? (
-              <div className="mx-auto mt-5 max-w-md rounded-[18px] border border-[var(--border)] bg-[var(--surface)] p-4 text-left text-[12px] shadow-[var(--shadow-card)]">
+              <div className="glass-data mx-auto mt-5 max-w-md rounded-[18px] p-4 text-left text-[12px]">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-[var(--text-strong)]">
                     Payment verified
                   </span>
-                  <span className="cq-pixel-label cq-real-label">
+                  {/* Copper = proof: a committed, server-verified payment. */}
+                  <Badge variant="copper">
                     {checkoutMode === "live" ? "Razorpay live" : "Razorpay test"}
-                  </span>
+                  </Badge>
                 </div>
                 <div className="mt-3 grid gap-2 text-[var(--text-muted)]">
                   <div>
@@ -567,7 +569,7 @@ function BookAppointmentModal({
             {error ? (
               <div
                 role="alert"
-                className="flex items-start gap-3 rounded-[18px] border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] p-4 text-[13px] text-[var(--destructive)]"
+                className="flex items-start gap-3 rounded-[18px] bg-[var(--destructive-soft)] p-4 text-[13px] text-[var(--destructive)]"
               >
                 <XCircle className="mt-0.5 h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
                 <span>{error}</span>
@@ -579,7 +581,7 @@ function BookAppointmentModal({
                 <CalendarDays className="h-[18px] w-[18px] text-[var(--primary)]" strokeWidth={1.75} />
                 Choose a date
               </div>
-              <div className="rounded-[18px] border border-[var(--border)] bg-[var(--surface)] p-3">
+              <div className="glass-data rounded-[18px] p-3">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -629,7 +631,7 @@ function BookAppointmentModal({
                         setError("");
                       }}
                       className={
-                        "min-h-10 rounded-[14px] border px-3 text-[13px] font-semibold transition " +
+                        "min-h-10 rounded-[14px] border px-3 text-[13px] font-semibold transition hover:-translate-y-px " +
                         (selectedSlot === row.time
                           ? "border-[var(--primary)] bg-[var(--primary)] text-white"
                           : row.available
@@ -671,7 +673,7 @@ function BookAppointmentModal({
             </div>
 
             {appointmentDay && selectedSlot ? (
-              <div className="cq-card-soft p-4">
+              <div className="glass-data rounded-[18px] p-4">
                 <div className="cq-kicker">Booking summary</div>
                 <div className="mt-3 grid gap-2 text-[13px] sm:grid-cols-2">
                   <div>

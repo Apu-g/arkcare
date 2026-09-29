@@ -11,6 +11,8 @@ import {
   LogIn,
   Stethoscope,
 } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import { instantEnterAs } from "@/actions/demoEntryActions";
 
 function destinationFor(role) {
@@ -57,8 +59,8 @@ function CredentialCard({ name, subtitle, email, role, symbol, hospitalName }) {
         {symbol ? <span className="cq-pixel-label">{symbol}</span> : null}
       </div>
 
-      <div className="cq-card-soft mt-3 flex items-center justify-between gap-2 px-3 py-2">
-        <code className="truncate font-mono text-[11px] text-[var(--text-muted)]">
+      <div className="glass-data mt-3 flex items-center justify-between gap-2 rounded-[14px] px-3 py-2">
+        <code className="truncate font-mono text-[11px] text-[var(--text)]">
           {email}
         </code>
         <Button
@@ -113,20 +115,23 @@ export default function NetworkAccounts({ accounts }) {
 
   return (
     <div className="nm-stack">
-      <section className="nm-dark-card cq-reveal p-5 md:p-6">
-        <div className="cq-kicker !text-white/60">Network directory</div>
-        <h1 className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+      <Reveal as="section" className="cq-card p-5 md:p-6">
+        <div className="cq-kicker">Network directory</div>
+        <MaskedText
+          as="h1"
+          className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
+        >
           Enter any dashboard
-        </h1>
-        <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[#B7B7BE]">
+        </MaskedText>
+        <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[var(--text-muted)]">
           One-click into any hospital admin or doctor in the network. Each hospital
           admin sees only their own hospital; each doctor opens their clinical
           workspace. Manual login password for every account:{" "}
-          <code className="rounded-[8px] bg-white/10 px-1.5 py-0.5 font-mono text-[12px] text-white">
+          <code className="glass-data inline-block rounded-[8px] px-1.5 py-0.5 font-mono text-[12px] text-[var(--text-strong)]">
             {accounts.demoPassword}
           </code>
         </p>
-      </section>
+      </Reveal>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -152,7 +157,7 @@ export default function NetworkAccounts({ accounts }) {
       </div>
 
       {tab === "hospitals" ? (
-        <div className="nm-grid-3">
+        <Reveal className="nm-grid-3">
           {accounts.hospitals.map((hospital) => (
             <CredentialCard
               key={hospital._id}
@@ -172,9 +177,9 @@ export default function NetworkAccounts({ accounts }) {
               symbol="ALL"
             />
           ) : null}
-        </div>
+        </Reveal>
       ) : (
-        <div className="nm-grid-3">
+        <Reveal className="nm-grid-3">
           {accounts.doctors.map((doctor) => (
             <CredentialCard
               key={doctor._id}
@@ -185,7 +190,7 @@ export default function NetworkAccounts({ accounts }) {
               hospitalName={doctor.hospitalName}
             />
           ))}
-        </div>
+        </Reveal>
       )}
     </div>
   );

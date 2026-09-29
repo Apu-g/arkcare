@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, ShieldCheck, Sparkles, Stethoscope, Users } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
 import { setUserRole } from "@/actions/userActions";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -70,14 +71,14 @@ export default function RoleSelection() {
 
   return (
     <div className="grid gap-4">
-      <div className="nm-grid-2">
+      <Reveal className="nm-grid-2">
         {roles.map(({ id, icon: Icon, label, description, tags }) => (
           <button
             key={id}
             type="button"
             onClick={() => handleRoleSelection(id)}
             disabled={loading !== null}
-            className="cq-card group flex flex-col p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-hover)] disabled:opacity-60"
+            className="cq-card cq-card-hover group flex flex-col p-5 text-left disabled:opacity-60"
           >
             <div className="flex items-start justify-between">
               <div className="nm-stat-icon">
@@ -107,15 +108,15 @@ export default function RoleSelection() {
             </div>
           </button>
         ))}
-      </div>
+      </Reveal>
 
-      <div className="cq-card-soft p-4">
+      <Reveal className="cq-card-soft p-4">
         <div className="mb-3 flex items-center gap-2">
           <Sparkles className="h-[15px] w-[15px] text-[var(--text-muted)]" strokeWidth={1.75} />
           <span className="cq-kicker">One-click judge demo</span>
         </div>
         <InstantSignIn compact />
-      </div>
+      </Reveal>
     </div>
   );
 }

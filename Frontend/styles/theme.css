@@ -1,123 +1,151 @@
 /*
- * ArkCare — soft-neumorphic dashboard theme.
+ * ArkCare — "Celadon & Copper" glass design system.
  *
- * Source of truth: DESIGN_SYSTEM_SOFT_NEUMORPHIC_DASHBOARD.md
+ * IDENTITY
+ *   Cool celadon carries CARE (clinical, calm, mineral).
+ *   Warm copper carries PROOF (verification, audit, immutable record).
+ *   That warm/cool split is the product's own visual hook and is why this
+ *   deliberately uses no blue/purple gradient language.
  *
- * The variable NAMES are unchanged from the previous healthcare theme so every
- * existing component keeps working; only the values are retuned to the
- * neumorphic finance palette. The --nm-* block at the bottom is the new
- * primitive layer added by the design system.
+ *   Two foundations, not one:
+ *     - LIGHT clinical base  : care surfaces, dashboards, forms
+ *     - INK trust surface    : audit, verification, security (data-scope="ink")
  *
- * Balance target: ~82% neutral surfaces, ~12% charcoal, ~6% accent.
+ * SUCCESSOR to DESIGN_SYSTEM_SOFT_NEUMORPHIC_DASHBOARD.md. The variable NAMES
+ * are unchanged from that system so all existing components keep working; only
+ * the values changed, and neumorphic dual-shadow surfaces were replaced by
+ * glass surfaces (the two are mutually exclusive).
+ *
+ * Balance target: ~80% neutral, ~12% ink, ~8% accent.
  */
 :root,
 [data-theme="light"] {
-  /* ---- canvas & surfaces (spec §2.1) ---- */
-  --background: #dfe2eb; /* --bg-page: scene outside the app shell */
-  --foreground: #17171c;
+  /* ---------------------------------------------------------------- canvas */
+  --background: #e7e8e3; /* warm mineral scene */
+  --foreground: #1a1d1a;
+  --surface-shell: #f1f2ec; /* floating app shell */
+  --surface: #ffffff;
 
-  --surface: #ffffff; /* --bg-surface: cards, panels */
-  --surface-subtle: #f6f8fc; /* --bg-surface-soft: inputs, recessed controls */
-  --surface-muted: #eceff5; /* --bg-surface-muted: tracks, secondary fills */
-  --surface-hover: #eef1f7;
-  --surface-shell: #f2f5fa; /* --bg-shell: the floating app shell */
+  /* ------------------------------------------------- glass surface hierarchy
+     1 canvas > 2 ambient > 3 primary glass > 4 secondary glass
+     > 5 priority control > 6 data surface (near-opaque for readability) */
+  --glass-ambient-1: rgba(47, 111, 99, 0.07);
+  --glass-ambient-2: rgba(169, 114, 60, 0.06);
 
-  /* ---- ink (spec §2.1) ---- */
-  --text: #17171c; /* --ink-900 */
-  --text-strong: #100e1a; /* --ink-950: headings, totals, key labels */
-  --text-muted: #747479; /* --ink-500: metadata, 4.6:1 on white */
-  --text-subtle: #97979e; /* --ink-400 */
-  --text-faint: #bfc0c5; /* --ink-300 */
+  --glass-1: rgba(255, 255, 255, 0.55); /* primary panels */
+  --glass-2: rgba(255, 255, 255, 0.38); /* secondary / nested */
+  --glass-3: rgba(255, 255, 255, 0.22); /* tertiary / wells */
+  --glass-edge: rgba(255, 255, 255, 0.62); /* the thin light edge on glass */
+  --glass-edge-strong: rgba(255, 255, 255, 0.85);
+  --glass-hairline: rgba(26, 29, 26, 0.09); /* dark hairline for legibility */
+  --glass-blur-primary: 20px;
+  --glass-blur-secondary: 12px;
+  --glass-blur-tertiary: 6px;
 
-  --border: #e4e7ee; /* --line-soft: separators only */
-  --border-strong: #d7dbe5;
-  --border-subtle: #eef0f5; /* --line-subtle: row dividers */
+  --surface-subtle: #f2f3ee; /* recessed inputs on light */
+  --surface-muted: #e4e6df;
+  --surface-hover: #eceee7;
+  --surface-well: #eff0ea;
 
-  /* ---- charcoal anchor (spec §2.2, §18) ---- */
-  --primary: #100e1a; /* primary buttons, active nav pill */
-  --primary-hover: #24242b;
-  --primary-soft: #e6e9f1; /* selected/active *background* */
-  --primary-foreground: #ffffff;
+  /* ------------------------------------------------------------ ink (trust) */
+  --dark-card: #171b18;
+  --dark-card-2: #121614;
+  --dark-elevated: #1e231f;
+  --dark-text: #f2f4ef;
+  --dark-muted: #a3a9a0;
 
-  --dark-card: #1b1b1e;
-  --dark-card-2: #111116;
-  --dark-elevated: #232329;
-  --dark-text: #ffffff;
-  --dark-muted: #b7b7be;
+  /* ------------------------------------------------------------------- ink */
+  --text: #1a1d1a;
+  --text-strong: #101310;
+  --text-muted: #5c6058; /* 5.4:1 on shell */
+  --text-subtle: #8a8f85;
+  --text-faint: #b6bab1;
 
-  --secondary: #eef0f5;
-  --secondary-foreground: #3a3a42;
+  --border: rgba(26, 29, 26, 0.12);
+  --border-strong: rgba(26, 29, 26, 0.2);
+  --border-subtle: rgba(26, 29, 26, 0.07);
 
-  --accent: #e8ecfc;
-  --accent-foreground: #405bd0;
+  /* ------------------------------------------- brand: celadon (care) */
+  --primary: #2f6f63; /* deep celadon — CTAs, active nav */
+  --primary-hover: #275c52;
+  --primary-soft: rgba(47, 111, 99, 0.12);
+  --primary-foreground: #f6faf8;
+  --celadon: #2f6f63;
+  --celadon-bright: #3e8c7d;
+  --celadon-soft: rgba(47, 111, 99, 0.12);
+  --celadon-line: rgba(47, 111, 99, 0.28);
 
-  /* ---- semantic (spec §22) ---- */
-  --success: #248a5a;
-  --success-soft: rgba(49, 185, 120, 0.12);
-  --warning: #9a7316;
-  --warning-soft: rgba(244, 198, 78, 0.18);
-  --destructive: #bf4343;
-  --destructive-soft: rgba(235, 90, 90, 0.12);
+  /* ------------------------------- brand accent: copper (proof/anchor) */
+  --copper: #a9723c;
+  --copper-bright: #c0864c;
+  --copper-soft: rgba(169, 114, 60, 0.13);
+  --copper-line: rgba(169, 114, 60, 0.32);
 
-  /* ---- accent ramp (spec §2.3, §31) ---- */
-  --accent-blue: #4f6ef7;
-  --accent-cyan: #42c8e8;
-  --accent-mint: #43d6a2;
-  --accent-green: #31b978;
-  --accent-yellow: #f4c64e;
-  --accent-orange: #f39a4a;
-  --accent-red: #eb5a5a;
-  --accent-pink: #eb6fae;
-  --accent-purple: #8b6df6;
-  --accent-gold: #d9b868;
+  --secondary: rgba(47, 111, 99, 0.08);
+  --secondary-foreground: #274b44;
+  --accent: rgba(47, 111, 99, 0.1);
+  --accent-foreground: #2a5a50;
 
-  /* Back-compat aliases used by older CareQuest surfaces. */
-  --lavender: #6f6a86;
-  --lavender-soft: #efeef6;
-  --peach: #a9705c;
-  --peach-soft: #f8ece7;
-  --sky: #4a6a80;
-  --sky-soft: #e9f0f5;
-  --gold: #8a6f34;
-  --gold-soft: #f6f0e0;
+  /* ------------------------------------------------------------ semantics */
+  --success: #1f7a52;
+  --success-soft: rgba(31, 122, 82, 0.12);
+  --warning: #8a6212;
+  --warning-soft: rgba(198, 149, 47, 0.16);
+  --destructive: #a93a3a;
+  --destructive-soft: rgba(169, 58, 58, 0.11);
+  --info: #2c5a8a;
+  --info-soft: rgba(44, 90, 138, 0.11);
 
-  --ring: #4f6ef7;
-  --input: #e4e7ee;
+  /* --------------------------------------------------------------- accents */
+  --accent-blue: #2c5a8a;
+  --accent-cyan: #2f7f8a;
+  --accent-mint: #1f7a52;
+  --accent-green: #2c8a5f;
+  --accent-yellow: #c6952f;
+  --accent-orange: #b5672a;
+  --accent-red: #a93a3a;
+  --accent-pink: #a85478;
+  --accent-purple: #6b5a9a;
+  --accent-gold: #a9723c; /* copper family — our "premium/proof" hue */
 
-  /* ---- neumorphic elevation (spec §5) ----
-     Never a hard black shadow on a light card: every light-surface shadow
-     pairs a soft dark offset with a light offset so the surface reads as
-     raised rather than painted on. */
-  --shadow-soft:
-    10px 10px 24px rgba(157, 166, 184, 0.18),
-    -10px -10px 24px rgba(255, 255, 255, 0.88);
-  --shadow-card:
-    6px 7px 16px rgba(160, 168, 184, 0.16),
-    -6px -6px 14px rgba(255, 255, 255, 0.95);
-  --shadow-hover:
-    10px 12px 24px rgba(145, 154, 172, 0.21),
-    -8px -8px 18px rgba(255, 255, 255, 0.96);
-  --shadow-inset:
-    inset 3px 3px 8px rgba(157, 166, 184, 0.14),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.92);
-  --shadow-dark-float:
-    0 16px 30px rgba(16, 14, 26, 0.24),
-    0 3px 10px rgba(16, 14, 26, 0.12);
-  --shadow-cta: 0 8px 18px rgba(16, 14, 26, 0.15);
-  --shadow-cta-active: 0 4px 10px rgba(16, 14, 26, 0.14);
+  --lavender: #5f5a78;
+  --lavender-soft: rgba(95, 90, 120, 0.1);
+  --peach: #a5674a;
+  --peach-soft: rgba(165, 103, 74, 0.11);
+  --sky: #3f6b7d;
+  --sky-soft: rgba(63, 107, 125, 0.11);
+  --gold: #8a6a34;
+  --gold-soft: rgba(138, 106, 52, 0.12);
 
-  /* ---- radius (spec §4) ---- */
+  --ring: #2f6f63;
+  --input: rgba(26, 29, 26, 0.1);
+
+  /* ---------------------------------------------------------------- shadows
+     Glass reads through a soft, low-opacity drop plus an inner top highlight
+     rather than the old paired light/dark extrusion. */
+  --shadow-soft: 0 24px 60px -28px rgba(26, 34, 30, 0.34);
+  --shadow-card: 0 14px 34px -20px rgba(26, 34, 30, 0.3);
+  --shadow-raised: 0 20px 44px -22px rgba(26, 34, 30, 0.32);
+  --shadow-inset: inset 0 1px 2px rgba(26, 34, 30, 0.07);
+  --shadow-well: inset 0 1px 3px rgba(26, 34, 30, 0.1);
+  --shadow-hover: 0 22px 50px -22px rgba(26, 34, 30, 0.36);
+  --shadow-dark-float: 0 30px 60px -24px rgba(8, 12, 10, 0.6);
+  --shadow-cta: 0 10px 24px -10px rgba(47, 111, 99, 0.5);
+  --shadow-cta-active: 0 4px 12px -6px rgba(47, 111, 99, 0.5);
+
+  /* ---------------------------------------------------------------- radius */
   --radius-sm: 12px;
   --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
-  --radius-2xl: 34px;
-  --radius-control: 14px;
-  --radius-card: 24px;
-  --radius-shell: 32px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-2xl: 30px;
+  --radius-control: 13px;
+  --radius-card: 22px;
+  --radius-glass: 24px;
+  --radius-shell: 30px;
   --radius-pill: 999px;
 
-  /* ---- type scale (spec §3.1) ---- */
+  /* ------------------------------------------------------------------ type */
   --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 12px;
@@ -127,9 +155,104 @@
   --text-2xl: 24px;
   --text-3xl: 30px;
 
-  /* ---- motion (spec §23) ---- */
-  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --dur-fast: 120ms;
-  --dur-base: 180ms;
-  --dur-slow: 260ms;
+  /* ---------------------------------------------------------------- motion
+     ONE motion language. Every reveal, transition and state change in the app
+     uses these tokens, so the four extracted animation sources read as a
+     single coherent system rather than four unrelated demos. */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1); /* reveals, entrances */
+  --ease-quint: cubic-bezier(0.22, 1, 0.36, 1); /* micro-interactions */
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1); /* controls, state */
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1); /* reversible transitions */
+
+  --dur-1: 120ms; /* micro: hover, press, icon */
+  --dur-2: 240ms; /* control state, chip, tab */
+  --dur-3: 420ms; /* component enter, data appear */
+  --dur-4: 680ms; /* section reveal, curtain */
+  --dur-5: 1100ms; /* hero / first paint */
+
+  --reveal-y: 14px; /* consistent reveal distance */
+  --reveal-scale: 0.985;
+  --curtain-scale: 1.04;
+  --stagger-step: 45ms;
+
+  /* Back-compat aliases for the retired neumorphic motion tokens. Rules that
+     still reference the old names now resolve into the single motion system,
+     so the whole app shares one timing language by construction. */
+  --ease-ui: var(--ease-soft);
+  --dur-fast: var(--dur-1);
+  --dur-base: var(--dur-2);
+  --dur-slow: var(--dur-4);
+}
+
+/* ============================================================== INK SURFACE
+   Reserved for verification, audit and security contexts. Scoped so light
+   clinical pages are untouched, and so the audit views feel genuinely
+   weightier without turning the whole product dark. */
+[data-scope="ink"] {
+  --background: #121614;
+  --foreground: #f2f4ef;
+  --surface-shell: #171b18;
+  --surface: #1e231f;
+
+  --glass-1: rgba(255, 255, 255, 0.055);
+  --glass-2: rgba(255, 255, 255, 0.035);
+  --glass-3: rgba(255, 255, 255, 0.02);
+  --glass-edge: rgba(255, 255, 255, 0.1);
+  --glass-edge-strong: rgba(255, 255, 255, 0.16);
+  --glass-hairline: rgba(242, 244, 239, 0.09);
+
+  --surface-subtle: #1b201c;
+  --surface-muted: #232824;
+  --surface-hover: #262b27;
+  --surface-well: #141816;
+
+  --text: #f2f4ef;
+  --text-strong: #ffffff;
+  --text-muted: #a3a9a0;
+  --text-subtle: #7d847a;
+  --text-faint: #5b6159;
+
+  --border: rgba(242, 244, 239, 0.12);
+  --border-strong: rgba(242, 244, 239, 0.2);
+  --border-subtle: rgba(242, 244, 239, 0.07);
+
+  /* celadon and copper both brighten on ink to hold contrast */
+  --primary: #6fc3ac;
+  --primary-hover: #85d3be;
+  --primary-soft: rgba(111, 195, 172, 0.14);
+  --primary-foreground: #0f1613;
+  --celadon: #6fc3ac;
+  --celadon-bright: #8ed6c1;
+  --celadon-soft: rgba(111, 195, 172, 0.14);
+  --celadon-line: rgba(111, 195, 172, 0.34);
+
+  --copper: #d9a05b;
+  --copper-bright: #e8b478;
+  --copper-soft: rgba(217, 160, 91, 0.15);
+  --copper-line: rgba(217, 160, 91, 0.38);
+
+  --secondary: rgba(111, 195, 172, 0.1);
+  --secondary-foreground: #b8e2d6;
+  --accent: rgba(111, 195, 172, 0.12);
+  --accent-foreground: #8ed6c1;
+
+  --success: #4fc08f;
+  --success-soft: rgba(79, 192, 143, 0.14);
+  --warning: #e0b25c;
+  --warning-soft: rgba(224, 178, 92, 0.16);
+  --destructive: #e87575;
+  --destructive-soft: rgba(232, 117, 117, 0.14);
+  --info: #7fb3e8;
+  --info-soft: rgba(127, 179, 232, 0.14);
+
+  --accent-gold: #d9a05b;
+  --ring: #6fc3ac;
+  --input: rgba(242, 244, 239, 0.12);
+
+  --shadow-soft: 0 30px 70px -30px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 18px 44px -22px rgba(0, 0, 0, 0.66);
+  --shadow-raised: 0 24px 54px -24px rgba(0, 0, 0, 0.7);
+  --shadow-hover: 0 28px 60px -24px rgba(0, 0, 0, 0.74);
+  --shadow-cta: 0 10px 24px -10px rgba(111, 195, 172, 0.32);
+  --shadow-cta-active: 0 4px 12px -6px rgba(111, 195, 172, 0.32);
 }

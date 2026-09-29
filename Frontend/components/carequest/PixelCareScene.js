@@ -1,9 +1,14 @@
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import { Activity, Coins, HeartPulse, ShieldCheck } from "lucide-react";
 
+/**
+ * Marketing/demonstration scene — not a data surface, so it stays the quietest
+ * level of the hierarchy: a recessed grid well with solid, readable chips. No
+ * glass, because nothing here carries a value the patient must act on.
+ */
 export default function PixelCareScene({ compact = false }) {
   return (
-    <div className="cq-grid-paper relative overflow-hidden rounded-[24px] bg-[var(--surface-subtle)] p-5 md:p-6">
+    <div className="cq-grid-paper relative overflow-hidden rounded-[24px] border border-[var(--glass-hairline)] bg-[var(--surface-subtle)] p-5 md:p-6">
       <div className="absolute bottom-0 left-0 right-0 h-[34%] bg-[var(--surface-muted)]" />
       <div className="relative z-10 flex min-h-[240px] items-end justify-between gap-3">
         <div className="mb-8 hidden rounded-[16px] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)] sm:block">
@@ -35,7 +40,7 @@ export default function PixelCareScene({ compact = false }) {
         ].map(([Icon, label]) => (
           <div
             key={label}
-            className="rounded-[14px] bg-[var(--surface)] p-2.5 text-center shadow-[var(--shadow-card)]"
+            className="glass-interactive rounded-[14px] border border-[var(--glass-hairline)] bg-[var(--surface)] p-2.5 text-center shadow-[var(--shadow-card)]"
           >
             <Icon className="mx-auto h-[18px] w-[18px] text-[var(--text-strong)]" strokeWidth={1.75} />
             <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-muted)]">

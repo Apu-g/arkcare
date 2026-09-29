@@ -15,7 +15,7 @@ function DialogOverlay({ className, ...props }) {
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("fixed inset-0 z-50 bg-[#100E1A]/25 backdrop-blur-[2px]", className)}
+      className={cn("fixed inset-0 z-50 bg-[#121614]/32 backdrop-blur-[3px]", className)}
       {...props}
     />
   );
@@ -29,8 +29,8 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
         data-slot="dialog-content"
         className={cn(
           "fixed left-1/2 top-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4",
-          "rounded-[24px] border border-white/70 bg-card p-6 text-card-foreground sm:max-w-lg",
-          "shadow-[0_24px_60px_rgba(16,14,26,0.20),0_6px_18px_rgba(16,14,26,0.10)]",
+          "rounded-[22px] border border-[var(--glass-edge)] bg-card p-6 text-card-foreground sm:max-w-lg",
+          "shadow-[var(--shadow-soft)] [box-shadow:var(--shadow-soft),inset_0_1px_0_var(--glass-edge-strong)]",
           className
         )}
         {...props}

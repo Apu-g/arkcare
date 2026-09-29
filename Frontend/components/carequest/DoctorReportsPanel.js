@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDoctorReportWorkspace } from "@/actions/reportActions";
-import { AlertCircle, Building2, Link2, Loader2, Pill, RefreshCw, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { AlertCircle, Building2, Clock3, Link2, Loader2, Pill, RefreshCw, ShieldCheck, Stethoscope } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 
 /**
  * The doctor's "patients I've seen" workspace: every patient they interacted
@@ -36,21 +38,32 @@ export default function DoctorReportsPanel() {
 
   if (!data) {
     return (
-      <div className="cq-card p-6 text-[13px] text-muted-foreground">
-        {error ? error : "Loading patient reports…"}
+      <div className="cq-card flex items-center gap-2 p-6 text-[13px] text-muted-foreground">
+        {error ? (
+          <>
+            <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            {error}
+          </>
+        ) : (
+          <>
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin" strokeWidth={1.75} />
+            Loading patient reports…
+          </>
+        )}
       </div>
     );
   }
 
   return (
     <section className="nm-stack">
+      <Reveal>
       <div className="cq-card p-5 md:p-6">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div>
             <div className="cq-kicker">MY PATIENTS</div>
-            <h2 className="mt-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--text-strong)]">
-              <Users className="h-[18px] w-[18px] text-[var(--text-muted)]" strokeWidth={1.75} /> Reports &amp; activity
-            </h2>
+            <MaskedText as="h2" className="mt-1 text-[15px] font-semibold text-[var(--text-strong)]">
+              Reports &amp; activity
+            </MaskedText>
             <p className="mt-1 text-[12px] text-muted-foreground">
               {data.totals.patients} patients · {data.totals.reports} reports filed ·{" "}
               {data.totals.capsulesOnChain} capsules earned by your patients
@@ -82,6 +95,7 @@ export default function DoctorReportsPanel() {
           </Button>
         </div>
       </div>
+      </Reveal>
 
       {error ? (
         <div className="flex items-start gap-2 rounded-[14px] bg-[var(--destructive-soft)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--destructive)]">
@@ -90,6 +104,7 @@ export default function DoctorReportsPanel() {
         </div>
       ) : null}
 
+      <Reveal delay={60}>
       <div className="nm-grid-2">
         {data.patients.map((patient) => {
           const patientReports = data.reports.filter(
@@ -114,17 +129,19 @@ export default function DoctorReportsPanel() {
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <div className="rounded-[16px] bg-[var(--surface-subtle)] p-2.5 text-center shadow-[var(--shadow-inset)]">
+              {/* Engagement figures: counts a doctor acts on, so they sit on
+                  the data surface rather than behind a blur. */}
+              <div className="glass-data mt-3 grid grid-cols-3 gap-2 rounded-[16px] p-1.5">
+                <div className="rounded-[14px] p-2 text-center">
                   <div className="text-[16px] font-bold text-[var(--text-strong)]">{patient.missionsCompleted}</div>
                   <div className="mt-0.5 text-[10px] text-muted-foreground">missions done</div>
                 </div>
-                <div className="rounded-[16px] bg-[var(--surface-subtle)] p-2.5 text-center shadow-[var(--shadow-inset)]">
+                <div className="rounded-[14px] p-2 text-center">
                   <div className="text-[16px] font-bold text-[var(--text-strong)]">{patient.missionsDue}</div>
                   <div className="mt-0.5 text-[10px] text-muted-foreground">due now</div>
                 </div>
-                <div className="rounded-[16px] bg-[var(--surface-subtle)] p-2.5 text-center shadow-[var(--shadow-inset)]">
-                  <div className="text-[16px] font-bold text-[var(--text-strong)]">{patient.capsulesEarned}</div>
+                <div className="rounded-[14px] p-2 text-center">
+                  <div className="text-[16px] font-bold text-[var(--copper)]">{patient.capsulesEarned}</div>
                   <div className="mt-0.5 text-[10px] text-muted-foreground">capsules</div>
                 </div>
               </div>
@@ -132,23 +149,29 @@ export default function DoctorReportsPanel() {
               {patientReports.length ? (
                 <div className="mt-3 nm-stack-sm">
                   {patientReports.map((report) => (
+                    /* Remarks, medications and hashes are the record itself:
+                       near-opaque, always fully readable. */
                     <div
                       key={report._id}
-                      className="rounded-[16px] bg-[var(--surface-subtle)] p-3 text-[11px] shadow-[var(--shadow-inset)]"
+                      className="glass-data rounded-[16px] p-3 text-[11px]"
                     >
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold">rev {report.revision}</span>
+                        <span className="font-bold text-[var(--text-strong)]">rev {report.revision}</span>
+                        {/* Anchor state indicator: the one element here whose
+                            change is animated, because "is this provable yet"
+                            is the question this panel answers. */}
                         {report.blockchain?.status === "anchored" ? (
-                          <span className="cq-pixel-label cq-real-label">
-                            <Link2 className="mr-1 h-3 w-3" strokeWidth={1.75} /> on-chain
+                          <span className="inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--success-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--success)] transition-colors duration-[var(--dur-3)] ease-[var(--ease-soft)]">
+                            <Link2 className="h-3 w-3" strokeWidth={1.75} /> on-chain
                           </span>
                         ) : (
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="transition-colors duration-[var(--dur-3)] ease-[var(--ease-soft)]">
+                            <Clock3 className="h-3 w-3" strokeWidth={1.75} />
                             {report.blockchain?.status || "pending"}
                           </Badge>
                         )}
                         {report.aiNeedsReview ? (
-                          <Badge variant="outline">needs review</Badge>
+                          <Badge variant="warning">needs review</Badge>
                         ) : null}
                       </div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
@@ -170,14 +193,15 @@ export default function DoctorReportsPanel() {
                         </p>
                       ) : null}
                       {report.medications?.length ? (
-                        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
                           <Pill className="h-3 w-3 shrink-0" strokeWidth={1.75} />
                           {report.medications
                             .map((m) => m.name + (m.dose ? ` ${m.dose}` : ""))
                             .join(", ")}
                         </div>
                       ) : null}
-                      <div className="mt-1 break-all font-mono text-[9px] text-muted-foreground">
+                      <div className="mt-1.5 flex items-start gap-1.5 break-all border-t border-[var(--border-subtle)] pt-1.5 font-mono text-[10px] text-[var(--text-muted)]">
+                        <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0 text-[var(--copper)]" strokeWidth={1.75} />
                         {report.contentHash?.slice(0, 20)}…
                         {report.blockchain?.txHash
                           ? ` · tx ${report.blockchain.txHash.slice(0, 10)}…`
@@ -195,6 +219,7 @@ export default function DoctorReportsPanel() {
           );
         })}
       </div>
+      </Reveal>
 
       {data.patients.length === 0 ? (
         <div className="cq-card p-8 text-center text-[13px] text-muted-foreground">

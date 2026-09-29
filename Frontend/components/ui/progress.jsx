@@ -11,14 +11,14 @@ function Progress({ className, value, indicatorColor, ...props }) {
       data-slot="progress"
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full bg-[var(--surface-muted)]",
-        "shadow-[inset_2px_2px_6px_rgba(157,166,184,0.16)]",
+        "shadow-[var(--shadow-well)]",
         className
       )}
       {...props}
     >
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
-        className={cn("h-full w-full flex-1 transition-all", indicatorColor || "bg-[var(--primary)]")}
+        className={cn("h-full w-full flex-1 transition-all", indicatorColor || "bg-[var(--celadon)]")}
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>

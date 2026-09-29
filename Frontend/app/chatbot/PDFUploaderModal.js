@@ -134,7 +134,8 @@ export default function PDFUploaderModal({ isOpen, onClose }) {
             <span>Upload Medical Reports</span>
           </DialogTitle>
           <DialogDescription>
-            Upload PDF files for AI analysis and structured data extraction
+            Upload PDF files for structured data extraction. AI reads the report — it
+            never diagnoses, prescribes or changes a dose.
           </DialogDescription>
         </DialogHeader>
 
@@ -155,7 +156,7 @@ export default function PDFUploaderModal({ isOpen, onClose }) {
               className="flex cursor-pointer flex-col items-center gap-2"
             >
               <Upload
-                className="h-9 w-9 text-[var(--text-subtle)]"
+                className="h-9 w-9 text-[var(--celadon)]"
                 strokeWidth={1.75}
               />
               <p className="text-[14px] font-semibold text-[var(--text-strong)]">
@@ -226,7 +227,7 @@ export default function PDFUploaderModal({ isOpen, onClose }) {
           {error && (
             <div
               role="alert"
-              className="flex items-center gap-2 rounded-[14px] border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] p-3 text-[var(--destructive)]"
+              className="flex items-center gap-2 rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] p-3 text-[var(--destructive)]"
             >
               <XCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
               <span className="text-[13px]">{error}</span>
@@ -299,7 +300,7 @@ export default function PDFUploaderModal({ isOpen, onClose }) {
                         {results.pdf_download_urls.map((item, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between gap-3 rounded-[14px] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]"
+                            className="glass-data flex items-center justify-between gap-3 rounded-[14px] p-3"
                           >
                             <div className="flex min-w-0 items-center gap-2">
                               <FileText
@@ -335,7 +336,7 @@ export default function PDFUploaderModal({ isOpen, onClose }) {
                       {results.parsed_json.map((report, index) => (
                         <div
                           key={index}
-                          className="mb-4 rounded-[14px] bg-[var(--surface-subtle)] p-3"
+                          className="glass-data mb-4 rounded-[14px] p-3"
                         >
                           <div className="grid grid-cols-2 gap-2 text-[13px] text-[var(--text)]">
                             <div>

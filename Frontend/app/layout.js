@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import AuthProvider from "@/components/AuthProvider";
 import SocketProvider from "@/components/SocketProvider";
+import AppChrome from "@/components/motion/AppChrome";
 
 // Design spec §3: Inter is the preferred family for the soft-neumorphic UI.
 // Geist_Mono stays for hashes, addresses and other monospace readouts.
@@ -32,11 +33,15 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
         />
         <div className="ark-shell">
-          <div className="ark-content">
-            <AuthProvider>
-              <SocketProvider>{children}</SocketProvider>
-            </AuthProvider>
-          </div>
+          {/* AppChrome owns the ambient layer and scroll-progress rail so they
+              mount once for the whole app and never restart on navigation. */}
+          <AppChrome>
+            <div className="ark-content">
+              <AuthProvider>
+                <SocketProvider>{children}</SocketProvider>
+              </AuthProvider>
+            </div>
+          </AppChrome>
         </div>
       </body>
     </html>

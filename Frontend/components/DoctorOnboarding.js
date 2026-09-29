@@ -9,8 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createDoctorProfile } from "@/actions/doctorActions";
-import { AlertCircle, Stethoscope, User, GraduationCap, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, GraduationCap, ShieldCheck, Stethoscope, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 
 const CATEGORIES = [
   "Cardiology",
@@ -134,17 +136,21 @@ export default function DoctorOnboarding() {
     <div className="nm-stack mx-auto max-w-4xl px-4 py-8 sm:px-6">
       {/* This page renders outside CareQuestShell, so it supplies its own page
           padding. Everything below the root uses the shared nm-* primitives. */}
+        <Reveal>
         <section className="nm-dark-card p-6 text-center md:p-7">
-          <div className="nm-stat-icon mx-auto">
+          <div className="mx-auto nm-stat-icon">
             <Stethoscope className="h-5 w-5" strokeWidth={1.75} />
           </div>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">Doctor onboarding</span>
-            <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">Profile quest</span>
+            <span className="nm-dark-elevated px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--dark-muted)]">Doctor onboarding</span>
+            <span className="nm-dark-elevated px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--dark-muted)]">Profile quest</span>
           </div>
-          <h1 className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[#fff] md:text-[22px]">
+          <MaskedText
+            as="h1"
+            className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--dark-text)] md:text-[22px]"
+          >
             Build your care profile
-          </h1>
+          </MaskedText>
           <p className="mx-auto mt-1.5 max-w-2xl text-[13px] leading-relaxed text-[var(--dark-muted)]">
             Complete credentials, consultation details, and availability so patients can discover and book you.
           </p>
@@ -153,11 +159,13 @@ export default function DoctorOnboarding() {
             <p className="mt-2 text-[11px] text-[var(--dark-muted)]">Profile setup · verification comes next</p>
           </div>
         </section>
+        </Reveal>
 
         <form onSubmit={handleSubmit} className="nm-stack">
           {/* Personal Information */}
+          <Reveal delay={60}>
           <Card className="cq-card gap-0 border-0 p-0">
-            <CardHeader>
+            <CardHeader className="border-b border-[var(--border-subtle)]">
               <CardTitle className="flex items-center gap-2.5">
                 <div className="nm-stat-icon">
                   <User className="h-5 w-5" strokeWidth={1.75} />
@@ -165,7 +173,7 @@ export default function DoctorOnboarding() {
                 <span className="text-[14px]">Personal information</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="nm-stack">
+            <CardContent className="nm-stack py-5">
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full name *</Label>
@@ -176,7 +184,7 @@ export default function DoctorOnboarding() {
                     required
                   />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="phone">Phone number *</Label>
                   <Input
                     id="phone"
@@ -189,10 +197,12 @@ export default function DoctorOnboarding() {
               </div>
             </CardContent>
           </Card>
+          </Reveal>
 
           {/* Professional Information */}
+          <Reveal delay={120}>
           <Card className="cq-card gap-0 border-0 p-0">
-            <CardHeader>
+            <CardHeader className="border-b border-[var(--border-subtle)]">
               <CardTitle className="flex items-center gap-2.5">
                 <div className="nm-stat-icon">
                   <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
@@ -200,7 +210,7 @@ export default function DoctorOnboarding() {
                 <span className="text-[14px]">Professional information</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="nm-stack">
+            <CardContent className="nm-stack py-5">
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="specialization">Specialization *</Label>
@@ -212,7 +222,7 @@ export default function DoctorOnboarding() {
                     required
                   />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="category">Category *</Label>
                   <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
                     <SelectTrigger
@@ -244,7 +254,7 @@ export default function DoctorOnboarding() {
                     required
                   />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="consultationFee">Consultation fee (₹) *</Label>
                   <Input
                     id="consultationFee"
@@ -272,10 +282,12 @@ export default function DoctorOnboarding() {
               </div>
             </CardContent>
           </Card>
+          </Reveal>
 
           {/* Availability */}
+          <Reveal delay={180}>
           <Card className="cq-card gap-0 border-0 p-0">
-            <CardHeader>
+            <CardHeader className="border-b border-[var(--border-subtle)]">
               <CardTitle className="flex items-center gap-2.5">
                 <div className="nm-stat-icon">
                   <Clock className="h-5 w-5" strokeWidth={1.75} />
@@ -286,10 +298,10 @@ export default function DoctorOnboarding() {
                 Select the days and time slots when you are available for consultations
               </CardDescription>
             </CardHeader>
-            <CardContent className="nm-stack">
+            <CardContent className="nm-stack py-5">
               {formData.availability.map((dayAvail, dayIndex) => (
                 <div key={dayAvail.day} className="space-y-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-h-10 items-center gap-3">
                     <Checkbox
                       id={dayAvail.day}
                       checked={dayAvail.selected}
@@ -317,8 +329,11 @@ export default function DoctorOnboarding() {
                           </Button>
                         ))}
                       </div>
+                      {/* Selection count is a state indicator: icon + number,
+                          never the celadon fill on its own. */}
                       {dayAvail.slots.length > 0 && (
-                        <p className="text-[12px] font-semibold text-[var(--success)]">
+                        <p className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--success)]">
+                          <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                           Selected: {dayAvail.slots.length} slots
                         </p>
                       )}
@@ -328,6 +343,7 @@ export default function DoctorOnboarding() {
               ))}
             </CardContent>
           </Card>
+          </Reveal>
 
           {error && (
             <div
@@ -340,6 +356,7 @@ export default function DoctorOnboarding() {
           )}
 
           {/* Submit */}
+          <Reveal delay={240}>
           <Card className="cq-card gap-0 border-0 p-0">
             <CardContent className="p-6 text-center">
               <Button
@@ -350,11 +367,13 @@ export default function DoctorOnboarding() {
               >
                 {loading ? "Creating Profile..." : "Submit for Review"}
               </Button>
-              <p className="mt-4 text-center text-[12px] text-muted-foreground">
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[12px] text-muted-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
                 Your profile will be reviewed by our team and you&apos;ll be notified once approved.
               </p>
             </CardContent>
           </Card>
+          </Reveal>
         </form>
     </div>
   );

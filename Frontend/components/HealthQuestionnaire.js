@@ -91,10 +91,12 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-                    <Card key={currentQuestion.id} className="border-none bg-transparent shadow-none">
+                    {/* cq-reveal: one enter per question, pure CSS, replayed by the
+                        existing `key` change — no new JS animation. */}
+                    <Card key={currentQuestion.id} className="cq-reveal border-none bg-transparent shadow-none">
                         <CardContent className="p-0">
                             <div className="flex items-start gap-3">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[12px] font-bold text-[var(--dark-text)] tabular-nums">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[12px] font-bold text-[var(--primary-foreground)] tabular-nums">
                                     {currentQuestionIndex + 1}
                                 </div>
                                 <div className="flex-1">
@@ -110,7 +112,7 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
                                             <Label
                                                 key={option.value}
                                                 htmlFor={`${currentQuestion.id}-${option.value}`}
-                                                className={`flex min-h-10 cursor-pointer items-center gap-3 rounded-[14px] border p-3 ${responses[currentQuestion.id] === option.value
+                                                className={`flex min-h-10 cursor-pointer items-center gap-3 rounded-[14px] border p-3 transition hover:-translate-y-px ${responses[currentQuestion.id] === option.value
                                                         ? 'border-[var(--primary)] bg-[var(--primary-soft)] shadow-[var(--shadow-card)]'
                                                         : 'border-[var(--border)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)]'
                                                     }`}

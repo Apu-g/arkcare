@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import MaskedText from "@/components/motion/MaskedText";
 import PDFUploaderModal from './PDFUploaderModal';
 import {
     Send,
@@ -144,9 +145,12 @@ export default function ChatbotPage() {
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                                <MaskedText
+                                    as="h1"
+                                    className="text-[15px] font-semibold text-[var(--text-strong)]"
+                                >
                                     ArkCare AI Guide
-                                </h1>
+                                </MaskedText>
                                 <span className="status-chip hidden sm:inline-flex">Care quest</span>
                             </div>
                             <p className="text-[11px] text-[var(--text-muted)]">
@@ -203,10 +207,12 @@ export default function ChatbotPage() {
                                         className={
                                             "max-w-[88%] rounded-[18px] px-4 py-3 " +
                                             (message.isUser
-                                                ? "bg-[var(--primary)] text-white"
+                                                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                                                 : message.isError
-                                                    ? "border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] text-[var(--destructive)]"
-                                                    : "cq-card text-[var(--text)]")
+                                                    ? "border border-[var(--destructive)] bg-[var(--destructive-soft)] text-[var(--destructive)]"
+                                                    // AI text is clinical content, so it sits on the
+                                                    // near-opaque data surface, never heavy glass.
+                                                    : "glass-data text-[var(--text)]")
                                         }
                                     >
                                         <div className="mb-2 flex items-center justify-between gap-3">
@@ -215,8 +221,7 @@ export default function ChatbotPage() {
                                                     <span className="grid h-6 w-6 place-items-center rounded-full bg-white/15">
                                                         <User className="h-3 w-3" strokeWidth={1.75} />
                                                     </span>
-                                                ) : (
-                                                    <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px]">
+                                                ) : (                                                    <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px] !p-0 !text-[12px]">
                                                         <Bot className="h-3 w-3" strokeWidth={1.75} />
                                                     </span>
                                                 )}
@@ -243,8 +248,7 @@ export default function ChatbotPage() {
                                             <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
                                                 <div className="mb-3 flex items-center gap-2">
                                                     <Stethoscope
-                                                        className="h-[18px] w-[18px] text-[var(--text-muted)]"
-                                                        strokeWidth={1.75}
+                                                        className="h-[18px] w-[18px] text-[var(--text-muted)]"                                                        strokeWidth={1.75}
                                                     />
                                                     <span className="nm-card-title">
                                                         Recommended Specialists
@@ -301,9 +305,9 @@ export default function ChatbotPage() {
 
                             {loading && (
                                 <div className="flex justify-start">
-                                    <div className="cq-card px-4 py-3">
+                                    <div className="glass-data rounded-[18px] px-4 py-3">
                                         <div className="flex items-center gap-3">
-                                            <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px]">
+                                            <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px] !p-0 !text-[12px]">
                                                 <Bot className="h-3 w-3" strokeWidth={1.75} />
                                             </span>
                                             <span className="text-[13px] text-[var(--text-muted)]">
@@ -362,6 +366,10 @@ export default function ChatbotPage() {
                     </p>
                     <span className="status-chip">AI Assistant online</span>
                 </div>
+                <p className="mt-2 text-[11px] text-[var(--text-subtle)]">
+                    AI never diagnoses, prescribes, changes a dose or approves anything.
+                    Only a clinician can.
+                </p>
             </div>
 
             {/* Booking Modal */}

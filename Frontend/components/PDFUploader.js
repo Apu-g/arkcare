@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Reveal from "@/components/motion/Reveal";
 import {
     Upload,
     FileText,
@@ -114,6 +115,7 @@ export default function PDFUploader() {
 
     return (
         <div className="mx-auto grid max-w-4xl gap-6">
+            <Reveal>
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -121,7 +123,8 @@ export default function PDFUploader() {
                         <span>Upload Medical Reports</span>
                     </CardTitle>
                     <CardDescription>
-                        Upload PDF files of your medical reports for AI analysis and structured data extraction
+                        Upload PDF files of your medical reports for structured data extraction. AI reads the report — it never
+                        diagnoses, prescribes or changes a dose.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 pb-6">
@@ -140,7 +143,7 @@ export default function PDFUploader() {
                             className="flex cursor-pointer flex-col items-center gap-2"
                         >
                             <Upload
-                                className="h-9 w-9 text-[var(--text-subtle)]"
+                                className="h-9 w-9 text-[var(--celadon)]"
                                 strokeWidth={1.75}
                             />
                             <p className="text-[14px] font-semibold text-[var(--text-strong)]">
@@ -203,7 +206,7 @@ export default function PDFUploader() {
                     {error && (
                         <div
                             role="alert"
-                            className="flex items-center gap-2 rounded-[14px] border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] p-3 text-[var(--destructive)]"
+                            className="flex items-center gap-2 rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] p-3 text-[var(--destructive)]"
                         >
                             <XCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
                             <span className="text-[13px]">{error}</span>
@@ -230,8 +233,10 @@ export default function PDFUploader() {
                     </Button>
                 </CardContent>
             </Card>
+            </Reveal>
 
             {results && (
+                <Reveal>
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -274,7 +279,7 @@ export default function PDFUploader() {
                                     {results.pdf_download_urls.map((item, index) => (
                                         <div
                                             key={index}
-                                            className="flex items-center justify-between gap-3 rounded-[14px] bg-[var(--surface-subtle)] p-3"
+                                            className="glass-data flex items-center justify-between gap-3 rounded-[14px] p-3"
                                         >
                                             <div className="flex min-w-0 items-center gap-2">
                                                 <FileText
@@ -307,7 +312,7 @@ export default function PDFUploader() {
                                     {results.parsed_json.map((report, index) => (
                                         <div
                                             key={index}
-                                            className="mb-4 rounded-[14px] bg-[var(--surface)] p-3"
+                                            className="glass-data mb-4 rounded-[14px] p-3"
                                         >
                                             <div className="grid grid-cols-2 gap-2 text-[13px] text-[var(--text)]">
                                                 <div><strong>Patient:</strong> {report.patient_info?.name || 'N/A'}</div>
@@ -332,6 +337,7 @@ export default function PDFUploader() {
                         )}
                     </CardContent>
                 </Card>
+                </Reveal>
             )}
         </div>
     );

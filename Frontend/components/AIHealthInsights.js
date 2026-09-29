@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import { Lightbulb, Target, TrendingUp, RefreshCw, ShieldCheck } from "lucide-react";
 
 export default function AIHealthInsights({ healthData, onRefresh }) {
@@ -60,14 +62,17 @@ export default function AIHealthInsights({ healthData, onRefresh }) {
     };
 
     return (
-        <Card className="overflow-hidden">
+        <Reveal>
+        <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <div className="nm-stat-icon shrink-0">
                         <Lightbulb className="h-[18px] w-[18px]" strokeWidth={1.75} />
                     </div>
                     <div>
-                        <CardTitle>AI Health Insights</CardTitle>
+                        <MaskedText as="h3" className="text-[13px] font-semibold leading-tight text-[var(--text-strong)]">
+                            AI Health Insights
+                        </MaskedText>
                         <CardDescription>Personalized analysis and recommendations.</CardDescription>
                     </div>
                 </div>
@@ -75,7 +80,7 @@ export default function AIHealthInsights({ healthData, onRefresh }) {
                     type="button"
                     onClick={generateInsights}
                     disabled={loading}
-                    className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-[var(--surface)] text-[var(--text-muted)] shadow-[var(--shadow-card)] hover:text-[var(--text-strong)] disabled:opacity-50"
+                    className="glass-interactive grid size-10 shrink-0 place-items-center rounded-[14px] bg-[var(--surface)] text-[var(--text-muted)] shadow-[var(--shadow-card)] hover:text-[var(--text-strong)] disabled:opacity-50"
                     aria-label="Refresh insights"
                 >
                     <RefreshCw className={`h-[18px] w-[18px] ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
@@ -102,7 +107,7 @@ export default function AIHealthInsights({ healthData, onRefresh }) {
                     <div className="space-y-5">
                         {/* Overall Assessment */}
                         {insights.overall_assessment && (
-                            <div className="rounded-[16px] bg-[var(--surface-subtle)] p-4">
+                            <div className="glass-data rounded-[16px] p-4">
                                 <h3 className="nm-card-title flex items-center gap-2">
                                     <Target className="h-[18px] w-[18px]" strokeWidth={1.75} />
                                     Overall Assessment
@@ -121,7 +126,7 @@ export default function AIHealthInsights({ healthData, onRefresh }) {
                                     Action Recommendations
                                 </h3>
                                 {insights.recommendations.map((rec, index) => (
-                                    <div key={index} className="cq-card-soft p-4">
+                                    <div key={index} className="nm-row grid-cols-1 items-start gap-1 rounded-[16px] px-3.5 py-3">
                                         <div className="mb-1.5 flex items-start justify-between gap-2">
                                             <h4 className="text-[12.5px] font-semibold text-[var(--text-strong)]">
                                                 {rec.title}
@@ -174,5 +179,6 @@ export default function AIHealthInsights({ healthData, onRefresh }) {
                 )}
             </CardContent>
         </Card>
+        </Reveal>
     );
 }

@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   FileText,
+  Info,
   Loader2,
   Lock,
   Paperclip,
@@ -24,6 +25,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { parseDoctorReportPreview, submitDoctorReport } from "@/actions/reportActions";
+import Reveal from "@/components/motion/Reveal";
 
 /**
  * The doctor's "Report" flow, available during/after a consultation:
@@ -146,8 +148,10 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
       <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-[18px] w-[18px] text-[var(--text-muted)]" strokeWidth={1.75} />
-            Consultation report
+            <span className="nm-stat-icon h-8 w-8 rounded-[10px]">
+              <FileText className="h-4 w-4" strokeWidth={1.75} />
+            </span>
+            <span className="text-[15px]">Consultation report</span>
           </DialogTitle>
           <DialogDescription>
             Document the visit for {appointment?.patient?.name || "this patient"}. Your
@@ -167,15 +171,23 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 {result.plan?.occurrenceCount} missions.
               </p>
             </div>
-            <div className="rounded-[16px] bg-[var(--surface-subtle)] p-3 text-[11px] shadow-[var(--shadow-inset)]">
+            {/* On-chain proof: the immutable-record readout. Near-opaque data
+                surface + mono, so a hash is never read through a blur. */}
+            <div className="glass-data rounded-[16px] p-3 text-[11px]">
               <div className="flex items-center gap-2 text-[12px] font-semibold text-[var(--text-strong)]">
-                <Lock className="h-3.5 w-3.5" strokeWidth={1.75} /> On-chain proof
+                <Lock className="h-3.5 w-3.5 text-[var(--copper)]" strokeWidth={1.75} /> On-chain proof
               </div>
-              <div className="mt-1.5 break-all font-mono text-[10px] text-[var(--text-muted)]">
-                hash {result.contentHash}
+              <div className="mt-1.5 flex items-start gap-2">
+                <span className="shrink-0 text-[var(--text-subtle)]">hash</span>
+                <span className="break-all font-mono text-[11px] text-[var(--text)]">
+                  {result.contentHash}
+                </span>
               </div>
-              <div className="break-all font-mono text-[10px] text-[var(--text-muted)]">
-                tx {result.blockchain?.txHash || result.blockchain?.status}
+              <div className="mt-0.5 flex items-start gap-2">
+                <span className="shrink-0 text-[var(--text-subtle)]">tx</span>
+                <span className="break-all font-mono text-[11px] text-[var(--text)]">
+                  {result.blockchain?.txHash || result.blockchain?.status}
+                </span>
               </div>
             </div>
             <Button
@@ -245,7 +257,7 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 {images.map((image) => (
                   <span
                     key={image.url}
-                    className="inline-flex items-center gap-1.5 rounded-[12px] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] text-[var(--text)] shadow-[var(--shadow-inset)]"
+                    className="glass-data inline-flex items-center gap-1.5 rounded-[12px] px-2.5 py-1 text-[11px] text-[var(--text)]"
                   >
                     <Paperclip className="h-3 w-3 shrink-0" strokeWidth={1.75} /> {image.fileName || "image"}
                     <button
@@ -267,7 +279,9 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            {/* The commit action. Copper is reserved for exactly this:
+                "this writes an immutable record". */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -281,7 +295,7 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 )}
                 Parse with AI
               </Button>
-              <Button type="button" onClick={submit} disabled={!canSubmit}>
+              <Button type="button" variant="copper" onClick={submit} disabled={!canSubmit} className="ml-auto">
                 {busy === "submit" ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
                 ) : (
@@ -292,7 +306,8 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
             </div>
 
             {message ? (
-              <div className="rounded-[14px] bg-[var(--surface-subtle)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--text-muted)] shadow-[var(--shadow-inset)]">
+              <div className="inline-flex items-start gap-2 rounded-[14px] bg-[var(--surface-subtle)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--text-muted)] shadow-[var(--shadow-inset)]">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
                 {message}
               </div>
             ) : null}
@@ -304,7 +319,11 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
             ) : null}
 
             {preview?.parsed ? (
-              <div className="space-y-3 rounded-[18px] bg-[var(--surface-subtle)] p-4 shadow-[var(--shadow-inset)]">
+              /* Parsed medications/doses are clinical values: data surface.
+                 One Reveal for the whole block, because a parse result is a
+                 section appearing — never one per medication line. */
+              <Reveal>
+              <div className="glass-data space-y-3 rounded-[18px] p-4">
                 <div className="cq-kicker">AI-STRUCTURED PREVIEW</div>
                 {preview.parsed.needsReview || preview.warnings?.length ? (
                   <div className="rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11px] leading-relaxed text-[var(--warning)]">
@@ -321,13 +340,22 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 {preview.parsed.medications?.length ? (
                   <div>
                     <div className="text-[12px] font-semibold text-[var(--text-strong)]">Medications</div>
-                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
+                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-[var(--text)]">
                       {preview.parsed.medications.map((med, index) => (
-                        <li key={index}>
-                          • {med.name}
-                          {med.dose ? ` · ${med.dose}` : ""}
-                          {med.frequency ? ` · ${med.frequency}` : ""}
-                          {med.needsReview ? " (verify)" : ""}
+                        <li key={index} className="flex flex-wrap items-baseline gap-x-1.5">
+                          <span className="font-semibold text-[var(--text-strong)]">
+                            {med.name}
+                          </span>
+                          <span className="font-mono">
+                            {med.dose || ""}
+                            {med.frequency ? ` · ${med.frequency}` : ""}
+                          </span>
+                          {med.needsReview ? (
+                            <span className="inline-flex items-center gap-1 text-[var(--warning)]">
+                              <AlertTriangle className="h-3 w-3" strokeWidth={1.75} />
+                              verify
+                            </span>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -336,7 +364,7 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 {preview.parsed.conditions?.length ? (
                   <div>
                     <div className="text-[12px] font-semibold text-[var(--text-strong)]">Conditions detected</div>
-                    <div className="mt-1 text-[11px] text-muted-foreground">
+                    <div className="mt-1 text-[11px] text-[var(--text-muted)]">
                       {preview.parsed.conditions.map((c) => c.label).join(", ")}
                     </div>
                   </div>
@@ -346,7 +374,7 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                     <div className="text-[12px] font-semibold text-[var(--text-strong)]">
                       Knowledge check (4 questions from the quiz bank)
                     </div>
-                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
+                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-[var(--text-muted)]">
                       {preview.quizPreview.map((item) => (
                         <li key={item.questionId}>
                           • [{item.categoryTitle}] {item.question}
@@ -355,11 +383,13 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                     </ul>
                   </div>
                 ) : null}
-                <div className="flex items-start gap-1.5 text-[10px] leading-relaxed text-muted-foreground">
+                <div className="flex items-start gap-1.5 border-t border-[var(--border-subtle)] pt-2.5 text-[10px] leading-relaxed text-[var(--text-muted)]">
                   <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={1.75} />
-                  AI only structures what you wrote. Correct answers never leave the server.
+                  AI only structures what you wrote. It cannot prescribe or change
+                  doses, and correct answers never leave the server.
                 </div>
               </div>
+              </Reveal>
             ) : null}
           </div>
         )}

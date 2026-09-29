@@ -19,16 +19,27 @@ import {
 } from "@/components/ui/select";
 import {
   Activity,
+  AlertCircle,
+  ArrowUpRight,
   Calendar,
   CalendarCheck2,
   CheckCircle2,
+  ClipboardList,
   Clock,
+  FileText,
+  Hourglass,
+  MessageCircle,
+  ShieldCheck,
+  Siren,
+  Sparkles,
+  Stethoscope,
   User,
   Users,
-  MessageCircle,
-  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import {
   getDoctorAppointments,
   updateAppointmentStatus,
@@ -36,7 +47,6 @@ import {
 } from "@/actions/appointmentActions";
 import ChatModal from "./ChatModal";
 import NotificationBell from "./NotificationBell";
-import { AlertCircle } from "lucide-react";
 
 // Lightweight freshness window for the appointment list. Long enough to be
 // cheap, short enough that a doctor does not sit on a stale schedule.
@@ -229,117 +239,166 @@ export default function DoctorDashboard({ doctor }) {
 
   return (
     <div className="nm-dash">
-      <div className="nm-dash-col">
-        {/* ------------------------------------------- dark anchor: today at a glance */}
-        <section className="nm-dark-card p-6">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="nm-stat-icon shrink-0">
-                <Activity className="h-5 w-5" strokeWidth={1.75} />
-              </div>
-              <div>
-                <div className="mb-2 flex flex-wrap gap-2">
-                  <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">
+      <div className="nm-dash-col nm-stack">
+        {/* --------------------------------- ink anchor: today's clinic, compact */}
+        <Reveal>
+          <section className="nm-dark-card p-5 md:p-6">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap gap-2">
+                  <span className="nm-dark-elevated px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--dark-muted)]">
                     Doctor workspace
                   </span>
-                  <span
-                    className={
-                      doctor.status === "approved"
-                        ? "cq-pixel-label cq-real-label"
-                        : "cq-pixel-label cq-sim-label"
-                    }
-                  >
-                    {doctor.status === "approved"
-                      ? "Profile verified"
-                      : "Review pending"}
+                  <span className="nm-dark-elevated inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]">
+                    {doctor.status === "approved" ? (
+                      <ShieldCheck
+                        className="h-3 w-3 text-[var(--celadon-bright)]"
+                        strokeWidth={1.75}
+                      />
+                    ) : (
+                      <Hourglass
+                        className="h-3 w-3 text-[var(--copper-bright)]"
+                        strokeWidth={1.75}
+                      />
+                    )}
+                    <span
+                      className={
+                        doctor.status === "approved"
+                          ? "text-[var(--celadon-bright)]"
+                          : "text-[var(--copper-bright)]"
+                      }
+                    >
+                      {doctor.status === "approved"
+                        ? "Profile verified"
+                        : "Review pending"}
+                    </span>
                   </span>
                 </div>
-                <h1 className="text-[20px] font-bold leading-tight tracking-[-0.01em] text-[#fff] md:text-[22px]">
-                  Care operations
-                </h1>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--dark-muted)]">
+
+                <MaskedText
+                  as="h1"
+                  className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--dark-text)] md:text-[22px]"
+                >
+                  Today&apos;s clinic
+                </MaskedText>
+                <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-[var(--dark-muted)]">
                   Welcome back, {doctor.name}. Manage consultations, notes,
                   conversations, and your care schedule.
                 </p>
               </div>
+
+              {/* The day's shape: one figure, always on the data surface. */}
+              <div className="glass-data flex shrink-0 items-center gap-4 rounded-[18px] px-5 py-4">
+                <div className="nm-stat-icon shrink-0">
+                  <Activity className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <div className="nm-metric-xl">{todayAppointments.length}</div>
+                  <div className="text-[11px] font-medium text-[var(--text-muted)]">
+                    {todayAppointments.length === 1
+                      ? "consultation today"
+                      : "consultations today"}
+                  </div>
+                </div>
+                <div className="hidden h-10 w-px bg-[var(--border-subtle)] sm:block" />
+                <div className="hidden sm:block">
+                  <div className="text-[12px] font-semibold text-[var(--text-strong)]">
+                    {pendingCount} awaiting
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)]">
+                    {confirmedCount} confirmed
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="hidden items-center gap-2 rounded-[14px] bg-[rgba(255,255,255,0.10)] px-3.5 py-2.5 text-[11px] font-semibold text-[rgba(255,255,255,0.92)] sm:inline-flex">
+
+            <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-4">
+              <span className="inline-flex items-center gap-2 text-[11px] font-semibold text-[var(--dark-muted)]">
                 <Sparkles className="h-4 w-4" strokeWidth={1.75} />
                 Milestone layer ready
               </span>
-              <NotificationBell />
+              <div className="ml-auto">
+                <NotificationBell />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </Reveal>
 
         {doctor.status === "approved" ? (
           <Tabs defaultValue="appointments" className="nm-stack">
-            <TabsList
-              className="h-auto w-auto gap-1 rounded-[var(--radius-pill)] border-0
-                bg-[var(--surface-subtle)] p-1 shadow-[var(--shadow-inset)]
-                data-[orientation=horizontal]:flex-row"
-            >
-              <TabsTrigger
-                value="appointments"
-                className="h-9 rounded-[var(--radius-pill)] px-4 text-[12px] font-semibold
-                  text-[var(--text-muted)] hover:text-[var(--text-strong)]
-                  data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[#fff]
-                  data-[state=active]:shadow-[0_6px_14px_rgba(16,14,26,0.16)]"
+            <div className="flex flex-wrap items-center gap-3">
+              <TabsList
+                className="h-auto w-auto gap-1 rounded-[var(--radius-pill)] border
+                  border-[var(--glass-edge)] bg-[var(--glass-2)] p-1 shadow-[var(--shadow-inset)]
+                  backdrop-blur-[12px]
+                  data-[orientation=horizontal]:flex-row"
               >
-                Appointments
-              </TabsTrigger>
-              <TabsTrigger
-                value="profile"
-                className="h-9 rounded-[var(--radius-pill)] px-4 text-[12px] font-semibold
-                  text-[var(--text-muted)] hover:text-[var(--text-strong)]
-                  data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[#fff]
-                  data-[state=active]:shadow-[0_6px_14px_rgba(16,14,26,0.16)]"
-              >
-                Profile
-              </TabsTrigger>
-            </TabsList>
+                <TabsTrigger
+                  value="appointments"
+                  className="h-9 rounded-[var(--radius-pill)] px-4 text-[12px] font-semibold
+                    text-[var(--text-muted)] hover:text-[var(--text-strong)]
+                    data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[#fff]
+                    data-[state=active]:shadow-[var(--shadow-cta)]"
+                >
+                  Appointments
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profile"
+                  className="h-9 rounded-[var(--radius-pill)] px-4 text-[12px] font-semibold
+                    text-[var(--text-muted)] hover:text-[var(--text-strong)]
+                    data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[#fff]
+                    data-[state=active]:shadow-[var(--shadow-cta)]"
+                >
+                  Profile
+                </TabsTrigger>
+              </TabsList>
+              <p className="ml-auto text-[11px] font-medium text-[var(--text-muted)]">
+                Status saves immediately &middot; notes save on blur
+              </p>
+            </div>
 
             <TabsContent value="appointments" className="nm-stack">
               {/* metric tiles */}
-              <div className="nm-primary-row">
-                <div className="nm-stat">
-                  <div className="nm-stat-icon">
-                    <CalendarCheck2 className="h-5 w-5" strokeWidth={1.75} />
+              <Reveal delay={60}>
+                <div className="nm-primary-row">
+                  <div className="nm-stat">
+                    <div className="nm-stat-icon">
+                      <CalendarCheck2 className="h-5 w-5" strokeWidth={1.75} />
+                    </div>
+                    <div className="mt-3 nm-stat-value">{todayAppointments.length}</div>
+                    <div className="nm-stat-label">
+                      {todayAppointments.length === 0
+                        ? "No appointments today"
+                        : "scheduled today"}
+                    </div>
                   </div>
-                  <div className="mt-3 nm-stat-value">{todayAppointments.length}</div>
-                  <div className="nm-stat-label">
-                    {todayAppointments.length === 0
-                      ? "No appointments today"
-                      : "scheduled today"}
+                  <div className="nm-stat">
+                    <div className="nm-stat-icon">
+                      <Users className="h-5 w-5" strokeWidth={1.75} />
+                    </div>
+                    <div className="mt-3 nm-stat-value">{appointments.length}</div>
+                    <div className="nm-stat-label">Total appointments</div>
+                  </div>
+                  <div className="nm-stat">
+                    <div className="nm-stat-icon" data-tone="copper">
+                      <CheckCircle2 className="h-5 w-5" strokeWidth={1.75} />
+                    </div>
+                    <div className="mt-3 nm-stat-value">{confirmedCount}</div>
+                    <div className="nm-stat-label">Confirmed consults</div>
                   </div>
                 </div>
-                <div className="nm-stat">
-                  <div className="nm-stat-icon">
-                    <Users className="h-5 w-5" strokeWidth={1.75} />
-                  </div>
-                  <div className="mt-3 nm-stat-value">{appointments.length}</div>
-                  <div className="nm-stat-label">Total appointments</div>
-                </div>
-                <div className="nm-stat">
-                  <div className="nm-stat-icon">
-                    <CheckCircle2 className="h-5 w-5" strokeWidth={1.75} />
-                  </div>
-                  <div className="mt-3 nm-stat-value">{confirmedCount}</div>
-                  <div className="nm-stat-label">Confirmed consults</div>
-                </div>
-              </div>
+              </Reveal>
 
               {/* appointments */}
+              <Reveal delay={120}>
               <section className="nm-stack">
                 <header className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <div className="cq-kicker">Schedule</div>
-                    <h2 className="cq-section-title mt-1">All appointments</h2>
+                    <MaskedText as="h2" className="cq-section-title mt-1">
+                      All appointments
+                    </MaskedText>
                   </div>
-                  <p className="text-[12px] text-muted-foreground">
-                    Status saves immediately &middot; notes save on blur
-                  </p>
                 </header>
 
                 {loading ? (
@@ -356,50 +415,61 @@ export default function DoctorDashboard({ doctor }) {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2.5">
-                              <User
-                                className="h-4 w-4 shrink-0 text-[var(--text-muted)]"
-                                strokeWidth={1.75}
-                              />
+                              <span className="nm-stat-icon h-8 w-8 rounded-[10px]">
+                                <User
+                                  className="h-4 w-4"
+                                  strokeWidth={1.75}
+                                />
+                              </span>
                               <span className="nm-card-title text-[14px]">
                                 {appointment.patient?.name ||
                                   "Patient not available"}
                               </span>
+                              {/* Status indicator: the one element whose change
+                                  is animated, so a confirmed→completed flip is
+                                  legible rather than a silent repaint. */}
                               <Badge
                                 variant={getAppointmentStatusVariant(
                                   appointment.status
                                 )}
+                                data-status={appointment.status}
+                                className="transition-[background-color,color,box-shadow] duration-[var(--dur-3)] ease-[var(--ease-soft)]"
                               >
                                 {appointment.status}
                               </Badge>
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-muted-foreground">
-                              <span className="inline-flex items-center gap-1.5">
-                                <Calendar
-                                  className="h-4 w-4"
-                                  strokeWidth={1.75}
-                                />
-                                {new Date(
-                                  appointment.appointmentDate
-                                ).toLocaleDateString()}
-                              </span>
-                              <span className="inline-flex items-center gap-1.5">
-                                <Clock className="h-4 w-4" strokeWidth={1.75} />
-                                {new Date(
-                                  appointment.appointmentDate
-                                ).toLocaleTimeString("en-US", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                            {appointment.reason ? (
-                              <p className="mt-2 text-[13px] leading-relaxed text-[var(--text)]">
-                                <span className="font-semibold text-[var(--text-strong)]">
-                                  Reason:{" "}
+                            {/* Date, time and presenting reason are clinical
+                                scheduling data: near-opaque data surface. */}
+                            <div className="glass-data mt-3 rounded-[14px] px-3.5 py-2.5">
+                              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-[var(--text-muted)]">
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Calendar
+                                    className="h-3.5 w-3.5"
+                                    strokeWidth={1.75}
+                                  />
+                                  {new Date(
+                                    appointment.appointmentDate
+                                  ).toLocaleDateString()}
                                 </span>
-                                {appointment.reason}
-                              </p>
-                            ) : null}
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
+                                  {new Date(
+                                    appointment.appointmentDate
+                                  ).toLocaleTimeString("en-US", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+                              {appointment.reason ? (
+                                <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--text)]">
+                                  <span className="font-semibold text-[var(--text-strong)]">
+                                    Reason:{" "}
+                                  </span>
+                                  {appointment.reason}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
 
@@ -448,14 +518,19 @@ export default function DoctorDashboard({ doctor }) {
                                 <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
                                 Chat
                                 {appointment.status === "completed" ? (
-                                  <span className="text-[10px] font-semibold text-[var(--text-muted)]">
-                                    + Report
+                                  /* Copper hint: filing the report is what
+                                     commits the immutable record. */
+                                  <span className="inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--copper-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--copper)]">
+                                    <FileText className="h-3 w-3" strokeWidth={1.75} />
+                                    Report
                                   </span>
                                 ) : null}
                               </Button>
                             )}
                           </div>
-                          <div className="w-full flex-1">
+                          {/* Clinical notes: near-opaque data surface so typed
+                              record text is never read through a blur. */}
+                          <div className="glass-data w-full flex-1 rounded-[16px] p-1">
                             <Textarea
                               placeholder="Add notes for this appointment..."
                               value={appointment.notes || ""}
@@ -481,7 +556,7 @@ export default function DoctorDashboard({ doctor }) {
                               }}
                               rows={3}
                               disabled={appointment.status === "cancelled"}
-                              className="text-[13px]"
+                              className="border-transparent bg-[var(--surface)] text-[13px] shadow-none backdrop-blur-none"
                             />
                           </div>
                         </div>
@@ -489,8 +564,8 @@ export default function DoctorDashboard({ doctor }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="cq-card p-10 text-center">
-                    <div className="nm-stat-icon mx-auto">
+                  <div className="cq-card flex flex-col items-center p-10 text-center">
+                    <div className="nm-stat-icon">
                       <Calendar className="h-5 w-5" strokeWidth={1.75} />
                     </div>
                     <h3 className="mt-4 nm-card-title text-[14px]">
@@ -503,6 +578,7 @@ export default function DoctorDashboard({ doctor }) {
                   </div>
                 )}
               </section>
+              </Reveal>
             </TabsContent>
 
             <TabsContent value="profile" className="nm-stack">
@@ -525,7 +601,7 @@ export default function DoctorDashboard({ doctor }) {
                     ].map(([label, value]) => (
                       <div
                         key={label}
-                        className="rounded-[18px] bg-[var(--surface-subtle)] p-4 shadow-[var(--shadow-inset)]"
+                        className="glass-data rounded-[18px] p-4"
                       >
                         <div className="cq-kicker">{label}</div>
                         <p className="mt-1.5 text-[15px] font-semibold text-[var(--text-strong)]">
@@ -581,8 +657,8 @@ export default function DoctorDashboard({ doctor }) {
           </Tabs>
         ) : (
           <Card className="cq-card gap-0 p-0">
-            <CardContent className="p-10 text-center">
-              <div className="nm-stat-icon mx-auto">
+            <CardContent className="flex flex-col items-center p-10 text-center">
+              <div className="nm-stat-icon">
                 <AlertCircle className="h-5 w-5" strokeWidth={1.75} />
               </div>
               <h3 className="mt-4 text-[15px] font-semibold text-[var(--text-strong)]">
@@ -598,25 +674,32 @@ export default function DoctorDashboard({ doctor }) {
                   onClick={handleContactSupport}
                   disabled={supportSending}
                 >
+                  <Siren className="h-4 w-4" strokeWidth={1.75} />
                   {supportSending ? "Sending request..." : "Contact Support"}
                 </Button>
 
                 {supportResult && (
-                  <p className="text-[12px] text-[var(--success)]">
-                    Support request sent. Reference{" "}
-                    <span className="font-mono text-[11px]">
-                      {supportResult.requestHash?.slice(0, 12)}
+                  /* Reference hash is proof data: mono, near-opaque, fully
+                     legible. */
+                  <div className="glass-data flex items-center justify-center gap-2 rounded-[14px] px-3.5 py-2.5 text-[12px] text-[var(--success)]">
+                    <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
+                    <span>
+                      Support request sent. Reference{" "}
+                      <span className="font-mono text-[11px]">
+                        {supportResult.requestHash?.slice(0, 12)}
+                      </span>
+                      {supportResult.notifiedStaff > 0
+                        ? ` — ${supportResult.notifiedStaff} coordinator${
+                            supportResult.notifiedStaff === 1 ? "" : "s"
+                          } notified`
+                        : ""}
+                      .
                     </span>
-                    {supportResult.notifiedStaff > 0
-                      ? ` — ${supportResult.notifiedStaff} coordinator${
-                          supportResult.notifiedStaff === 1 ? "" : "s"
-                        } notified`
-                      : ""}
-                    .
-                  </p>
+                  </div>
                 )}
                 {supportError && (
-                  <p className="text-[12px] text-[var(--destructive)]">
+                  <p className="flex items-center gap-1.5 text-[12px] text-[var(--destructive)]">
+                    <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
                     {supportError}
                   </p>
                 )}
@@ -638,67 +721,149 @@ export default function DoctorDashboard({ doctor }) {
       </div>
 
       {/* --------------------------------------------- right insight rail */}
-      <aside className="nm-rail">
-        <div>
-          <div className="cq-kicker">Today</div>
-          <div className="mt-1.5 nm-metric-xl">{todayAppointments.length}</div>
-          <p className="mt-1 text-[12px] text-muted-foreground">
-            {todayAppointments.length === 0
-              ? "Nothing scheduled today."
-              : `consultation${
-                  todayAppointments.length === 1 ? "" : "s"
-                } scheduled today.`}
-          </p>
-        </div>
-
-        <div className="h-px w-full bg-[var(--border)]" />
-
-        <div>
-          <div className="cq-kicker">Queue health</div>
-          <div className="mt-2 nm-stack-sm">
-            <div className="nm-row grid-cols-[1fr_auto]">
-              <span className="text-[12px] text-muted-foreground">
-                Awaiting confirmation
+      <Reveal delay={90}>
+        <aside className="nm-rail">
+          {/* Triage: the heavier ink surface is justified on a clinician's
+              queue view, where the whole job is "what needs me now". */}
+          <div
+            data-scope="ink"
+            className="rounded-[18px] bg-[var(--dark-card)] p-4 shadow-[var(--shadow-card)]"
+          >
+            <div className="flex items-center gap-2">
+              <ClipboardList
+                className="h-4 w-4 text-[var(--celadon-bright)]"
+                strokeWidth={1.75}
+              />
+              <span className="cq-kicker text-[var(--dark-muted)]">
+                Needs attention
               </span>
-              <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="nm-metric-xl text-[var(--dark-text)]">
                 {pendingCount}
               </span>
-            </div>
-            <div className="nm-row grid-cols-[1fr_auto]">
-              <span className="text-[12px] text-muted-foreground">
-                Ready to consult
-              </span>
-              <span className="text-[13px] font-semibold text-[var(--text-strong)]">
-                {confirmedCount}
+              <span className="text-[11px] font-medium text-[var(--dark-muted)]">
+                awaiting your confirmation
               </span>
             </div>
-            <div className="nm-row grid-cols-[1fr_auto]">
-              <span className="text-[12px] text-muted-foreground">
-                All appointments
-              </span>
-              <span className="text-[13px] font-semibold text-[var(--text-strong)]">
-                {appointments.length}
-              </span>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--dark-muted)]">
+              Chat, calls and the report flow stay locked until an appointment
+              is confirmed.
+            </p>
+            <Link
+              href="/doctor/escalations"
+              className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-[13px] bg-white/[0.07] px-3 text-[12px] font-semibold text-[var(--dark-text)] transition-colors hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--celadon-bright)]/60"
+            >
+              <Siren className="h-4 w-4" strokeWidth={1.75} />
+              Open escalations
+              <ArrowUpRight
+                className="h-3.5 w-3.5 opacity-70"
+                strokeWidth={1.75}
+              />
+            </Link>
+          </div>
+
+          <div>
+            <div className="cq-kicker">The day&apos;s shape</div>
+            <div className="mt-2 nm-stack-sm">
+              {todayAppointments.length === 0 ? (
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  Nothing scheduled today. Confirmed appointments for the day
+                  appear here with their times.
+                </p>
+              ) : (
+                <div className="glass-data rounded-[16px] px-3.5 py-1">
+                  {todayAppointments
+                    .slice()
+                    .sort(
+                      (a, b) =>
+                        new Date(a.appointmentDate) -
+                        new Date(b.appointmentDate)
+                    )
+                    .map((apt) => (
+                      <div
+                        key={apt._id}
+                        className="flex items-center gap-2.5 border-b border-[var(--border-subtle)] py-2.5 last:border-0"
+                      >
+                        <Clock
+                          className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]"
+                          strokeWidth={1.75}
+                        />
+                        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-[var(--text-strong)]">
+                          {apt.patient?.name || "Patient"}
+                        </span>
+                        <span className="shrink-0 font-mono text-[11px] text-[var(--text-muted)]">
+                          {new Date(apt.appointmentDate).toLocaleTimeString(
+                            "en-US",
+                            { hour: "2-digit", minute: "2-digit" }
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="h-px w-full bg-[var(--border)]" />
+          <div className="h-px w-full bg-[var(--border)]" />
 
-        <div>
-          <div className="cq-kicker">Clinical workspace</div>
-          <div className="mt-2.5 nm-stack-sm">
-            <p className="text-[12px] leading-relaxed text-muted-foreground">
-              Mark an appointment confirmed before the consultation so chat,
-              calls and the report flow unlock.
-            </p>
-            <p className="text-[12px] leading-relaxed text-muted-foreground">
-              Notes save when you leave the field. A status change never
-              rewrites the clinical record.
-            </p>
+          <div>
+            <div className="cq-kicker">Queue health</div>
+            <div className="mt-2 nm-stack-sm">
+              <div className="nm-row grid-cols-[1fr_auto]">
+                <span className="text-[12px] text-muted-foreground">
+                  Awaiting confirmation
+                </span>
+                <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+                  {pendingCount}
+                </span>
+              </div>
+              <div className="nm-row grid-cols-[1fr_auto]">
+                <span className="text-[12px] text-muted-foreground">
+                  Ready to consult
+                </span>
+                <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+                  {confirmedCount}
+                </span>
+              </div>
+              <div className="nm-row grid-cols-[1fr_auto]">
+                <span className="text-[12px] text-muted-foreground">
+                  All appointments
+                </span>
+                <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+                  {appointments.length}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      </aside>
+
+          <div className="h-px w-full bg-[var(--border)]" />
+
+          <div>
+            <div className="cq-kicker">Clinical workspace</div>
+            <div className="mt-2.5 nm-stack-sm">
+              <p className="flex items-start gap-1.5 text-[12px] leading-relaxed text-muted-foreground">
+                <Stethoscope
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                  strokeWidth={1.75}
+                />
+                <span>
+                  Mark an appointment confirmed before the consultation so
+                  chat, calls and the report flow unlock.
+                </span>
+              </p>
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                Notes save when you leave the field. A status change never
+                rewrites the clinical record.
+              </p>
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                AI may draft education and follow-up questions only. It cannot
+                prescribe, change doses, publish, or approve.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </Reveal>
     </div>
   );
 }

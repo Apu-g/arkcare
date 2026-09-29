@@ -10,6 +10,10 @@ import CapsuleIcon from "@/components/carequest/CapsuleIcon";
  * The bar fills slowly toward CAPSULE_DISPLAY_MAX (2000). It polls the server
  * balance and animates whenever the balance changes, so completing a quiz,
  * job or activity visibly moves the bar.
+ *
+ * It lives in the top bar, so it stays a compact SOLID surface (`.cq-capsule-
+ * gauge` is --surface, not glass): a balance read at a glance must never sit
+ * on a blur. The sheen and the `data-bump` scale are the only motion here.
  */
 export default function CapsuleGauge({ max = 2000, refreshSignal = 0 }) {
   const [state, setState] = useState({ balance: 0, symbol: "", programName: "" });
@@ -71,7 +75,7 @@ export default function CapsuleGauge({ max = 2000, refreshSignal = 0 }) {
             {state.symbol || "CAP"}
           </span>
         </div>
-        <div className="text-[10px] font-semibold text-[var(--text-subtle)]">
+        <div className="text-[10px] font-semibold tabular-nums text-[var(--text-muted)]">
           {Math.round(pct)}% of {max}
         </div>
       </div>

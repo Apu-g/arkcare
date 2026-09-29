@@ -1,6 +1,8 @@
 "use client";
 
 import { Building2, Link2, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 
@@ -21,27 +23,28 @@ export default function HospitalProfileCard({ profile }) {
   return (
     <div className="nm-dash">
       <div className="nm-dash-col">
-        <section className="nm-dark-card cq-reveal p-5 md:p-6">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-[18px] w-[18px] text-white/70" strokeWidth={1.75} />
-            <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80">
-              Hospital reputation
-            </span>
+        <Reveal as="section" className="cq-card p-5 md:p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <Building2 className="h-[18px] w-[18px] text-[var(--text-muted)]" strokeWidth={1.75} />
+            <span className="cq-pixel-label">Hospital reputation</span>
           </div>
-          <h1 className="mt-4 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+          <MaskedText
+            as="h1"
+            className="mt-4 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
+          >
             {profile.name}
-          </h1>
-          <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[#B7B7BE]">
+          </MaskedText>
+          <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[var(--text-muted)]">
             Your hospital&apos;s reputation is the participation its own patients have
             generated. It reflects engagement and trust — it is never a claimable
             balance, and Capsules remain hospital-specific, non-transferable units.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">
+          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--border-subtle)] pt-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--celadon-soft)] px-3 py-1.5 text-[12px] font-semibold text-[var(--celadon)]">
               <CapsuleIcon size={15} />
               {profile.reputationLabel}
             </span>
-            <span className="text-[13px] text-[#B7B7BE]">
+            <span className="text-[13px] text-[var(--text-muted)]">
               reputation {profile.reputationScore}/100
             </span>
             <PixelCharacter
@@ -51,9 +54,9 @@ export default function HospitalProfileCard({ profile }) {
               speech="Every patient engagement counts toward your trust score."
             />
           </div>
-        </section>
+        </Reveal>
 
-        <section className="nm-grid-3">
+        <Reveal as="section" className="nm-grid-3">
           <div className="nm-stat">
             <div className="nm-stat-icon">
               <CapsuleIcon size={18} />
@@ -80,11 +83,13 @@ export default function HospitalProfileCard({ profile }) {
             <div className="nm-stat-value mt-3">{profile.doctorCount}</div>
             <div className="nm-stat-label">doctors on your roster</div>
           </div>
-        </section>
+        </Reveal>
 
-        <section className="cq-card p-5 md:p-6">
+        <Reveal as="section" className="cq-card p-5 md:p-6">
           <div className="cq-kicker">Patient engagement</div>
-          <h2 className="cq-section-title mt-1">Top participating patients</h2>
+          <MaskedText as="h2" className="cq-section-title mt-1">
+            Top participating patients
+          </MaskedText>
           <p className="mt-1 text-[13px] text-[var(--text-muted)]">
             Recognising consistent participation — not health outcomes.
           </p>
@@ -109,7 +114,7 @@ export default function HospitalProfileCard({ profile }) {
               </p>
             ) : null}
           </div>
-        </section>
+        </Reveal>
       </div>
 
       <aside className="nm-rail">
@@ -124,33 +129,50 @@ export default function HospitalProfileCard({ profile }) {
           </p>
         </div>
 
-        <div className="rounded-[18px] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
-          {profile.chainValid ? (
-            <span className="cq-pixel-label cq-real-label">
-              <ShieldCheck className="h-[13px] w-[13px]" strokeWidth={1.75} />
-              chain valid
-            </span>
-          ) : (
-            <span className="cq-pixel-label cq-sim-label">chain check</span>
-          )}
-          <div className="nm-metric-xl mt-2">
+        {/* Provenance is the PROOF half, so this panel alone drops onto the ink
+            scope. No colour is redeclared — the scope remaps the tokens. */}
+        <Reveal data-scope="ink" className="nm-dark-card p-4">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-[16px] w-[16px] text-[var(--copper)]" strokeWidth={1.75} />
+            <span className="cq-kicker">Chain head</span>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2">
+            {profile.chainValid ? (
+              <span className="cq-pixel-label cq-real-label">
+                <ShieldCheck className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                chain valid
+              </span>
+            ) : (
+              <span className="cq-pixel-label cq-sim-label">chain check</span>
+            )}
+          </div>
+          <div className="mt-2 text-[30px] font-bold leading-none tracking-[-0.02em] text-[var(--text-strong)]">
             {profile.chainValid ? "VALID" : "CHECK"}
           </div>
-          <div className="nm-stat-label">your audit chain</div>
-        </div>
+          <div className="cq-kicker mt-1.5">your audit chain</div>
 
-        <div className="cq-card-soft px-4 py-3">
-          <div className="flex items-center gap-1.5">
-            <Link2 className="h-[14px] w-[14px] text-[var(--text-muted)]" strokeWidth={1.75} />
-            <span className="cq-kicker">Chain head hash</span>
-          </div>
-          <div className="mt-1.5 select-all break-all font-mono text-[12px] leading-5 text-[var(--text)]">
-            {profile.headHash || "—"}
+          {/* The hash is the credibility: shown in full, selectable, never
+              truncated, on a near-opaque data surface. */}
+          <div className="glass-data mt-3 rounded-[14px] px-3 py-2.5">
+            <div className="select-all break-all font-mono text-[12px] leading-5 text-[var(--text)]">
+              {profile.headHash || "—"}
+            </div>
           </div>
           <p className="mt-2 text-[11px] leading-4 text-[var(--text-muted)]">
-            {profile.chainChecked} event hash(es) recomputed for this hospital.
+            {profile.chainChecked} event hash(es) recomputed for this hospital.{" "}
+            {profile.anchorCount} on-chain anchor
+            {profile.anchorCount === 1 ? "" : "s"}.
           </p>
-        </div>
+          {profile.tokenId ? (
+            <div className="mt-2 border-t border-[var(--glass-hairline)] pt-2">
+              <div className="cq-kicker">On-chain token</div>
+              <div className="mt-1 select-all break-all font-mono text-[11px] leading-4 text-[var(--text-muted)]">
+                {profile.tokenId}
+              </div>
+            </div>
+          ) : null}
+        </Reveal>
       </aside>
     </div>
   );

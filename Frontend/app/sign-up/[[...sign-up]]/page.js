@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Activity, ArrowLeft, HeartPulse, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import MaskedText from "@/components/motion/MaskedText";
+import Reveal from "@/components/motion/Reveal";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -53,7 +55,7 @@ export default function SignUpPage() {
   return (
     <main className="flex min-h-screen items-center px-4 py-10 md:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[1.05fr_.95fr]">
-        <section className="cq-card p-5 md:p-8 lg:p-10">
+        <Reveal as="section" className="cq-card p-5 md:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
             <Link
               href="/"
@@ -64,14 +66,17 @@ export default function SignUpPage() {
             </Link>
 
             <div className="mb-7 flex items-center gap-3">
-              <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-white shadow-[0_6px_14px_rgba(16,14,26,0.18)]">
-                <HeartPulse className="h-5 w-5" strokeWidth={2} />
+              <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-cta)]">
+                <HeartPulse className="h-5 w-5" strokeWidth={1.75} />
               </div>
               <div>
                 <p className="cq-kicker">New profile</p>
-                <h1 className="text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]">
+                <MaskedText
+                  as="h1"
+                  className="text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]"
+                >
                   Start your ArkCare journey
-                </h1>
+                </MaskedText>
               </div>
             </div>
 
@@ -107,7 +112,7 @@ export default function SignUpPage() {
               {error ? (
                 <p
                   role="alert"
-                  className="rounded-[14px] border border-[rgba(235,90,90,0.2)] bg-[rgba(235,90,90,0.12)] px-4 py-3 text-[13px] text-[var(--destructive)]"
+                  className="rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] px-4 py-3 text-[13px] text-[var(--destructive)]"
                 >
                   {error}
                 </p>
@@ -128,17 +133,18 @@ export default function SignUpPage() {
               </Link>
             </p>
           </div>
-        </section>
+        </Reveal>
 
-        <section className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
+        <Reveal as="section" delay={90} className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
           <div>
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold text-white/80">
+            <span className="cq-pixel-label !bg-white/10 !text-white/80">
               Journey initialization
             </span>
-            <h2 className="mt-6 text-[30px] font-bold leading-[1.15] tracking-[-0.02em] text-white">
-              Create identity.
-              <span className="text-white/60"> Choose your path.</span>
-            </h2>
+            <MaskedText
+              as="h2"
+              lines={["Create identity.", "Choose your path."]}
+              className="mt-6 text-[30px] font-bold leading-[1.15] tracking-[-0.02em] text-white"
+            />
             <p className="mt-4 max-w-md text-[13px] leading-relaxed text-[#B7B7BE]">
               Your account begins neutral. Next, choose patient or doctor and ArkCare
               provisions the right workspace.
@@ -149,9 +155,7 @@ export default function SignUpPage() {
             <div className="rounded-[18px] bg-white/[.07] p-5">
               <div className="flex items-center justify-between">
                 <Activity className="h-5 w-5 text-white/80" strokeWidth={1.75} />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
-                  Step 01
-                </span>
+                <span className="cq-kicker !text-white/60">Step 01</span>
               </div>
               <h3 className="mt-5 font-semibold text-white">Identity</h3>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
@@ -161,9 +165,7 @@ export default function SignUpPage() {
             <div className="rounded-[18px] bg-white/[.07] p-5">
               <div className="flex items-center justify-between">
                 <Sparkles className="h-5 w-5 text-white/80" strokeWidth={1.75} />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
-                  Step 02
-                </span>
+                <span className="cq-kicker !text-white/60">Step 02</span>
               </div>
               <h3 className="mt-5 font-semibold text-white">Role + care experience</h3>
               <p className="mt-2 text-[12px] leading-relaxed text-white/60">
@@ -171,7 +173,7 @@ export default function SignUpPage() {
               </p>
             </div>
           </div>
-        </section>
+        </Reveal>
       </div>
     </main>
   );

@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import RoleSelection from "@/components/RoleSelection";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import PixelCareScene from "@/components/carequest/PixelCareScene";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
@@ -73,7 +75,7 @@ export default function Home() {
       {/* ------------------------------------------------------------- nav */}
       <div className="px-4 pt-4 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <nav className="cq-card cq-reveal flex items-center justify-between gap-3 px-4 py-3">
+          <nav className="cq-card flex items-center justify-between gap-3 px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="nm-stat-icon">
                 <HeartPulse className="h-[18px] w-[18px]" strokeWidth={1.75} />
@@ -85,7 +87,7 @@ export default function Home() {
                 <div className="cq-kicker">CareQuest care OS</div>
               </div>
             </div>
-            <a href="#enter" className="nm-btn-secondary">
+            <a href="#enter" className="nm-btn-primary">
               Enter demo <ArrowRight className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </a>
           </nav>
@@ -95,15 +97,19 @@ export default function Home() {
       {/* ------------------------------------------------------------ hero */}
       <section className="px-4 py-10 md:px-8 lg:py-14">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr]">
-          <div className="cq-reveal">
+          <Reveal>
             <div className="mb-4 flex flex-wrap gap-2">
               <span className="cq-pixel-label">Clinician approved</span>
               <span className="cq-pixel-label">Human handoffs</span>
               <SimulationBadge real>Real local EVM</SimulationBadge>
             </div>
-            <h1 className="max-w-3xl text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)] md:text-[26px]">
-              Care after the consult, built like a journey.
-            </h1>
+            {/* First-paint moment only. MaskedText is a pure CSS transition
+                driven by one data-attribute flip, so it cannot replay. */}
+            <MaskedText
+              as="h1"
+              lines={["Care after the consult,", "built like a journey."]}
+              className="max-w-3xl text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)] md:text-[26px]"
+            />
             <p className="mt-4 max-w-2xl text-[14px] leading-7 text-[var(--text-muted)]">
               ArkCare turns doctor-approved plans into clear missions, rewards honest
               participation with hospital-specific Capsules, and converts patient
@@ -127,31 +133,30 @@ export default function Home() {
                 everything went well.
               </p>
             </div>
-          </div>
+          </Reveal>
 
-          <div className="cq-reveal cq-reveal-delay-1">
+          <Reveal delay={90}>
             <div className="cq-card p-5">
               <PixelCareScene />
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* -------------------------------------------------------- care loop */}
-      <section className="px-4 pb-12 md:px-8">
+      <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
             <div className="cq-kicker">The care loop</div>
-            <h2 className="cq-section-title mt-1">
-              Gamification that ends in real healthcare workflow.
-            </h2>
+            <MaskedText
+              as="h2"
+              className="cq-section-title mt-1"
+              lines={["Gamification that ends in", "real healthcare workflow."]}
+            />
           </div>
           <div className="mt-5 nm-grid-3">
-            {careLoop.map(({ icon: Icon, step, title, text }, index) => (
-              <article
-                key={title}
-                className={"cq-card p-5 cq-reveal cq-reveal-delay-" + Math.min(index, 3)}
-              >
+            {careLoop.map(({ icon: Icon, step, title, text }) => (
+              <article key={title} className="cq-card p-5">
                 <div className="flex items-center justify-between">
                   <div className="nm-stat-icon">
                     <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
@@ -166,16 +171,18 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* --------------------------------------------------------- passport */}
-      <section className="px-4 pb-12 md:px-8">
+      <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[.9fr_1.1fr]">
           <div>
             <div className="cq-kicker">Multi-hospital passport</div>
-            <h2 className="cq-section-title mt-1">
-              One patient. Separate hospital journeys.
-            </h2>
+            <MaskedText
+              as="h2"
+              className="cq-section-title mt-1"
+              lines={["One patient. Separate", "hospital journeys."]}
+            />
             <p className="mt-2 max-w-xl text-[13px] leading-6 text-[var(--text-muted)]">
               Each hospital controls its own program, budget and benefit catalog.
               Balances stay independent and never imply access to another hospital&apos;s
@@ -217,10 +224,13 @@ export default function Home() {
                   <span className="cq-pixel-label">{card.symbol}</span>
                 </div>
                 <h3 className="mt-3 nm-card-title text-[14px]">{card.hospital}</h3>
-                <div className="nm-metric-xl mt-3">{card.balance}</div>
-                <div className="nm-stat-label">{card.symbol} capsules</div>
-                <div className="cq-progress mt-3">
-                  <span style={{ width: card.progress }} />
+                {/* A capsule balance is a value: data surface, not glass. */}
+                <div className="glass-data mt-3 rounded-[14px] px-3 py-2">
+                  <div className="nm-metric-xl text-[26px] tabular-nums">{card.balance}</div>
+                  <div className="nm-stat-label">{card.symbol} capsules</div>
+                  <div className="cq-progress mt-3">
+                    <span style={{ width: card.progress }} />
+                  </div>
                 </div>
                 <div className="mt-2 text-[11px] text-[var(--text-muted)]">
                   {card.missions} active mission(s)
@@ -229,10 +239,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ------------------------------------------------- simulation panel */}
-      <section className="px-4 pb-12 md:px-8">
+      <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr]">
           <div className="cq-card cq-grid-paper p-5 md:p-6">
             <div className="flex flex-wrap items-center gap-2">
@@ -259,7 +269,7 @@ export default function Home() {
                 ["1,429", "virtual work units"],
                 ["+3 CITY", "Capsules at goal"],
               ].map(([value, label]) => (
-                <div key={label} className="rounded-[16px] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+                <div key={label} className="glass-data rounded-[16px] p-3">
                   <div className="text-[18px] font-bold text-[var(--text-strong)]">
                     {value}
                   </div>
@@ -273,9 +283,11 @@ export default function Home() {
 
           <div>
             <div className="cq-kicker">Concept simulation</div>
-            <h2 className="cq-section-title mt-1">
-              Show the future idea without pretending the phone is mining today.
-            </h2>
+            <MaskedText
+              as="h2"
+              className="cq-section-title mt-1"
+              lines={["Show the future idea without", "pretending the phone is mining today."]}
+            />
             <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
               The demo simulates wearable sync, proof-of-work metrics and external token
               value. The actual CareQuest backend after that boundary—eligibility,
@@ -288,10 +300,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ------------------------------------------------------------ roles */}
-      <section className="px-4 pb-12 md:px-8">
+      <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="cq-kicker">Built for every role</div>
           <div className="mt-4 nm-grid-3">
@@ -310,10 +322,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ------------------------------------------------- trust boundaries */}
-      <section className="px-4 pb-12 md:px-8">
+      <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto nm-grid-3 max-w-7xl">
           <article className="cq-card p-5">
             <WalletCards
@@ -336,6 +348,11 @@ export default function Home() {
               Local Solidity/EVM proof rails support Capsules and audit commitments while
               clinical content remains off-chain.
             </p>
+            {/* Proof gets the copper tone, never celadon. */}
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--copper-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--copper)]">
+              <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
+              Verification &amp; provenance
+            </span>
           </article>
           <article className="cq-card p-5">
             <Coins
@@ -349,10 +366,10 @@ export default function Home() {
             </p>
           </article>
         </div>
-      </section>
+      </Reveal>
 
       {/* ------------------------------------------------------------ enter */}
-      <section id="enter" className="px-4 pb-10 md:px-8">
+      <Reveal as="section" id="enter" className="px-4 pb-10 md:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[.8fr_1.2fr]">
           <div>
             <div className="cq-kicker">Enter the care network</div>
@@ -374,7 +391,7 @@ export default function Home() {
             <RoleSelection />
           </div>
         </div>
-      </section>
+      </Reveal>
 
       <footer className="border-t border-[var(--border)] px-4 py-6 text-[11px] text-[var(--text-muted)] md:px-8">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-2 sm:flex-row">

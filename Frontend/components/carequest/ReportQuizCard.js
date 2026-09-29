@@ -54,7 +54,7 @@ export default function ReportQuizCard({ report, onCompleted }) {
   }
 
   return (
-    <div className="nm-stack-sm rounded-[16px] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
+    <div className="nm-stack-sm glass-data rounded-[16px] p-4">
       <div className="cq-kicker">KNOWLEDGE CHECK · 4 QUESTIONS</div>
       {questions.map((question, questionIndex) => (
         <fieldset key={question.questionId} className="space-y-2">
@@ -73,7 +73,7 @@ export default function ReportQuizCard({ report, onCompleted }) {
                     setAnswers((current) => ({ ...current, [questionIndex]: option }))
                   }
                   className={
-                    "min-h-10 rounded-[12px] border px-3 py-2 text-left text-[12px] font-medium " +
+                    "min-h-10 rounded-[12px] border px-3 py-2 text-left text-[12px] font-medium transition hover:-translate-y-px " +
                     (picked
                       ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--text-strong)]"
                       : "border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--text)] hover:bg-[var(--surface-hover)]")

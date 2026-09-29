@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import { Search, Stethoscope, Video } from "lucide-react";
 
 /**
@@ -36,14 +38,17 @@ export default function DoctorDirectory({ doctors, organizationName }) {
 
   return (
     <div className="nm-stack">
-      <section className="nm-dark-card cq-reveal p-5 md:p-6">
+      <Reveal as="section" className="cq-card p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="cq-kicker !text-white/60">Doctor directory</div>
-            <h1 className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+            <div className="cq-kicker">Doctor directory</div>
+            <MaskedText
+              as="h1"
+              className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
+            >
               Meet a clinician by niche
-            </h1>
-            <p className="mt-1 max-w-xl text-[13px] leading-6 text-[#B7B7BE]">
+            </MaskedText>
+            <p className="mt-1 max-w-xl text-[13px] leading-6 text-[var(--text-muted)]">
               Every approved doctor at {organizationName || "this hospital"}. Enter a
               niche, then book a slot to open a video consultation.
             </p>
@@ -62,7 +67,7 @@ export default function DoctorDirectory({ doctors, organizationName }) {
             />
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {byNiche.length === 0 ? (
         <div className="cq-card border-dashed p-8 text-center text-[13px] text-[var(--text-muted)]">
@@ -71,7 +76,7 @@ export default function DoctorDirectory({ doctors, organizationName }) {
       ) : null}
 
       {byNiche.map(([niche, list]) => (
-        <section key={niche} className="nm-stack-sm">
+        <Reveal as="section" key={niche} className="nm-stack-sm">
           <div className="flex flex-wrap items-center gap-2">
             <Stethoscope
               className="h-[18px] w-[18px] text-[var(--text-muted)]"
@@ -120,7 +125,7 @@ export default function DoctorDirectory({ doctors, organizationName }) {
               </article>
             ))}
           </div>
-        </section>
+        </Reveal>
       ))}
 
       <p className="text-center text-[12px] text-[var(--text-muted)]">

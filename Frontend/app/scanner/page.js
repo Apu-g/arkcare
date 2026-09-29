@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ScanLine, ShieldCheck } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 
 export default function ScannerPage() {
   const [scannerUrl, setScannerUrl] = useState("");
@@ -39,7 +41,7 @@ export default function ScannerPage() {
   return (
     <main className="min-h-screen px-3 py-4 md:px-5 md:py-5">
       <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1600px] flex-col gap-4">
-        <header className="cq-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <Reveal as="header" className="cq-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
               href="/patient"
@@ -52,18 +54,21 @@ export default function ScannerPage() {
               <ScanLine className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </div>
             <div>
-              <h1 className="text-[15px] font-semibold text-[var(--text-strong)]">
+              <MaskedText
+                as="h1"
+                className="text-[15px] font-semibold text-[var(--text-strong)]"
+              >
                 ArkCare Scanner
-              </h1>
+              </MaskedText>
               <p className="text-[11px] text-[var(--text-muted)]">
                 Capture layer for future verified records
               </p>
             </div>
           </div>
           <span className="status-chip hidden sm:inline-flex">Scanner module</span>
-        </header>
+        </Reveal>
 
-        <section className="cq-card relative flex flex-1 overflow-hidden">
+        <Reveal as="section" delay={80} className="cq-card relative flex flex-1 overflow-hidden">
           {loading ? (
             <div className="m-auto text-center">
               <div
@@ -98,7 +103,7 @@ export default function ScannerPage() {
               allow="camera"
             />
           )}
-        </section>
+        </Reveal>
       </div>
     </main>
   );

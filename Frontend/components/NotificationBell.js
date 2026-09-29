@@ -26,12 +26,14 @@ function relativeTime(value) {
 
 /* Sparse semantic accents (design spec §22). The type name is always shown
    alongside, so colour is never the only signal. */
+/* Sparse semantic accents. The type name is always shown alongside, so colour
+   is never the only signal. */
 const TYPE_ACCENT = {
-  appointment_booked: "bg-[rgba(49,185,120,0.12)] text-[#248A5A]",
-  appointment_completed: "bg-[rgba(79,110,247,0.12)] text-[#405BD0]",
-  appointment_cancelled: "bg-[rgba(244,198,78,0.18)] text-[#9A7316]",
-  report_published: "bg-[rgba(139,109,246,0.12)] text-[#6B4FD6]",
-  carequest_alert: "bg-[rgba(235,90,90,0.12)] text-[#BF4343]",
+  appointment_booked: "bg-[var(--success-soft)] text-[var(--success)]",
+  appointment_completed: "bg-[var(--info-soft)] text-[var(--info)]",
+  appointment_cancelled: "bg-[var(--warning-soft)] text-[var(--warning)]",
+  report_published: "bg-[var(--copper-soft)] text-[var(--copper)]",
+  carequest_alert: "bg-[var(--destructive-soft)] text-[var(--destructive)]",
 };
 
 /**
@@ -152,19 +154,19 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
           unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
         }
         aria-expanded={open}
-        className="relative flex size-10 items-center justify-center rounded-[14px] border border-white/70 bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-hover)]"
+        className="relative flex size-10 items-center justify-center rounded-[14px] border border-[var(--glass-edge)] bg-[var(--glass-1)] text-[var(--text)] shadow-[var(--shadow-card),inset_0_1px_0_var(--glass-edge-strong)] backdrop-blur-[20px] saturate-[150%] transition hover:shadow-[var(--shadow-hover),inset_0_1px_0_var(--glass-edge-strong)]"
       >
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent-red)] px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--destructive)] px-1 text-[10px] font-bold text-white">
             {unread > MAX_BADGE ? `${MAX_BADGE}+` : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-[20px] border border-white/70 bg-[var(--surface)] shadow-[0_24px_60px_rgba(16,14,26,0.20),0_6px_18px_rgba(16,14,26,0.10)]">
-          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3">
+        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-[20px] border border-[var(--glass-edge)] bg-[var(--surface)] shadow-[var(--shadow-hover),inset_0_1px_0_var(--glass-edge-strong)]">
+          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--glass-1)] px-4 py-3">
             <span className="text-[13px] font-semibold text-[var(--text-strong)]">
               Notifications
             </span>
@@ -202,7 +204,7 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
                 >
                   <div className="flex items-start gap-2">
                     {!item.readAt && (
-                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--accent-blue)]" />
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--info)]" />
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, ClipboardList, Loader2, Stethoscope, UserRound } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Reveal from "@/components/motion/Reveal";
 import { instantSignInAs } from "@/actions/demoAuthActions";
 
 export default function InstantSignIn({ compact = false }) {
@@ -35,6 +36,8 @@ export default function InstantSignIn({ compact = false }) {
 
   const buttonClass = "nm-btn-secondary w-full";
 
+  /* Judge access only ever opens a real, isolated demo session — the copy
+     states that so a viewer is never misled about the data behind it. */
   const entries = [
     ["patient", UserRound, "Demo Patient"],
     ["doctor", Stethoscope, "Demo Doctor"],
@@ -49,7 +52,7 @@ export default function InstantSignIn({ compact = false }) {
           Synthetic judge accounts only.
         </p>
       ) : null}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <Reveal className="grid gap-2 sm:grid-cols-2">
         {entries.map(([role, Icon, label]) => (
           <button
             key={role}
@@ -61,16 +64,16 @@ export default function InstantSignIn({ compact = false }) {
             {pending === role ? (
               <Loader2 className="h-[18px] w-[18px] animate-spin" strokeWidth={1.75} />
             ) : (
-              <Icon className="h-[18px] w-[18px] text-[var(--primary)]" strokeWidth={1.75} />
+              <Icon className="h-[18px] w-[18px] text-[var(--celadon)]" strokeWidth={1.75} />
             )}
             {pending === role ? "Starting…" : label}
           </button>
         ))}
-      </div>
+      </Reveal>
       {error ? (
         <p
           role="alert"
-          className="mt-3 rounded-[14px] border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] px-3 py-2 text-[13px] text-[var(--destructive)]"
+          className="mt-3 rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] px-3 py-2 text-[13px] text-[var(--destructive)]"
         >
           {error}
         </p>

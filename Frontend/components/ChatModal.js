@@ -15,7 +15,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Send, MessageCircle, User, Stethoscope,
   Image as ImageIcon, Loader2, X, Phone, Video,
-  PhoneIncoming, FileText, AlertTriangle
+  PhoneIncoming, FileText, AlertTriangle,
+  Hourglass, ShieldCheck
 } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import {
@@ -522,10 +523,13 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
         className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
       >
         <div
+          /* Own messages are solid celadon (CARE); peer messages sit on the
+             near-opaque data surface so a clinician never has to read a
+             patient's message through a blur. */
           className={`max-w-[76%] rounded-[18px] px-3.5 py-2.5 ${
             isOwnMessage
-              ? "rounded-br-[6px] bg-[var(--primary)] text-[#fff] shadow-[0_8px_18px_rgba(16,14,26,0.15)]"
-              : "rounded-bl-[6px] border border-[rgba(255,255,255,0.72)] bg-[var(--surface-subtle)] text-[var(--text)] shadow-[var(--shadow-card)]"
+              ? "rounded-br-[6px] bg-[var(--primary)] text-[#fff] shadow-[var(--shadow-cta)]"
+              : "glass-data rounded-bl-[6px] text-[var(--text)]"
           }`}
         >
           <div
@@ -567,7 +571,7 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
   if (callState === 'connected' && callData) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl h-[80vh] overflow-hidden border-0 bg-card p-0">
+        <DialogContent className="max-w-4xl h-[80vh] overflow-hidden border-0 bg-[var(--surface-shell)] p-0">
           <VideoCallComponent
             callData={callData}
             isVideo={isVideo}
@@ -581,27 +585,35 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="flex h-[620px] max-w-2xl flex-col overflow-hidden border-0 bg-card p-0">
-          <DialogHeader className="shrink-0 gap-2 border-b border-[var(--border-subtle)] px-5 py-4 pr-16">
+        <DialogContent className="flex h-[620px] max-w-2xl flex-col overflow-hidden border-0 bg-[var(--surface-shell)] p-0">
+          <DialogHeader className="shrink-0 gap-2 border-b border-[var(--border-subtle)] bg-[var(--glass-1)] px-5 py-4 pr-16 backdrop-blur-[20px]">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2.5">
-                <div className="nm-stat-icon shrink-0">
-                  <MessageCircle className="h-5 w-5" strokeWidth={1.75} />
+                <div className="nm-stat-icon h-9 w-9 rounded-[12px]">
+                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </div>
-                <DialogTitle className="truncate text-[14px]">
-                  Chat with{" "}
-                  {isDoctor
-                    ? otherUser?.name || "Patient"
-                    : otherUser?.name || "Doctor"}
-                </DialogTitle>
+                <div className="min-w-0">
+                  <DialogTitle className="truncate text-[14px]">
+                    Chat with{" "}
+                    {isDoctor
+                      ? otherUser?.name || "Patient"
+                      : otherUser?.name || "Doctor"}
+                  </DialogTitle>
+                  <DialogDescription className="truncate">
+                    Appointment on{" "}
+                    {new Date(appointment.appointmentDate).toLocaleDateString()}
+                  </DialogDescription>
+                </div>
               </div>
 
               {/* Call Controls */}
               <div className="flex shrink-0 items-center gap-2">
                 {isDoctor ? (
+                  /* The Report action is the clinical commitment in this
+                     conversation, so it wears the reserved proof colour. */
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="copper"
                     onClick={() => setReportOpen(true)}
                     aria-label="Open consultation report"
                     title="File the consultation report (AI parses it into a care plan)"
@@ -630,12 +642,27 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                 </Button>
               </div>
             </div>
-            <DialogDescription>
-              Appointment on{" "}
-              {new Date(appointment.appointmentDate).toLocaleDateString()}
-              {" · "}
-              {realtimeReady ? "Secure realtime connected" : "Connecting secure realtime..."}
-            </DialogDescription>
+            {/* Connection state is a verification signal, so it is always
+                word + icon, never a colour alone. */}
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-muted)]">
+              {realtimeReady ? (
+                <>
+                  <ShieldCheck
+                    className="h-3.5 w-3.5 text-[var(--success)]"
+                    strokeWidth={1.75}
+                  />
+                  <span>Secure realtime connected</span>
+                </>
+              ) : (
+                <>
+                  <Hourglass
+                    className="h-3.5 w-3.5 text-[var(--warning)]"
+                    strokeWidth={1.75}
+                  />
+                  <span>Connecting secure realtime...</span>
+                </>
+              )}
+            </div>
           </DialogHeader>
 
           {rtcNotice ? (
@@ -651,7 +678,10 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
           {/* Call Status */}
           {(callState === "initiating" || callState === "calling") && (
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-[var(--surface-subtle)] px-5 py-3 text-[12px] font-medium text-[var(--text)]">
-              <span>{callState === "initiating" ? "Preparing secure call..." : "Calling — waiting for answer..."}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <PhoneIncoming className="h-3.5 w-3.5" strokeWidth={1.75} />
+                {callState === "initiating" ? "Preparing secure call..." : "Calling — waiting for answer..."}
+              </span>
               {callState === "calling" && (
                 <Button size="sm" variant="secondary" onClick={cancelOutgoingCall}>
                   Cancel
@@ -667,7 +697,10 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                 <div className="p-5">
                   {loading ? (
                     <div className="flex items-center justify-center h-full min-h-[300px]">
-                      <div className="text-[13px] text-muted-foreground">Loading chat...</div>
+                      <div className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+                        Loading chat...
+                      </div>
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full min-h-[300px] text-center">
@@ -684,6 +717,8 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                       </div>
                     </div>
                   ) : (
+                    /* Messages are never animated as they stream in — a
+                       clinical transcript must stay scannable. */
                     <div className="space-y-3">
                       {messages.map((message, index) => renderMessage(message, index))}
                       <div ref={messagesEndRef} />
@@ -695,13 +730,13 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
 
             {/* Image Preview Area */}
             {previewUrl && (
-              <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-4">
+              <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--glass-2)] p-4 backdrop-blur-[12px]">
                 <div className="flex items-start gap-3">
                   <div className="relative">
                     <img
                       src={previewUrl}
                       alt="Preview"
-                      className="h-20 w-20 rounded-[14px] object-cover"
+                      className="h-20 w-20 rounded-[14px] object-cover shadow-[var(--shadow-card)]"
                     />
                     <button
                       type="button"
@@ -745,7 +780,7 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
             )}
 
             {/* Message Input */}
-            <div className="shrink-0 border-t border-[var(--border-subtle)] p-4">
+            <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--glass-2)] p-4 backdrop-blur-[12px]">
               <form onSubmit={handleSendMessage} className="flex gap-2">
                 <input
                   ref={fileInputRef}
@@ -793,7 +828,7 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
         <Dialog open={true}>
           <DialogContent className="max-w-md">
             <DialogHeader className="items-center text-center">
-              <div className="nm-stat-icon mx-auto">
+              <div className="nm-stat-icon">
                 <PhoneIncoming className="h-5 w-5" strokeWidth={1.75} />
               </div>
               <DialogTitle className="mt-2 text-[15px]">
@@ -805,6 +840,7 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
             </DialogHeader>
             <div className="mt-4 flex justify-center gap-3">
               <Button onClick={acceptCall}>
+                <Phone className="h-4 w-4" strokeWidth={1.75} />
                 Accept
               </Button>
               <Button

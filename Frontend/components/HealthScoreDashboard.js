@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
+import PathMorph from "@/components/motion/PathMorph";
 import {
     Heart, Brain, Activity, Apple, Moon, Smile,
     TrendingUp, TrendingDown, Minus, Play, RefreshCw,
@@ -16,22 +19,40 @@ import HealthQuestionnaire from "./HealthQuestionnaire";
 import { getHealthData, updateHealthScore } from "@/actions/healthActions";
 import AIHealthInsights from "./AIHealthInsights";
 
-// Monochrome theme: the accent is the theme's primary (charcoal). SVG
+// Monochrome theme: the accent is the theme's primary (celadon). SVG
 // presentation attributes resolve var() inconsistently across browsers, so it is
 // applied through style rather than stroke/fill attributes.
 const ACCENT_COLOR = "var(--primary)";
+
+/*
+ * A real vitals trace rather than a decorative squiggle: the path is scrubbed by
+ * PathMorph as the score card enters the viewport, so the reading is *drawn on*
+ * exactly as the score beside it is revealed. Celadon, because this is care
+ * data — copper is reserved for proof surfaces.
+ */
+const VitalsTrace = ({ className = "" }) => (
+    <PathMorph
+        d={
+            "M0 108 L54 108 L64 108 L72 96 L80 122 L88 62 L96 138 L104 108 " +
+            "L150 108 L160 108 L168 98 L176 120 L184 68 L192 132 L200 108 " +
+            "L246 108 L256 108 L264 96 L272 122 L280 62 L288 138 L296 108 " +
+            "L342 108 L352 108 L360 98 L368 120 L376 68 L384 132 L392 108 " +
+            "L440 108 L450 108 L458 96 L466 122 L474 62 L482 138 L490 108 L500 108"
+        }
+        variant="vitals"
+        mode="draw"
+        viewBox="0 0 500 160"
+        className={"h-14 w-full " + className}
+    />
+);
 
 const GlowingScoreVisual = ({ score }) => {
     const circumference = 2 * Math.PI * 84;
 
     return (
-        <>
-            <style jsx global>{`
-                @keyframes pulse-accent { 50% { filter: drop-shadow(0 0 18px ${ACCENT_COLOR}); } }
-                .animate-pulse-accent { animation: pulse-accent 3s infinite ease-in-out; }
-            `}</style>
-            <div className="relative w-40 h-40 md:w-44 md:h-44 flex-shrink-0">
-                <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 192 192">
+        <div className="flex flex-shrink-0 flex-col items-center gap-4">
+            <div className="relative h-40 w-40 md:h-44 md:w-44">
+                <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 192 192">
                     <circle cx="96" cy="96" r="84" fill="none" style={{ stroke: "var(--surface-muted)" }} strokeWidth="12" />
                     <circle
                         cx="96" cy="96" r="84" fill="none"
@@ -43,15 +64,19 @@ const GlowingScoreVisual = ({ score }) => {
                         className="transition-all duration-1000 ease-out"
                     />
                 </svg>
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="flex h-full w-full items-center justify-center">
                     <Brain
-                        className="w-16 h-16 md:w-20 md:h-20 text-[var(--text-subtle)] transition-all duration-1000 animate-pulse-accent"
+                        className="h-16 w-16 text-[var(--text-subtle)] md:h-20 md:w-20"
                         strokeWidth={1.5}
-                        style={{ filter: `drop-shadow(0 0 10px ${ACCENT_COLOR})` }}
                     />
                 </div>
             </div>
-        </>
+            {/* Data surface: the trace is a reading, so it never sits on a blur. */}
+            <div className="glass-data w-full rounded-[14px] px-3 py-2">
+                <VitalsTrace />
+                <div className="cq-kicker mt-1 text-center">Vitals trace · {score}/100</div>
+            </div>
+        </div>
     );
 };
 
@@ -120,112 +145,122 @@ export default function HealthScoreDashboard({ patient }) {
 
     return (
         <div className="nm-dash">
-            <div className="nm-dash-col">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex items-start gap-3">
-                        <Button asChild variant="secondary" size="icon" aria-label="Go back to patient page">
-                            <Link href="/patient">
-                                <ChevronLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                            </Link>
-                        </Button>
-                        <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="status-chip">Health journey</span>
-                                <span className="cq-pixel-label">PROGRESS LAYER</span>
+            <div className="nm-dash-col nm-stack">
+                <Reveal className="nm-stack-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <Button asChild variant="secondary" size="icon" aria-label="Go back to patient page">
+                                <Link href="/patient">
+                                    <ChevronLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                                </Link>
+                            </Button>
+                            <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="status-chip">Health journey</span>
+                                    <span className="cq-pixel-label">PROGRESS LAYER</span>
+                                </div>
+                                <MaskedText
+                                    as="h1"
+                                    className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
+                                >
+                                    Health Journey
+                                </MaskedText>
+                                <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+                                    Turn assessments and reports into a trackable care progression.
+                                </p>
                             </div>
-                            <h1 className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]">
-                                Health Journey
-                            </h1>
-                            <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-                                Turn assessments and reports into a trackable care progression.
-                            </p>
                         </div>
+                        <Button onClick={() => setShowQuestionnaire(true)}>
+                            <Play className="h-4 w-4" strokeWidth={1.75} />
+                            {healthData?.questionnaire ? "Retake assessment" : "Take assessment"}
+                        </Button>
                     </div>
-                    <Button onClick={() => setShowQuestionnaire(true)}>
-                        <Play className="h-4 w-4" strokeWidth={1.75} />
-                        {healthData?.questionnaire ? "Retake assessment" : "Take assessment"}
-                    </Button>
-                </div>
+                </Reveal>
 
                 {healthData?.questionnaire ? (
-                    <Card className="overflow-hidden">
-                        <CardContent className="grid grid-cols-1 gap-6 p-5 md:grid-cols-5 md:items-center md:p-6">
-                            <div className="flex justify-center items-center md:col-span-2">
-                                <GlowingScoreVisual score={currentScore} />
-                            </div>
-                            <div className="space-y-4 md:col-span-3">
-                                <div>
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <span className="nm-metric-xl tabular-nums" style={{ color: ACCENT_COLOR }}>
-                                            {currentScore}
-                                            <span className="text-[16px] text-[var(--text-muted)]">/100</span>
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant={scoreStatus.variant}>{scoreStatus.text}</Badge>
-                                            {healthData?.trend ? getTrendIcon(healthData.trend) : null}
-                                        </div>
-                                    </div>
-                                    <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
-                                        Your overall health score based on recent data.
-                                    </p>
+                    <Reveal>
+                        <Card tone="data" className="overflow-hidden">
+                            <CardContent className="grid grid-cols-1 gap-6 p-5 md:grid-cols-5 md:items-center md:p-6">
+                                <div className="flex items-center justify-center md:col-span-2">
+                                    <GlowingScoreVisual score={currentScore} />
                                 </div>
-
-                                <div>
-                                    <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
-                                        <span>Overall progress</span>
-                                        <span className="tabular-nums">{currentScore}%</span>
-                                    </div>
-                                    <Progress value={currentScore} className="h-2" />
-                                </div>
-
-                                {(questionnaireScore > 0 || aiScore > 0) && (
-                                    <div className="space-y-2">
-                                        <h3 className="nm-card-title">Score breakdown</h3>
-                                        <div className="flex flex-col gap-2 sm:flex-row">
-                                            {questionnaireScore > 0 && (
-                                                <div className="nm-stat flex-1">
-                                                    <div className="nm-stat-label">Assessment</div>
-                                                    <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
-                                                        {questionnaireScore}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {aiScore > 0 && (
-                                                <div className="nm-stat flex-1">
-                                                    <div className="nm-stat-label">AI analysis</div>
-                                                    <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
-                                                        {aiScore}
-                                                    </div>
-                                                </div>
-                                            )}
+                                <div className="space-y-4 md:col-span-3">
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className="nm-metric-xl tabular-nums" style={{ color: ACCENT_COLOR }}>
+                                                {currentScore}
+                                                <span className="text-[16px] text-[var(--text-muted)]">/100</span>
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={scoreStatus.variant}>{scoreStatus.text}</Badge>
+                                                {healthData?.trend ? getTrendIcon(healthData.trend) : null}
+                                            </div>
                                         </div>
+                                        <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
+                                            Your overall health score based on recent data.
+                                        </p>
                                     </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+
+                                    <div>
+                                        <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
+                                            <span>Overall progress</span>
+                                            <span className="tabular-nums">{currentScore}%</span>
+                                        </div>
+                                        <Progress value={currentScore} className="h-2" />
+                                    </div>
+
+                                    {(questionnaireScore > 0 || aiScore > 0) && (
+                                        <div className="space-y-2">
+                                            <h3 className="nm-card-title">Score breakdown</h3>
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                {questionnaireScore > 0 && (
+                                                    <div className="glass-data flex-1 rounded-[18px] px-3.5 py-3">
+                                                        <div className="nm-stat-label">Assessment</div>
+                                                        <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
+                                                            {questionnaireScore}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {aiScore > 0 && (
+                                                    <div className="glass-data flex-1 rounded-[18px] px-3.5 py-3">
+                                                        <div className="nm-stat-label">AI analysis</div>
+                                                        <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
+                                                            {aiScore}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Reveal>
                 ) : (
-                    <Card>
-                        <CardContent className="p-8 text-center md:p-10">
-                            <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[var(--primary)] text-[var(--dark-text)]">
-                                <Heart className="h-6 w-6" strokeWidth={1.75} />
-                            </div>
-                            <h3 className="cq-section-title mt-4">Start your health journey</h3>
-                            <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-6 text-[var(--text-muted)]">
-                                Take our comprehensive health assessment to get your personalized
-                                score and AI-powered recommendations.
-                            </p>
-                            <Button onClick={() => setShowQuestionnaire(true)} className="mt-5">
-                                <Play className="h-4 w-4" strokeWidth={1.75} />
-                                Take health assessment
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <Reveal>
+                        <Card>
+                            <CardContent className="p-8 text-center md:p-10">
+                                <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[var(--primary)] text-[var(--dark-text)]">
+                                    <Heart className="h-6 w-6" strokeWidth={1.75} />
+                                </div>
+                                <h3 className="cq-section-title mt-4">Start your health journey</h3>
+                                <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-6 text-[var(--text-muted)]">
+                                    Take our comprehensive health assessment to get your personalized
+                                    score and AI-powered recommendations.
+                                </p>
+                                <Button onClick={() => setShowQuestionnaire(true)} className="mt-5">
+                                    <Play className="h-4 w-4" strokeWidth={1.75} />
+                                    Take health assessment
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Reveal>
                 )}
 
                 {Object.keys(categoryScores).length > 0 && (
-                    <section className="nm-stack-sm">
+                    <Reveal className="nm-stack-sm">
                         <h2 className="cq-section-title">Category breakdown</h2>
+                        {/* Readings, not decoration: near-opaque data surface. */}
                         <div className="nm-grid-2">
                             {Object.entries({
                                 diet: { title: 'Diet & Nutrition', Icon: Apple },
@@ -233,7 +268,7 @@ export default function HealthScoreDashboard({ patient }) {
                                 sleep: { title: 'Sleep & Rest', Icon: Moon },
                                 mental_health: { title: 'Mental Wellness', Icon: Smile },
                             }).map(([key, { title, Icon }]) => (
-                                <div key={key} className="nm-stat">
+                                <div key={key} className="glass-data rounded-[18px] p-3.5">
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-3">
                                             <div className="nm-stat-icon">
@@ -251,7 +286,7 @@ export default function HealthScoreDashboard({ patient }) {
                                 </div>
                             ))}
                         </div>
-                    </section>
+                    </Reveal>
                 )}
 
                 {healthData?.questionnaire && (
@@ -261,6 +296,7 @@ export default function HealthScoreDashboard({ patient }) {
 
             {/* ------------------------------------------- right insight rail */}
             <aside className="nm-rail" aria-label="Score safety notes">
+                {/* The one ink anchor on this screen — a number you must not misread. */}
                 <div className="nm-dark-card p-4">
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--dark-muted)]">
                         Current score

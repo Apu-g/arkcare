@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -185,7 +186,8 @@ export default function NeedHelpButton({ userId: userIdProp }) {
                   A nurse will pick this up. Your request is on-chain
                   {sent.onChain === "anchored" ? " (anchored)" : ""}.
                 </p>
-                <p className="mt-1 break-all font-mono text-[10px]">
+                {/* Request hash is provenance data: readable, never blurred. */}
+                <p className="mt-1 break-all font-mono text-[10px] text-[var(--text-muted)]">
                   proof {String(sent.requestHash || "").slice(0, 20)}…
                 </p>
               </div>
@@ -194,19 +196,20 @@ export default function NeedHelpButton({ userId: userIdProp }) {
             {mine.length ? (
               <div className="nm-stack-sm border-t border-[var(--border-subtle)] pt-3">
                 <div className="cq-kicker">MY REQUESTS</div>
+                {/* Divider rows, not boxes: this is a case list, not a feed. */}
                 {mine.map((item) => (
                   <div
                     key={item._id}
-                    className="rounded-[14px] bg-[var(--surface-subtle)] p-3 text-[11.5px]"
+                    className="nm-row grid-cols-1 items-start py-3 text-[11.5px]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-semibold text-[var(--text-strong)]">
                         {item.status === "resolved" ? "Resolved" : "In progress"}
                       </span>
                       {item.resolution?.blockchain?.status === "anchored" ? (
-                        <span className="cq-pixel-label cq-real-label">
-                          <Link2 className="mr-1 h-3 w-3" strokeWidth={2} /> on-chain
-                        </span>
+                        <Badge variant="copper">
+                          <Link2 className="h-3 w-3" strokeWidth={2} /> on-chain
+                        </Badge>
                       ) : null}
                     </div>
                     <p className="mt-1 text-[var(--text-muted)]">{item.summary}</p>

@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import { getRtcEnvironmentIssue, isRtcEnvironmentError } from "@/lib/rtcEnvironment";
 import {
   AlertCircle,
+  CircleCheck,
+  Hourglass,
   Mic,
   MicOff,
   PhoneOff,
+  ShieldCheck,
   Video,
   VideoOff,
+  Volume2,
 } from "lucide-react";
 
 function isOperationAborted(error) {
@@ -377,25 +381,70 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
   };
 
   return (
+    /* The media plane is deliberately solid: no glass, ever, over a video
+       track. Glass is reserved for the chrome around it. */
     <div className="absolute inset-0 z-50 flex flex-col overflow-hidden bg-[var(--surface-shell)] text-[var(--text)]">
-      <div className="m-3 flex items-center justify-between gap-3 rounded-[20px] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-card)]">
-        <div>
+      <div className="m-3 flex items-center justify-between gap-3 rounded-[20px] border border-[var(--glass-edge)] bg-[var(--glass-1)] px-4 py-3 shadow-[var(--shadow-card),inset_0_1px_0_var(--glass-edge-strong)] backdrop-blur-[20px]">
+        <div className="min-w-0">
           <div className="text-[13px] font-semibold text-[var(--text-strong)]">
             {isVideo ? "Video consultation" : "Voice consultation"}
           </div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground">
-            {connectionState === "connected"
-              ? remotePresent
-                ? "Connected"
-                : "Connected · waiting for participant"
-              : connectionState === "failed"
-                ? "Connection failed"
-                : connectionState === "ending"
-                  ? "Ending call..."
-                  : "Connecting securely..."}
+          {/* Connection state indicator: word + icon, and it transitions
+              because a call connecting/failing/ending is a state change a
+              clinician must be able to notice. */}
+          <div
+            data-call-state={connectionState}
+            className="mt-0.5 inline-flex items-center gap-1.5 text-[11px] text-[var(--text-muted)] transition-colors duration-[var(--dur-2)] ease-[var(--ease-soft)]"
+          >
+            {connectionState === "connected" ? (
+              remotePresent ? (
+                <>
+                  <CircleCheck
+                    className="h-3.5 w-3.5 text-[var(--success)]"
+                    strokeWidth={1.75}
+                  />
+                  <span>Connected</span>
+                </>
+              ) : (
+                <>
+                  <Hourglass
+                    className="h-3.5 w-3.5 text-[var(--warning)]"
+                    strokeWidth={1.75}
+                  />
+                  <span>Connected · waiting for participant</span>
+                </>
+              )
+            ) : connectionState === "failed" ? (
+              <>
+                <AlertCircle
+                  className="h-3.5 w-3.5 text-[var(--destructive)]"
+                  strokeWidth={1.75}
+                />
+                <span className="text-[var(--destructive)]">Connection failed</span>
+              </>
+            ) : connectionState === "ending" ? (
+              <>
+                <PhoneOff
+                  className="h-3.5 w-3.5 text-[var(--text-muted)]"
+                  strokeWidth={1.75}
+                />
+                <span>Ending call...</span>
+              </>
+            ) : (
+              <>
+                <Hourglass
+                  className="h-3.5 w-3.5 text-[var(--info)]"
+                  strokeWidth={1.75}
+                />
+                <span>Connecting securely...</span>
+              </>
+            )}
           </div>
         </div>
-        <span className="status-chip shrink-0">Agora RTC</span>
+        <span className="status-chip shrink-0">
+          <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
+          Agora RTC
+        </span>
       </div>
 
       {errorMessage && (
@@ -409,8 +458,9 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         <button
           type="button"
           onClick={resumeAudio}
-          className="mx-3 mb-3 min-h-10 rounded-[16px] bg-[var(--accent)] px-4 py-2.5 text-left text-[12px] font-semibold text-[var(--accent-foreground)] shadow-[var(--shadow-card)]"
+          className="mx-3 mb-3 inline-flex min-h-10 items-center gap-2 rounded-[16px] bg-[var(--accent)] px-4 py-2.5 text-left text-[12px] font-semibold text-[var(--accent-foreground)] shadow-[var(--shadow-card)]"
         >
+          <Volume2 className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           Tap to enable call audio
         </button>
       )}
@@ -418,7 +468,9 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
       <div className="relative flex-1 overflow-hidden">
         {isVideo ? (
           <>
-            <div ref={remoteVideoRef} className="absolute inset-0 bg-[var(--surface-subtle)]" />
+            {/* Solid backing behind the remote track — media is never on
+                glass. */}
+            <div ref={remoteVideoRef} className="absolute inset-0 bg-[var(--surface-muted)]" />
 
             {!remotePresent && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -435,7 +487,7 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
 
             <div
               ref={localVideoRef}
-              className="absolute right-4 top-4 h-32 w-44 overflow-hidden rounded-[20px] bg-[var(--surface)] shadow-[0_16px_30px_rgba(16,14,26,0.24)] md:h-40 md:w-56"
+              className="absolute right-4 top-4 h-32 w-44 overflow-hidden rounded-[20px] bg-[var(--surface)] shadow-[0_16px_30px_rgba(16,14,26,0.24)] ring-1 ring-[var(--glass-edge)] md:h-40 md:w-56"
             />
           </>
         ) : (
@@ -455,7 +507,7 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         )}
       </div>
 
-      <div className="m-3 flex items-center justify-center gap-3 rounded-[20px] bg-[var(--surface)] p-3.5 shadow-[var(--shadow-card)]">
+      <div className="m-3 flex items-center justify-center gap-3 rounded-[20px] border border-[var(--glass-edge)] bg-[var(--glass-1)] p-3.5 shadow-[var(--shadow-card),inset_0_1px_0_var(--glass-edge-strong)] backdrop-blur-[20px]">
         <Button
           type="button"
           onClick={toggleMic}

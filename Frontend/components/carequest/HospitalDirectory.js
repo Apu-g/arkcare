@@ -1,6 +1,8 @@
 "use client";
 
 import { Building2, HeartPulse, Link2, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 
@@ -12,18 +14,21 @@ import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 export default function HospitalDirectory({ hospitals }) {
   return (
     <div className="nm-stack">
-      <section className="nm-dark-card cq-reveal p-5 md:p-6">
-        <div className="cq-kicker !text-white/60">CareQuest network</div>
-        <h1 className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+      <Reveal as="section" className="cq-card p-5 md:p-6">
+        <div className="cq-kicker">CareQuest network</div>
+        <MaskedText
+          as="h1"
+          className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
+        >
           Choose a hospital you trust
-        </h1>
-        <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[#B7B7BE]">
+        </MaskedText>
+        <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[var(--text-muted)]">
           Each hospital runs its own clinical program and its own audit chain. Reputation
           reflects the participation its patients have generated — it is a quality
           signal, never a cashable balance. Capsules are hospital-specific and cannot be
           transferred or cashed out.
         </p>
-        <div className="mt-5 border-t border-white/10 pt-4">
+        <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
           <PixelCharacter
             variant="guardian"
             mood="idle"
@@ -31,9 +36,11 @@ export default function HospitalDirectory({ hospitals }) {
             speech={`${hospitals.length} hospitals in the network`}
           />
         </div>
-      </section>
+      </Reveal>
 
-      <div className="nm-grid-2">
+      {/* Hospital cards carry no hashes or clinical values, so they sit on
+          secondary glass rather than the near-opaque data surface. */}
+      <Reveal className="nm-grid-2">
         {hospitals.map((hospital, index) => (
           <article key={hospital.organizationId} className="cq-card cq-card-hover p-5">
             <div className="flex items-start justify-between gap-3">
@@ -96,7 +103,7 @@ export default function HospitalDirectory({ hospitals }) {
             </div>
           </article>
         ))}
-      </div>
+      </Reveal>
 
       <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-[var(--text-muted)]">
         <HeartPulse className="h-[15px] w-[15px]" strokeWidth={1.75} />

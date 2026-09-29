@@ -70,9 +70,9 @@ export default function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="flex min-h-10 items-center gap-2 rounded-[14px] border border-white/70 bg-[var(--surface)] px-2 py-1.5 shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-hover)]"
+        className="flex min-h-10 items-center gap-2 rounded-[14px] border border-[var(--glass-edge)] bg-[var(--glass-1)] px-2 py-1.5 shadow-[var(--shadow-card),inset_0_1px_0_var(--glass-edge-strong)] backdrop-blur-[20px] saturate-[150%] transition hover:shadow-[var(--shadow-hover),inset_0_1px_0_var(--glass-edge-strong)]"
       >
-        <span className="grid size-8 place-items-center rounded-full bg-[var(--primary)] text-[11px] font-semibold text-white">
+        <span className="grid size-8 place-items-center rounded-full bg-[var(--primary)] text-[11px] font-semibold text-[var(--primary-foreground)]">
           {initials(user.fullName)}
         </span>
         <span className="hidden max-w-[10rem] truncate text-[13px] font-semibold text-[var(--text-strong)] sm:block">
@@ -80,6 +80,9 @@ export default function UserMenu() {
         </span>
       </button>
 
+      {/* The dropdown is a dark floating surface in both palettes, so it stays
+          legible on any surface it opens over. Colours are literal here on
+          purpose: this surface is intentionally outside the token scope. */}
       {open && (
         <div
           role="menu"

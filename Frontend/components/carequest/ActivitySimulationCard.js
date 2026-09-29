@@ -11,6 +11,8 @@ import {
   Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
 import {
@@ -109,6 +111,7 @@ export default function ActivitySimulationCard({
   }
 
   return (
+    <Reveal>
     <section className="cq-card overflow-hidden p-5 md:p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
@@ -118,7 +121,9 @@ export default function ActivitySimulationCard({
             <SimulationBadge>SIMULATED MARKET</SimulationBadge>
           </div>
           <div className="cq-kicker mt-3">ACTIVE CARE MISSION · {organization.name}</div>
-          <h2 className="cq-section-title mt-1">Walking activity demo</h2>
+          <MaskedText as="h2" className="cq-section-title mt-1">
+            Walking activity demo
+          </MaskedText>
           <p className="mt-1.5 max-w-2xl text-[12.5px] leading-6 text-[var(--text-muted)]">
             The phone/wearable, proof-of-work and public-value stream are virtual.
             Eligibility, duplicate protection, Capsule award, audit and hospital program
@@ -133,22 +138,24 @@ export default function ActivitySimulationCard({
         />
       </div>
 
+      {/* Live readings: steps, hash rate, shares and reward are all values you
+          act on, so each tile is a near-opaque data surface. */}
       <div className="mt-5 nm-grid-3">
-        <div className="nm-stat">
+        <div className="glass-data rounded-[18px] p-3.5">
           <div className="nm-stat-icon">
             <Footprints className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </div>
           <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">{steps.toLocaleString()}</div>
           <div className="nm-stat-label mt-0.5">of {goal.toLocaleString()} steps</div>
         </div>
-        <div className="nm-stat">
+        <div className="glass-data rounded-[18px] p-3.5">
           <div className="nm-stat-icon">
             <Cpu className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </div>
           <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">{hashRate} H/s</div>
           <div className="nm-stat-label mt-0.5">virtual hash rate</div>
         </div>
-        <div className="nm-stat">
+        <div className="glass-data rounded-[18px] p-3.5">
           <div className="nm-stat-icon">
             <Activity className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </div>
@@ -157,8 +164,8 @@ export default function ActivitySimulationCard({
           </div>
           <div className="nm-stat-label mt-0.5">virtual accepted shares</div>
         </div>
-        <div className="nm-stat">
-          <div className="nm-stat-icon">
+        <div className="glass-data rounded-[18px] p-3.5">
+          <div className="nm-stat-icon" data-tone="copper">
             <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </div>
           <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">+{reward}</div>
@@ -179,12 +186,12 @@ export default function ActivitySimulationCard({
       </div>
 
       {!activityOccurrence ? (
-        <div className="mt-5 rounded-[16px] bg-[var(--surface-subtle)] p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
+        <div className="cq-card-soft mt-5 p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
           No clinician-approved activity mission is available in this hospital journey.
           The virtual phone/mining demo cannot start without one.
         </div>
       ) : activityOccurrence.status !== "due" ? (
-        <div className="mt-5 rounded-[16px] bg-[var(--surface-subtle)] p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
+        <div className="cq-card-soft mt-5 p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
           This activity is approved but scheduled for{" "}
           <strong className="text-[var(--text-strong)]">
             {new Date(activityOccurrence.scheduledFor).toLocaleString()}
@@ -232,14 +239,15 @@ export default function ActivitySimulationCard({
       </div>
 
       {result?.mining ? (
-        <div className="mt-5 rounded-[16px] bg-[var(--gold-soft)] p-4">
+        <div className="mt-5 rounded-[16px] bg-[var(--copper-soft)] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <SimulationBadge>SIMULATED MINING PAYOUT</SimulationBadge>
-            <span className="font-mono text-[11px] font-bold text-[var(--gold)]">
+            <span className="font-mono text-[11px] font-bold text-[var(--copper)]">
               {result.mining.simulatedCoinAmount} {result.mining.simulatedCoinSymbol}
             </span>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+          {/* Money-shaped figures: data surface, never a blur. */}
+          <div className="glass-data mt-4 grid gap-3 rounded-[14px] p-3.5 sm:grid-cols-4">
             {[
               ["₹" + result.mining.simulatedGrossValueInr, "virtual gross"],
               ["₹" + result.mining.patientShareInr, "patient share"],
@@ -269,5 +277,6 @@ export default function ActivitySimulationCard({
         </div>
       ) : null}
     </section>
+    </Reveal>
   );
 }
