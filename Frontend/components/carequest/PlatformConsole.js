@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
-  Fingerprint,
   HeartPulse,
   Link2,
   Link2Off,
@@ -24,21 +23,6 @@ import PixelCharacter from "@/components/carequest/PixelCharacter";
 import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
 import { reanchorStaleAuditBatches } from "@/actions/auditActions";
-
-function Stat({ icon: Icon, value, label, note, tone }) {
-  return (
-    <div className="nm-stat">
-      <div className="nm-stat-icon" data-tone={tone}>
-        <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-      </div>
-      <div className="nm-stat-value mt-3">{value}</div>
-      <div className="nm-stat-label">{label}</div>
-      {note ? (
-        <p className="mt-1 text-[11px] leading-4 text-[var(--text-subtle)]">{note}</p>
-      ) : null}
-    </div>
-  );
-}
 
 /**
  * Chain of custody — a real path, not artwork.
@@ -79,7 +63,7 @@ function ChainOfCustody({ eventCount, chainCount }) {
  * complete hash (not an ellipsised prefix) and must be copyable so it can be
  * checked against the chain.
  */
-function HashField({ label, value, hint, tone }) {
+function HashField({ label, value, hint, tone, bare = false }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -95,7 +79,10 @@ function HashField({ label, value, hint, tone }) {
   }
 
   return (
-    <div className="glass-data rounded-[16px] px-4 py-3">
+    /* `bare` puts the hash on an existing data surface as a hairline-separated
+       row, so a hospital with three provenance values does not become three
+       nested boxes. It is always the same hash rendering either way. */
+    <div className={bare ? "border-b border-[var(--glass-hairline)] py-3 first:pt-0 last:border-b-0 last:pb-0" : "well"}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="cq-kicker">{label}</span>
         {value ? (
@@ -137,10 +124,14 @@ function HashField({ label, value, hint, tone }) {
 }
 
 /**
- * The platform (master) console. Shows every hospital in the network, each
- * hospital's reputation (capsules earned by its patients — a non-cash metric),
- * and the per-hospital audit head so an operator can see exactly where every
- * audit went and that each chain is internally consistent.
+ * The platform (master) console.
+ *
+ * EDITORIAL ORDER — the page answers an operator's questions in the order they
+ * actually ask them, as document sections rather than a symmetric grid:
+ *   1. the network at a glance            (stat strip, no tiles)
+ *   2. is the network verified?           (the single ink anchor)
+ *   3. what is anchored, per hospital     (ledger, one row per hospital)
+ *   4. what is happening right now        (timeline of recent events)
  */
 export default function PlatformConsole({ overview }) {
   const [expanded, setExpanded] = useState(null);
@@ -187,119 +178,104 @@ export default function PlatformConsole({ overview }) {
   return (
     <div className="nm-dash">
       <div className="nm-dash-col">
-        {/* Framing stays on the light clinical base. Only the proof content
-            below switches to the ink scope. */}
-        <Reveal as="section" className="cq-card p-5 md:p-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="cq-pixel-label">Platform / master</span>
+        {/* ====================================================== 1. THE
+            NETWORK AT A GLANCE. Header is editorial — a rule and a heading,
+            never a boxed panel — and the three headline figures read as one
+            inline strip instead of three identical tiles. */}
+        <Reveal as="section">
+          <div className="section-rule">
+            <span>Platform / master</span>
+          </div>
+          <div className="section-head">
+            <MaskedText as="h1" className="section-title">
+              ArkCare hospital network
+            </MaskedText>
             <SimulationBadge real>Network-wide</SimulationBadge>
           </div>
-          <MaskedText
-            as="h1"
-            className="mt-4 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
-          >
-            ArkCare hospital network
-          </MaskedText>
-          <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[var(--text-muted)]">
-            Every hospital runs its own clinical program, Capsule wallet and audit chain,
-            stored and verified separately. A hospital&apos;s reputation is the
+          <p className="section-lede">
+            Every hospital runs its own clinical program, Capsule wallet and audit
+            chain, stored and verified separately. A hospital&apos;s reputation is the
             participation its patients have generated — it is a quality signal, not a
             claimable balance, and Capsules are never cashable or transferable.
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="nm-stat">
-              <div className="nm-stat-label">Participation earned</div>
-              <div className="mt-1.5 flex items-baseline gap-1.5 text-[24px] font-bold leading-none text-[var(--text-strong)]">
-                <HeartPulse className="h-4 w-4 text-[var(--celadon)]" strokeWidth={1.75} />
+          <dl className="stat-strip mt-5">
+            <div className="stat-inline">
+              <dt>Hospitals</dt>
+              <dd>{totals.hospitalCount}</dd>
+            </div>
+            <div className="stat-inline">
+              <dt>Participation earned</dt>
+              <dd>
+                <HeartPulse
+                  className="mr-1.5 inline-block h-4 w-4 align-[-1px] text-[var(--celadon)]"
+                  strokeWidth={1.75}
+                />
                 {totals.totalCapsules}
-              </div>
-              <div className="mt-1.5 text-[11px] text-[var(--text-muted)]">
-                Non-cash participation signal.
-              </div>
+                <small> non-cash</small>
+              </dd>
             </div>
-            <div className="nm-stat">
-              <div className="nm-stat-label">Hospitals</div>
-              <div className="mt-1.5 text-[24px] font-bold leading-none text-[var(--text-strong)]">
-                {totals.hospitalCount}
-              </div>
-              <div className="mt-1.5 text-[11px] text-[var(--text-muted)]">
-                Each with an independent chain.
-              </div>
+            <div className="stat-inline">
+              <dt>On-chain anchors</dt>
+              <dd className="text-[var(--copper)]">{totals.totalOnChainAnchors}</dd>
             </div>
-            <div className="nm-stat">
-              <div className="nm-stat-label">On-chain anchors</div>
-              <div className="mt-1.5 text-[24px] font-bold leading-none text-[var(--copper)]">
-                {totals.totalOnChainAnchors}
-              </div>
-              <div className="mt-1.5 text-[11px] text-[var(--text-muted)]">
-                Merkle batches committed to the chain.
-              </div>
-            </div>
-          </div>
+          </dl>
+          <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+            Each hospital holds an independent chain; an anchor commits one merkle root
+            of many event hashes to it.
+          </p>
         </Reveal>
 
-        {/* ============================================================ INK
-            Chain integrity is the PROOF half of the product, so it sits on the
-            ink scope: the token remap makes every surface, rule and value
-            inside weightier without turning the whole console dark. Nothing in
-            here re-declares a colour — the scope does it. */}
-        <Reveal
-          as="section"
-          data-scope="ink"
-          className="nm-dark-card p-5 md:p-6"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="cq-kicker">Verification</div>
-              <MaskedText
-                as="h2"
-                className="mt-1 text-[18px] font-semibold tracking-[-0.01em] text-[var(--text-strong)]"
-              >
-                Chain integrity
-              </MaskedText>
-            </div>
+        {/* ====================================================== 2. VERDICT.
+            Chain integrity is the PROOF half of the product, so this is the one
+            ink anchor on the screen. Everything the operator must trust before
+            reading anything else is here; the framing above stays on the light
+            clinical base. Nothing in here re-declares a colour — the scope does
+            it. */}
+        <Reveal as="section" data-scope="ink" className="nm-dark-card p-5 md:p-6">
+          <div className="section-rule mt-0">
+            <span>Verification</span>
+          </div>
+          <div className="section-head">
+            <MaskedText as="h2" className="section-title">
+              Is the network verified?
+            </MaskedText>
             <span className="cq-pixel-label">
               Append-only · one chain per hospital
             </span>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="nm-dark-elevated px-4 py-3">
-              <div className="cq-kicker">Verdict</div>
-              <div className="mt-1 text-[24px] font-bold leading-none text-[var(--text-strong)]">
-                {totals.allChainsValid ? "VALID" : "CHECK"}
-              </div>
-              <div className="mt-1.5 text-[11px] leading-4 text-[var(--text-muted)]">
-                {totals.allChainsValid
-                  ? "Every hospital chain is internally consistent."
-                  : `${broken} chain(s) need review.`}
-              </div>
+          <dl className="stat-strip mt-2">
+            <div className="stat-inline">
+              <dt>Verdict</dt>
+              <dd>{totals.allChainsValid ? "VALID" : "CHECK"}</dd>
             </div>
-            <div className="nm-dark-elevated px-4 py-3">
-              <div className="cq-kicker">Chain heads checked</div>
-              <div className="mt-1 text-[24px] font-bold leading-none text-[var(--text-strong)]">
+            <div className="stat-inline">
+              <dt>Chain heads checked</dt>
+              <dd>
                 {totals.hospitalCount - broken - unknown}
-                <span className="text-[14px] font-semibold text-[var(--text-subtle)]">
-                  /{totals.hospitalCount}
-                </span>
-              </div>
-              <div className="mt-1.5 text-[11px] leading-4 text-[var(--text-muted)]">
-                {unknown > 0
-                  ? `${unknown} chain(s) not verified yet.`
-                  : "All chains verified."}
-              </div>
+                <small> /{totals.hospitalCount}</small>
+              </dd>
             </div>
-            <div className="nm-dark-elevated px-4 py-3">
-              <div className="cq-kicker">Audit events</div>
-              <div className="mt-1 text-[24px] font-bold leading-none text-[var(--copper)]">
-                {totals.totalAuditEvents}
-              </div>
-              <div className="mt-1.5 text-[11px] leading-4 text-[var(--text-muted)]">
-                Hash-chained, tenant scoped.
-              </div>
+            <div className="stat-inline">
+              <dt>Audit events</dt>
+              <dd className="text-[var(--copper)]">{totals.totalAuditEvents}</dd>
             </div>
-          </div>
+          </dl>
+
+          <ul className="mt-3 grid gap-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
+            <li>
+              {totals.allChainsValid
+                ? "Every hospital chain is internally consistent."
+                : `${broken} chain(s) need review.`}
+            </li>
+            <li>
+              {unknown > 0
+                ? `${unknown} chain(s) not verified yet.`
+                : "All chains verified."}
+            </li>
+            <li>Every event is hash-chained and tenant scoped.</li>
+          </ul>
 
           <div className="mt-5">
             <ChainOfCustody
@@ -356,60 +332,47 @@ export default function PlatformConsole({ overview }) {
           </div>
         </Reveal>
 
-        <Reveal as="section" className="nm-grid-3">
-          <Stat
-            icon={Building2}
-            value={totals.hospitalCount}
-            label="Hospitals in network"
-          />
-          <Stat
-            icon={HeartPulse}
-            value={totals.totalCapsules}
-            label="Participation capsules earned"
-            note="Non-cash participation signal"
-          />
-          <Stat
-            icon={Fingerprint}
-            tone="copper"
-            value={totals.totalAuditEvents}
-            label="Audit events (all hospitals)"
-            note="Hash-chained, tenant scoped"
-          />
-        </Reveal>
-
-        <Reveal as="section" className="nm-stack-sm">
-          <div>
-            <div className="cq-kicker">Hospitals &amp; reputation</div>
+        {/* ====================================================== 3. WHAT IS
+            ANCHORED. Hospitals are records, so they are a ledger: hairline
+            rows, not one card per hospital. A row expands in place to reveal
+            that hospital's chain head, merkle root and anchor receipt. */}
+        <Reveal as="section">
+          <div className="section-rule">
+            <span>Hospitals &amp; reputation</span>
+          </div>
+          <div className="section-head">
             <MaskedText
               as="h2"
-              className="cq-section-title mt-1"
-              lines={["Ranked by participation", "their patient cohort has generated"]}
+              className="section-title"
+              lines={["Ranked by the participation", "their patient cohort generated"]}
             />
-            <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-              Expand a hospital to see its full chain head, merkle root and anchor
+            <p className="section-lede">
+              Open a hospital to read its full chain head, merkle root and anchor
               transaction.
             </p>
           </div>
 
-          {overview.hospitals.map((hospital, index) => {
-            const isOpen = expanded === hospital.organizationId;
-            return (
-              <article key={hospital.organizationId} className="cq-card p-5">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="nm-stat-icon shrink-0">
-                      <Building2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    </div>
+          <div className="ledger">
+            <div className="ledger-head">
+              <span>Hospital</span>
+              <span>Chain &amp; anchors</span>
+            </div>
+
+            {overview.hospitals.map((hospital, index) => {
+              const isOpen = expanded === hospital.organizationId;
+              return (
+                <div key={hospital.organizationId}>
+                  <div className="ledger-row">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="cq-pixel-label">#{index + 1}</span>
-                        <h3 className="nm-card-title text-[14px]">{hospital.name}</h3>
+                        <span className="cq-kicker">#{index + 1}</span>
+                        <span className="ledger-title">{hospital.name}</span>
                         <Badge variant="default">{hospital.reputationLabel}</Badge>
                         {hospital.chainValid === false ? (
                           <Badge variant="warning">chain check</Badge>
                         ) : null}
                       </div>
-                      <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]">
+                      <p className="ledger-meta mt-1 flex flex-wrap items-center gap-1.5">
                         <CapsuleIcon size={14} className="text-[var(--primary)]" />
                         <strong className="text-[var(--text)]">
                           {hospital.totalCapsules}
@@ -418,178 +381,225 @@ export default function PlatformConsole({ overview }) {
                         patients · {hospital.doctorCount} doctors
                       </p>
                     </div>
-                  </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    {hospital.chainValid ? (
-                      <span className="cq-pixel-label cq-real-label">
-                        <Link2 className="h-[13px] w-[13px]" strokeWidth={1.75} /> chain
-                        valid
-                      </span>
-                    ) : null}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() =>
-                        setExpanded(isOpen ? null : hospital.organizationId)
-                      }
-                      aria-expanded={isOpen}
-                    >
-                      {isOpen ? (
-                        <ChevronUp className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                      ) : (
-                        <ChevronDown className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                      )}
-                      {isOpen ? "Hide audit" : "View audit"}
-                    </Button>
-                  </div>
-                </div>
-
-                {isOpen ? (
-                  <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
-                    <div className="nm-grid-3">
-                      <div className="nm-stat">
-                        <div className="nm-stat-label">Reputation score</div>
-                        <div className="nm-stat-value mt-1.5">
-                          {hospital.reputationScore}
-                          <span className="ml-1 text-[12px] font-semibold text-[var(--text-muted)]">
-                            /100
-                          </span>
-                        </div>
-                      </div>
-                      <div className="nm-stat">
-                        <div className="nm-stat-label">Handoffs resolved</div>
-                        <div className="nm-stat-value mt-1.5">
-                          {hospital.resolvedCases}
-                        </div>
-                      </div>
-                      <div className="glass-data rounded-[18px] p-[15px_14px]">
-                        <div className="nm-stat-label">On-chain token</div>
-                        <div className="mt-1.5 break-all font-mono text-[13px] font-semibold text-[var(--text-strong)]">
-                          {hospital.tokenId || "—"}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Full hash provenance, same as the hospital audit log. The
-                        provenance block is the proof surface, so it alone drops
-                        onto the ink scope; the hospital's own card above stays on
-                        the light clinical base. */}
-                    <div
-                      data-scope="ink"
-                      className="mt-4 rounded-[18px] border border-[var(--glass-hairline)] bg-[var(--surface-shell)] p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        {hospital.chainValid ? (
-                          <span className="cq-pixel-label cq-real-label">
-                            <ShieldCheck className="h-[13px] w-[13px]" strokeWidth={1.75} />
-                            chain verified
-                          </span>
-                        ) : hospital.chainValid === false ? (
-                          <span className="cq-pixel-label cq-danger-label">
-                            <TriangleAlert className="h-[13px] w-[13px]" strokeWidth={1.75} />
-                            chain inconsistent
-                          </span>
-                        ) : hospital.chainTotal === 0 ? (
-                          <span className="cq-pixel-label">
-                            <Link2Off className="h-[13px] w-[13px]" strokeWidth={1.75} />
-                            no audit events yet
-                          </span>
-                        ) : (
-                          <span className="cq-pixel-label cq-info-label">
-                            <Link2Off className="h-[13px] w-[13px]" strokeWidth={1.75} />
-                            chain not verified
-                          </span>
-                        )}
-                        <span className="text-[11px] text-[var(--text-muted)]">
-                          {hospital.chainChecked} of {hospital.chainTotal} events checked
-                          {hospital.chainTruncated ? " (truncated)" : ""} ·{" "}
-                          {hospital.anchorCount} on-chain anchor
-                          {hospital.anchorCount === 1 ? "" : "s"}
+                    <div className="ledger-actions flex-col items-end gap-1.5">
+                      {/* On-chain state is always an icon plus a word, so it
+                          never depends on colour alone. */}
+                      {hospital.anchorOnChain === true ? (
+                        <Badge variant="copper">
+                          <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
+                          {hospital.anchorCount} anchor
+                          {hospital.anchorCount === 1 ? "" : "s"} on chain
+                        </Badge>
+                      ) : hospital.anchorCount > 0 ? (
+                        <span className="cq-pixel-label cq-sim-label">
+                          <TriangleAlert className="h-[13px] w-[13px]" strokeWidth={1.75} />{" "}
+                          {hospital.anchorCount} anchor
+                          {hospital.anchorCount === 1 ? "" : "s"} off chain
                         </span>
+                      ) : null}
+                      {hospital.chainValid ? (
+                        <span className="cq-pixel-label cq-real-label">
+                          <Link2 className="h-[13px] w-[13px]" strokeWidth={1.75} /> chain
+                          valid
+                        </span>
+                      ) : null}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          setExpanded(isOpen ? null : hospital.organizationId)
+                        }
+                        aria-expanded={isOpen}
+                      >
+                        {isOpen ? (
+                          <ChevronUp className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        ) : (
+                          <ChevronDown className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        )}
+                        {isOpen ? "Hide audit" : "View audit"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {isOpen ? (
+                    <div className="border-b border-[var(--border-subtle)] pb-6 pt-1">
+                      <dl className="dl-grid">
+                        <dt>Reputation score</dt>
+                        <dd>
+                          {hospital.reputationScore}
+                          <small className="ml-1 text-[12px] font-semibold text-[var(--text-muted)]">
+                            /100
+                          </small>
+                        </dd>
+                        <dt>Handoffs resolved</dt>
+                        <dd>{hospital.resolvedCases}</dd>
+                        <dt>On-chain token</dt>
+                        <dd className="select-all break-all font-mono text-[13px]">
+                          {hospital.tokenId || "—"}
+                        </dd>
+                      </dl>
+
+                      {/* Full hash provenance, same as the hospital audit log.
+                          The provenance block is the proof surface, so it alone
+                          drops onto the ink scope; the ledger row above stays on
+                          the light clinical base. */}
+                      <div data-scope="ink" className="nm-dark-card mt-4 p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {hospital.chainValid ? (
+                            <span className="cq-pixel-label cq-real-label">
+                              <ShieldCheck className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                              chain verified
+                            </span>
+                          ) : hospital.chainValid === false ? (
+                            <span className="cq-pixel-label cq-danger-label">
+                              <TriangleAlert className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                              chain inconsistent
+                            </span>
+                          ) : hospital.chainTotal === 0 ? (
+                            <span className="cq-pixel-label">
+                              <Link2Off className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                              no audit events yet
+                            </span>
+                          ) : (
+                            <span className="cq-pixel-label cq-info-label">
+                              <Link2Off className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                              chain not verified
+                            </span>
+                          )}
+                          {hospital.anchorOnChain === true ? (
+                            <Badge variant="copper">
+                              <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
+                              anchor verified on chain
+                            </Badge>
+                          ) : null}
+                        </div>
+                        {/* Chain health and anchor metadata are key/values, so
+                            they read as a definition list beside the hashes
+                            rather than as another box. */}
+                        <dl className="dl-grid mt-3">
+                          <dt>Chain health</dt>
+                          <dd>
+                            {hospital.chainChecked} of {hospital.chainTotal} events
+                            recomputed
+                            {hospital.chainTruncated ? " (truncated)" : ""}
+                          </dd>
+                          <dt>On-chain anchors</dt>
+                          <dd>
+                            {hospital.anchorCount} confirmed batch
+                            {hospital.anchorCount === 1 ? "" : "es"}
+                          </dd>
+                          <dt>Anchor network</dt>
+                          <dd>
+                            {hospital.latestAnchor
+                              ? `Chain ${hospital.latestAnchor.chainId ?? "—"} · ${
+                                  hospital.latestAnchor.network || "local EVM"
+                                }`
+                              : "—"}
+                          </dd>
+                          <dt>Batch committed</dt>
+                          <dd>
+                            {hospital.latestAnchor
+                              ? hospital.latestAnchor.eventCount + " event hashes"
+                              : "—"}
+                          </dd>
+                        </dl>
                         {hospital.anchorCount > 0 &&
                         hospital.anchorOnChain === false ? (
-                          <span className="cq-pixel-label cq-sim-label">
-                            <TriangleAlert className="h-[13px] w-[13px]" strokeWidth={1.75} />
-                            anchor not on current chain
-                          </span>
+                          <div className="mt-2">
+                            <span className="cq-pixel-label cq-sim-label">
+                              <TriangleAlert className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                              anchor not on current chain
+                            </span>
+                          </div>
                         ) : null}
-                        {hospital.anchorOnChain === true ? (
-                          <Badge variant="copper">
-                            <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
-                            anchor verified on chain
-                          </Badge>
-                        ) : null}
-                      </div>
 
-                      <div className="mt-3 grid gap-3">
-                        <HashField
-                          label="Audit chain head (latest event hash)"
-                          value={hospital.headHash}
-                          hint="Final link in this hospital's hash chain. Changing any earlier event breaks the link back to the genesis head."
-                        />
+                        {/* Provenance is three key/values, so it is ONE data
+                            surface with a definition list inside it — not three
+                            stacked boxes. Every hash is rendered in full, in
+                            mono, break-all and selectable, so an operator can
+                            copy it and check it against the chain. */}
+                        <div className="well mt-3">
+                          <HashField
+                            bare
+                            label="Audit chain head (latest event hash)"
+                            value={hospital.headHash}
+                            hint="Final link in this hospital's hash chain. Changing any earlier event breaks the link back to the genesis head."
+                          />
 
-                        <HashField
-                          label="Latest merkle root (anchored on-chain)"
-                          value={hospital.latestAnchor?.merkleRoot}
-                          hint={
-                            hospital.latestAnchor
-                              ? "Batch of " +
-                                hospital.latestAnchor.eventCount +
-                                " event hashes, committed to the chain in one transaction."
-                              : undefined
-                          }
-                        />
+                          <HashField
+                            bare
+                            label="Latest merkle root (anchored on-chain)"
+                            value={hospital.latestAnchor?.merkleRoot}
+                            hint={
+                              hospital.latestAnchor
+                                ? "Batch of " +
+                                  hospital.latestAnchor.eventCount +
+                                  " event hashes, committed to the chain in one transaction."
+                                : undefined
+                            }
+                          />
 
-                        <HashField
-                          label="Anchor transaction hash"
-                          value={hospital.latestAnchor?.txHash}
-                          hint={
-                            hospital.latestAnchor
-                              ? "Block " +
-                                (hospital.latestAnchor.chainId ?? "—") +
-                                " network · anchored " +
-                                new Date(hospital.latestAnchor.confirmedAt).toLocaleString()
-                              : undefined
-                          }
-                        />
+                          <HashField
+                            bare
+                            label="Anchor transaction hash"
+                            value={hospital.latestAnchor?.txHash}
+                            hint={
+                              hospital.latestAnchor
+                                ? "Chain " +
+                                  (hospital.latestAnchor.chainId ?? "—") +
+                                  " · " +
+                                  (hospital.latestAnchor.network || "local EVM") +
+                                  " · anchored " +
+                                  new Date(hospital.latestAnchor.confirmedAt).toLocaleString()
+                                : undefined
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })}
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </Reveal>
 
-        <Reveal as="section" className="cq-card p-5 md:p-6">
-          <div className="cq-kicker">Where every audit went</div>
-          <MaskedText as="h2" className="cq-section-title mt-1">
-            Recent network activity
-          </MaskedText>
-          <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-            Every event is tagged to the hospital it belongs to, with an independent
-            chain per hospital.
-          </p>
-          <div className="mt-4">
+        {/* ====================================================== 4. RECENT
+            ACTIVITY. Events are chronological, so they are a timeline — the
+            most honest shape for a provenance narrative. */}
+        <Reveal as="section">
+          <div className="section-rule">
+            <span>Where every audit went</span>
+          </div>
+          <div className="section-head">
+            <MaskedText as="h2" className="section-title">
+              Recent network activity
+            </MaskedText>
+            <p className="section-lede">
+              Every event is tagged to the hospital it belongs to, with an independent
+              chain per hospital.
+            </p>
+          </div>
+
+          <div className="timeline">
             {overview.recentEvents.map((event) => (
-              <div key={event.eventId} className="nm-row py-3 text-[12px]">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <strong className="nm-card-title">{event.eventType}</strong>
-                    <span className="text-[var(--text-muted)]">{event.resourceType}</span>
-                    <Badge variant="outline">{event.actorRole}</Badge>
-                    <span className="text-[11px] text-[var(--text-muted)]">
-                      {event.organizationName} ·{" "}
-                      {new Date(event.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  {/* Per-event hash, matching the hospital audit log view. */}
-                  <div className="glass-data mt-1.5 select-all break-all rounded-[10px] px-2.5 py-1.5 font-mono text-[11px] leading-4 text-[var(--text-muted)]">
-                    {event.eventHash || "no hash"}
-                  </div>
+              <article key={event.eventId} className="timeline-item" data-tone="copper">
+                <div className="timeline-time">
+                  {new Date(event.createdAt).toLocaleString()}
                 </div>
-              </div>
+                <div className="timeline-title flex flex-wrap items-center gap-2">
+                  {event.eventType}
+                  <Badge variant="outline">{event.actorRole}</Badge>
+                </div>
+                <div className="timeline-body">
+                  {event.organizationName} · {event.resourceType}
+                </div>
+                {/* Per-event hash, matching the hospital audit log view. */}
+                <div className="well mt-2 select-all break-all px-2.5 py-1.5 font-mono text-[11px] leading-4 text-[var(--text-muted)]">
+                  {event.eventHash || "no hash"}
+                </div>
+              </article>
             ))}
           </div>
         </Reveal>
@@ -610,51 +620,39 @@ export default function PlatformConsole({ overview }) {
 
         <div>
           <div className="cq-kicker">Chain health</div>
-          <div className="mt-2 grid gap-2">
-            <div className="glass-data rounded-[16px] p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[12px] font-semibold text-[var(--text)]">
-                  Verified chains
-                </span>
-                <span className="nm-card-title">
-                  {totals.hospitalCount - broken - unknown}
-                </span>
-              </div>
-              <div className="cq-progress mt-2">
-                <span
-                  style={{
-                    width:
-                      (totals.hospitalCount
-                        ? ((totals.hospitalCount - broken - unknown) /
-                            totals.hospitalCount) *
-                          100
-                        : 0) + "%",
-                  }}
-                />
-              </div>
+          <dl className="dl-grid mt-2">
+            <dt>Verified chains</dt>
+            <dd>{totals.hospitalCount - broken - unknown}</dd>
+            <dt>Broken chains</dt>
+            <dd>{broken}</dd>
+            <dt>Unverified chains</dt>
+            <dd>{unknown}</dd>
+          </dl>
+          <div className="glass-data mt-3 rounded-[16px] p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] font-semibold text-[var(--text)]">
+                Verified share
+              </span>
+              <span className="nm-card-title">
+                {totals.hospitalCount - broken - unknown}/{totals.hospitalCount}
+              </span>
             </div>
-            <div className="glass-data rounded-[16px] p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[12px] font-semibold text-[var(--text)]">
-                  Broken chains
-                </span>
-                <span className="nm-card-title">{broken}</span>
-              </div>
-              <p className="mt-1 text-[11px] leading-4 text-[var(--text-muted)]">
-                Recomputation found a broken link.
-              </p>
+            <div className="cq-progress mt-2">
+              <span
+                style={{
+                  width:
+                    (totals.hospitalCount
+                      ? ((totals.hospitalCount - broken - unknown) /
+                          totals.hospitalCount) *
+                        100
+                      : 0) + "%",
+                }}
+              />
             </div>
-            <div className="glass-data rounded-[16px] p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[12px] font-semibold text-[var(--text)]">
-                  Unverified chains
-                </span>
-                <span className="nm-card-title">{unknown}</span>
-              </div>
-              <p className="mt-1 text-[11px] leading-4 text-[var(--text-muted)]">
-                No verdict yet — not counted as valid.
-              </p>
-            </div>
+            <p className="mt-2 text-[11px] leading-4 text-[var(--text-muted)]">
+              A broken chain means recomputation found a broken link. An unverified chain
+              has no verdict yet, so it is never counted as valid.
+            </p>
           </div>
         </div>
 

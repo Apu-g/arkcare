@@ -35,6 +35,7 @@
   --glass-1: rgba(255, 255, 255, 0.55); /* primary panels */
   --glass-2: rgba(255, 255, 255, 0.38); /* secondary / nested */
   --glass-3: rgba(255, 255, 255, 0.22); /* tertiary / wells */
+  --glass-data: rgba(255, 255, 255, 0.88); /* DATA surface — near-opaque */
   --glass-edge: rgba(255, 255, 255, 0.62); /* the thin light edge on glass */
   --glass-edge-strong: rgba(255, 255, 255, 0.85);
   --glass-hairline: rgba(26, 29, 26, 0.09); /* dark hairline for legibility */
@@ -197,6 +198,7 @@
   --glass-1: rgba(255, 255, 255, 0.055);
   --glass-2: rgba(255, 255, 255, 0.035);
   --glass-3: rgba(255, 255, 255, 0.02);
+  --glass-data: rgba(12, 16, 14, 0.9);
   --glass-edge: rgba(255, 255, 255, 0.1);
   --glass-edge-strong: rgba(255, 255, 255, 0.16);
   --glass-hairline: rgba(242, 244, 239, 0.09);

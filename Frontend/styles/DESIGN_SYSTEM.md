@@ -80,6 +80,51 @@ lucide-react only, 18px, `strokeWidth={1.75}`, monochrome (`currentColor` or a t
 
 Compact scale: page title 18–20px/700 · section 13–15px/600 · card title 12–14px/600 · big figure 22–30px/700 · body 12–13px · metadata 10–12px. No 3xl+ hero headings.
 
+## Editorial layer — STOP PUTTING EVERYTHING IN CARDS
+
+The previous pass overused `.cq-card`, which flattened the hierarchy: every block
+looked equally important. Use the **structural** primitives below for grouped
+content and reserve cards for genuinely distinct objects.
+
+| Primitive | Use for |
+|---|---|
+| `.section-rule` + `.section-head` / `.section-title` / `.section-lede` | Dividing major sections of a page. A rule + label, not a boxed header. |
+| `.stat-strip` + `.stat-inline` (`dt`/`dd`) | 2–6 related figures shown **inline in a row** with hairline dividers. Prefer this over N `.nm-stat` tiles. |
+| `.ledger` / `.ledger-head` / `.ledger-row` / `.ledger-title` / `.ledger-meta` / `.ledger-actions` | Record lists: appointments, reports, audit events, handoffs, prescriptions, doctors. Rows separated by hairlines, **not** one card per record. |
+| `.timeline` / `.timeline-item` (`data-tone="copper\|muted"`) / `.timeline-time` / `.timeline-title` / `.timeline-body` | Chronological narrative: audit history, mission timeline, care episodes. |
+| `.dl-grid` (`dt`/`dd`) | Clinical key/value pairs — drug, dose, frequency, duration. |
+| `.well` | A data surface without the card reading. Near-opaque, so safe for medical values. |
+| `.plain-panel` | Explicitly no surface — when a block needs space, not a box. |
+
+### When a card IS correct
+`.cq-card` / `.nm-stat` / `.nm-dark-card` only for:
+- a distinct entity (a doctor, a patient, a hospital) the user can act on
+- a metric that genuinely deserves emphasis
+- the single ink anchor per screen
+
+**Rule of thumb:** if a page has more than ~4 cards in a row, most of them
+should be `.ledger` rows or `.stat-inline` figures instead.
+
+## Scrolling
+
+The **document scrolls**. Do not add `overflow`, fixed heights, or scroll
+containers anywhere — the shell grows with its content and the sidebar/topbar
+are `position: sticky`. Never introduce an inner scroller: an early revision did,
+and it clipped everything past the fold with no way to reach it.
+
+## Motion — making it actually visible
+
+Reveals are **progressive enhancement**: the resting state is visible, and JS
+only sets `data-reveal-pending` on elements that start *below the fold*.
+
+- `<Reveal>` animates a section if it starts below the fold, and simply
+  appears if it does not.
+- Do not try to force above-the-fold content to animate. It will not, by
+  design — that is a layout shift and a delayed read for no benefit.
+- `<MaskedText>` headings behave identically.
+- `<PathMorph>` scrubs on scroll, so it is only visible once you scroll to it.
+  Do not place one in the first viewport expecting a first-paint effect.
+
 ## Rules that are not negotiable
 
 1. No logic, state, handlers, server actions, props or data flow changes. Presentation only.

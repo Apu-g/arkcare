@@ -5,13 +5,16 @@ import { usePrefersReducedMotion, useRevealOnScroll } from "@/hooks/useMotion";
 /**
  * Reveal — the app's single scroll-reveal primitive.
  *
- * Wraps `useRevealOnScroll` so no component ever hand-rolls its own
- * IntersectionObserver (which is how duplicate/never-cleaned observers
- * accumulate). It sets `data-revealed` once; the CSS transition does the rest.
+ * Wraps `useRevealOnScroll` so no component hand-rolls its own
+ * IntersectionObserver (which is how duplicate and uncleaned observers
+ * accumulate).
  *
- * @param delay    ms, kept small and consistent with the motion scale
- * @param as       element to render
- * @param stagger  number of children to cascade across
+ * The element is VISIBLE by default. JS only sets `data-reveal-pending` for
+ * content that starts below the fold, and the observer then flips
+ * `data-revealed`. Consequences that matter:
+ *   - content is never invisible if JS or the observer fails
+ *   - above-the-fold content does not animate or shift
+ *   - a re-render cannot restart or double-run the reveal
  */
 export default function Reveal({
   as: Tag = "div",
@@ -20,12 +23,14 @@ export default function Reveal({
   delay = 0,
   stagger = 0,
   threshold = 0.12,
+  margin = 120,
   disabled = false,
   ...rest
 }) {
   const reduced = usePrefersReducedMotion();
-  const { ref, revealed } = useRevealOnScroll({
+  const { ref, revealed, pending } = useRevealOnScroll({
     threshold,
+    margin,
     disabled: disabled || reduced,
   });
 
@@ -43,6 +48,7 @@ export default function Reveal({
       className={className}
       data-reveal=""
       data-revealed={revealed ? "true" : "false"}
+      data-reveal-pending={pending ? "true" : "false"}
       style={delay ? { "--reveal-delay": `${delay}ms` } : undefined}
       {...rest}
     >
@@ -52,6 +58,7 @@ export default function Reveal({
               key={child?.key ?? index}
               data-reveal=""
               data-revealed={revealed ? "true" : "false"}
+              data-reveal-pending={pending ? "true" : "false"}
               style={{ "--reveal-delay": `${delay + index * stagger}ms` }}
             >
               {child}

@@ -128,10 +128,13 @@ export default function CareQuestShell({
   const closeDrawer = () => setDrawerOpen(false);
 
   return (
-    <div className="cq-app-shell flex h-full min-h-screen flex-col lg:grid lg:grid-cols-[236px_1fr]">
-      {/* ------------------------------------------------ desktop sidebar (spec §8) */}
-      <aside className="cq-sidebar hidden lg:flex lg:h-full lg:flex-col">
-        <div className="flex h-full flex-col gap-6 overflow-y-auto p-5">
+    <div className="cq-app-shell flex min-h-screen flex-col lg:grid lg:grid-cols-[236px_1fr]">
+      {/* ------------------------------------------------ desktop sidebar
+          `position: sticky` (set in globals.css) pins this to the viewport
+          under document scrolling, so the rail stays put while the page
+          scrolls. The page itself is the scroller. */}
+      <aside className="cq-sidebar hidden lg:flex lg:flex-col">
+        <div className="flex flex-col gap-6 p-5">
           <Brand meta={meta} />
 
           <div className="rounded-[20px] bg-[var(--surface-subtle)] p-3 shadow-[var(--shadow-card)]">
@@ -174,7 +177,18 @@ export default function CareQuestShell({
             className="absolute inset-0 bg-[#100E1A]/30"
             onClick={closeDrawer}
           />
-          <div className="cq-sidebar absolute inset-y-0 left-0 flex w-[264px] flex-col gap-6 overflow-y-auto p-5 shadow-[0_24px_60px_rgba(16,14,26,0.2)]">
+          {/* NOTE: deliberately NOT `.cq-sidebar`. That class is the sticky
+              desktop rail (`position: sticky; height: 100vh`), and reusing it
+              here would fight the drawer's own absolute positioning on
+              mobile. The drawer is a fixed overlay and scrolls itself. */}
+          <div
+            className="absolute inset-y-0 left-0 flex w-[264px] flex-col gap-6 overflow-y-auto p-5 shadow-[0_24px_60px_rgba(16,14,26,0.2)]"
+            style={{
+              background: "color-mix(in srgb, var(--surface-shell) 96%, transparent)",
+              backdropFilter: "blur(16px)",
+              position: "fixed",
+            }}
+          >
             <div className="flex items-center justify-between">
               <Brand meta={meta} />
               <button
@@ -192,7 +206,7 @@ export default function CareQuestShell({
       ) : null}
 
       {/* ------------------------------------------------ main column */}
-      <div className="flex min-w-0 flex-col lg:h-full">
+      <div className="flex min-w-0 flex-col">
         <header className="cq-topbar z-30 shrink-0">
           <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-7">
             <div className="flex min-w-0 items-center gap-3">

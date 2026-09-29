@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import Reveal from "@/components/motion/Reveal";
+import MaskedText from "@/components/motion/MaskedText";
 import {
     Upload,
     FileText,
@@ -17,6 +16,14 @@ import {
     Trash2
 } from "lucide-react";
 
+/**
+ * Report intake.
+ *
+ * The document scrolls: the selected-file list and the extracted-data preview
+ * are ledgers that grow the page, not fixed-height scrollers. Clipping a
+ * patient's own report list behind an internal scrollbar is exactly the
+ * failure mode the editorial layer exists to remove.
+ */
 export default function PDFUploader() {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
@@ -114,21 +121,25 @@ export default function PDFUploader() {
     };
 
     return (
-        <div className="mx-auto grid max-w-4xl gap-6">
-            <Reveal>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Upload className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                        <span>Upload Medical Reports</span>
-                    </CardTitle>
-                    <CardDescription>
-                        Upload PDF files of your medical reports for structured data extraction. AI reads the report — it never
-                        diagnoses, prescribes or changes a dose.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 pb-6">
-                    <div className="rounded-[18px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-subtle)] p-8 text-center">
+        <div className="mx-auto max-w-4xl">
+            <Reveal as="section">
+                <div className="section-rule">
+                    <span>Report intake</span>
+                </div>
+                <div className="section-head">
+                    <MaskedText as="h2" className="section-title">
+                        Upload medical reports
+                    </MaskedText>
+                    <span className="cq-pixel-label">PDF · up to 5 files · 15MB each</span>
+                </div>
+                <p className="section-lede">
+                    Upload PDF files of your medical reports for structured data
+                    extraction. AI reads the report — it never diagnoses, prescribes or
+                    changes a dose.
+                </p>
+
+                <div className="mt-5">
+                    <div className="well border-dashed p-8 text-center">
                         <input
                             id="pdf-input"
                             type="file"
@@ -154,26 +165,29 @@ export default function PDFUploader() {
                             </p>
                         </label>
                     </div>
+                </div>
 
-                    {selectedFiles.length > 0 && (
-                        <div className="grid gap-2">
-                            <h3 className="nm-card-title">Selected Files ({selectedFiles.length})</h3>
-                            <ScrollArea className="h-32 rounded-[14px] border border-[var(--border)] bg-[var(--surface-subtle)] p-2">
-                                {selectedFiles.map((file, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-between gap-2 rounded-[12px] p-2 transition-colors hover:bg-[var(--surface-muted)]"
-                                    >
-                                        <div className="flex min-w-0 items-center gap-2">
-                                            <FileText
-                                                className="h-[18px] w-[18px] shrink-0 text-[var(--text-muted)]"
-                                                strokeWidth={1.75}
-                                            />
-                                            <span className="truncate text-[13px] font-medium text-[var(--text)]">
-                                                {file.name}
-                                            </span>
-                                            <Badge variant="outline">{formatFileSize(file.size)}</Badge>
-                                        </div>
+                {selectedFiles.length > 0 && (
+                    <div className="mt-6">
+                        <div className="section-rule">
+                            <span>Selected files ({selectedFiles.length})</span>
+                        </div>
+                        <div className="ledger">
+                            {selectedFiles.map((file, index) => (
+                                <div key={index} className="ledger-row">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <FileText
+                                            className="h-[18px] w-[18px] shrink-0 text-[var(--text-muted)]"
+                                            strokeWidth={1.75}
+                                        />
+                                        <span className="ledger-title break-all">
+                                            {file.name}
+                                        </span>
+                                    </div>
+                                    <div className="ledger-actions">
+                                        <Badge variant="outline">
+                                            {formatFileSize(file.size)}
+                                        </Badge>
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -184,35 +198,39 @@ export default function PDFUploader() {
                                             <Trash2 className="h-[15px] w-[15px]" strokeWidth={1.75} />
                                         </Button>
                                     </div>
-                                ))}
-                            </ScrollArea>
+                                </div>
+                            ))}
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {uploading && (
-                        <div className="grid gap-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[12px] text-[var(--text-muted)]">
-                                    Processing files…
-                                </span>
-                                <span className="text-[12px] font-semibold text-[var(--text)]">
-                                    {uploadProgress}%
-                                </span>
-                            </div>
+                {uploading && (
+                    <div className="mt-6">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[12px] text-[var(--text-muted)]">
+                                Processing files…
+                            </span>
+                            <span className="text-[12px] font-semibold text-[var(--text)]">
+                                {uploadProgress}%
+                            </span>
+                        </div>
+                        <div className="mt-2">
                             <Progress value={uploadProgress} aria-label="Upload progress" />
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {error && (
-                        <div
-                            role="alert"
-                            className="flex items-center gap-2 rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] p-3 text-[var(--destructive)]"
-                        >
-                            <XCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
-                            <span className="text-[13px]">{error}</span>
-                        </div>
-                    )}
+                {error && (
+                    <div
+                        role="alert"
+                        className="mt-5 flex items-center gap-2 rounded-[14px] border border-[var(--destructive)] bg-[var(--destructive-soft)] p-3 text-[var(--destructive)]"
+                    >
+                        <XCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
+                        <span className="text-[13px]">{error}</span>
+                    </div>
+                )}
 
+                <div className="mt-6">
                     <Button
                         onClick={uploadFiles}
                         disabled={selectedFiles.length === 0 || uploading}
@@ -231,65 +249,58 @@ export default function PDFUploader() {
                             </>
                         )}
                     </Button>
-                </CardContent>
-            </Card>
+                </div>
             </Reveal>
 
             {results && (
-                <Reveal>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <CheckCircle
-                                className="h-[18px] w-[18px] text-[var(--success)]"
-                                strokeWidth={1.75}
-                            />
-                            <span>Processing Complete</span>
-                        </CardTitle>
-                        <CardDescription>
-                            Successfully processed {results.total_files_processed} PDF files
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 pb-6">
-                        <div className="nm-grid-3">
-                            <div className="nm-stat">
-                                <div className="nm-stat-value">
-                                    {results.parsed_json?.length || 0}
-                                </div>
-                                <div className="nm-stat-label">Reports Analyzed</div>
-                            </div>
-                            <div className="nm-stat">
-                                <div className="nm-stat-value">
-                                    {results.total_files_processed}
-                                </div>
-                                <div className="nm-stat-label">Files Processed</div>
-                            </div>
-                            <div className="nm-stat">
-                                <div className="nm-stat-value">
-                                    {results.pdf_download_urls?.length || 0}
-                                </div>
-                                <div className="nm-stat-label">Downloads Available</div>
-                            </div>
-                        </div>
+                <Reveal as="section" className="mt-10">
+                    <div className="section-rule">
+                        <span>Processing complete</span>
+                    </div>
+                    <div className="section-head">
+                        <MaskedText as="h2" className="section-title">
+                            {results.total_files_processed} file
+                            {results.total_files_processed === 1 ? "" : "s"} processed
+                        </MaskedText>
+                        <span className="cq-pixel-label cq-real-label">
+                            <CheckCircle className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                            Complete
+                        </span>
+                    </div>
 
-                        {results.pdf_download_urls && results.pdf_download_urls.length > 0 && (
-                            <div className="grid gap-2">
-                                <h3 className="nm-card-title">Download Processed Reports</h3>
-                                <div className="grid gap-2">
-                                    {results.pdf_download_urls.map((item, index) => (
-                                        <div
-                                            key={index}
-                                            className="glass-data flex items-center justify-between gap-3 rounded-[14px] p-3"
-                                        >
-                                            <div className="flex min-w-0 items-center gap-2">
-                                                <FileText
-                                                    className="h-[18px] w-[18px] shrink-0 text-[var(--text-muted)]"
-                                                    strokeWidth={1.75}
-                                                />
-                                                <span className="truncate text-[13px] font-medium text-[var(--text)]">
-                                                    {item.filename}
-                                                </span>
-                                            </div>
+                    <dl className="stat-strip mt-4">
+                        <div className="stat-inline">
+                            <dt>Reports analyzed</dt>
+                            <dd>{results.parsed_json?.length || 0}</dd>
+                        </div>
+                        <div className="stat-inline">
+                            <dt>Files processed</dt>
+                            <dd>{results.total_files_processed}</dd>
+                        </div>
+                        <div className="stat-inline">
+                            <dt>Downloads available</dt>
+                            <dd>{results.pdf_download_urls?.length || 0}</dd>
+                        </div>
+                    </dl>
+
+                    {results.pdf_download_urls && results.pdf_download_urls.length > 0 && (
+                        <div className="mt-8">
+                            <div className="section-rule">
+                                <span>Download processed reports</span>
+                            </div>
+                            <div className="ledger">
+                                {results.pdf_download_urls.map((item, index) => (
+                                    <div key={index} className="ledger-row">
+                                        <div className="flex min-w-0 items-center gap-2">
+                                            <FileText
+                                                className="h-[18px] w-[18px] shrink-0 text-[var(--text-muted)]"
+                                                strokeWidth={1.75}
+                                            />
+                                            <span className="ledger-title break-all">
+                                                {item.filename}
+                                            </span>
+                                        </div>
+                                        <div className="ledger-actions">
                                             <Button
                                                 variant="outline"
                                                 size="default"
@@ -300,43 +311,43 @@ export default function PDFUploader() {
                                                 {!item.download_url ? 'N/A' : 'Download'}
                                             </Button>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {results.parsed_json && results.parsed_json.length > 0 && (
-                            <div className="grid gap-2">
-                                <h3 className="nm-card-title">Extracted Data Preview</h3>
-                                <ScrollArea className="h-48 rounded-[14px] border border-[var(--border)] bg-[var(--surface-subtle)] p-4">
-                                    {results.parsed_json.map((report, index) => (
-                                        <div
-                                            key={index}
-                                            className="glass-data mb-4 rounded-[14px] p-3"
-                                        >
-                                            <div className="grid grid-cols-2 gap-2 text-[13px] text-[var(--text)]">
-                                                <div><strong>Patient:</strong> {report.patient_info?.name || 'N/A'}</div>
-                                                <div><strong>Age:</strong> {report.patient_info?.age || 'N/A'}</div>
-                                                <div><strong>Report Type:</strong> {report.report_type || 'N/A'}</div>
-                                                <div><strong>Tests:</strong> {report.test_results?.length || 0} tests</div>
-                                            </div>
-                                            {report.summary && (
-                                                <div className="mt-2">
-                                                    <strong className="text-[13px] text-[var(--text)]">
-                                                        Summary:
-                                                    </strong>
-                                                    <p className="mt-1 text-[12px] text-[var(--text-muted)]">
-                                                        {report.summary}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </ScrollArea>
+                    {results.parsed_json && results.parsed_json.length > 0 && (
+                        <div className="mt-8">
+                            <div className="section-rule">
+                                <span>Extracted data preview</span>
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            <div className="grid gap-4">
+                                {results.parsed_json.map((report, index) => (
+                                    <div key={index} className="well">
+                                        <dl className="dl-grid">
+                                            <dt>Patient</dt>
+                                            <dd>{report.patient_info?.name || 'N/A'}</dd>
+                                            <dt>Age</dt>
+                                            <dd>{report.patient_info?.age || 'N/A'}</dd>
+                                            <dt>Report type</dt>
+                                            <dd>{report.report_type || 'N/A'}</dd>
+                                            <dt>Tests</dt>
+                                            <dd>{report.test_results?.length || 0} tests</dd>
+                                        </dl>
+                                        {report.summary && (
+                                            <div className="mt-3 border-t border-[var(--border-subtle)] pt-3">
+                                                <div className="cq-kicker">Summary</div>
+                                                <p className="mt-1 text-[12px] leading-5 text-[var(--text-muted)]">
+                                                    {report.summary}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </Reveal>
             )}
         </div>

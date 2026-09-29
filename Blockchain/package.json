@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "node": "hardhat node --hostname 127.0.0.1 --port 8545",
+    "chain-id": "node scripts/print-chain-id.js",
+    "wait-rpc": "node scripts/wait-for-rpc.js",
     "deploy": "node scripts/deploy.js",
+    "smoke": "node scripts/smoke.js",
     "bridge": "node bridge-server.js"
   },
   "dependencies": {

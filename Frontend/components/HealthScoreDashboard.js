@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -46,39 +45,50 @@ const VitalsTrace = ({ className = "" }) => (
     />
 );
 
-const GlowingScoreVisual = ({ score }) => {
+/* The score ring is the one figure that earns a tile. The vitals trace is a
+   scroll-scrubbed path, so it deliberately lives in its own section BELOW the
+   fold rather than crowding the top of the page. */
+const ScoreRing = ({ score }) => {
     const circumference = 2 * Math.PI * 84;
 
     return (
-        <div className="flex flex-shrink-0 flex-col items-center gap-4">
-            <div className="relative h-40 w-40 md:h-44 md:w-44">
-                <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 192 192">
-                    <circle cx="96" cy="96" r="84" fill="none" style={{ stroke: "var(--surface-muted)" }} strokeWidth="12" />
-                    <circle
-                        cx="96" cy="96" r="84" fill="none"
-                        style={{ stroke: ACCENT_COLOR }}
-                        strokeWidth="12"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={circumference - (score / 100) * circumference}
-                        strokeLinecap="round"
-                        className="transition-all duration-1000 ease-out"
-                    />
-                </svg>
-                <div className="flex h-full w-full items-center justify-center">
-                    <Brain
-                        className="h-16 w-16 text-[var(--text-subtle)] md:h-20 md:w-20"
-                        strokeWidth={1.5}
-                    />
-                </div>
-            </div>
-            {/* Data surface: the trace is a reading, so it never sits on a blur. */}
-            <div className="glass-data w-full rounded-[14px] px-3 py-2">
-                <VitalsTrace />
-                <div className="cq-kicker mt-1 text-center">Vitals trace · {score}/100</div>
+        <div className="relative h-40 w-40 shrink-0 md:h-44 md:w-44">
+            <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 192 192">
+                <circle cx="96" cy="96" r="84" fill="none" style={{ stroke: "var(--surface-muted)" }} strokeWidth="12" />
+                <circle
+                    cx="96" cy="96" r="84" fill="none"
+                    style={{ stroke: ACCENT_COLOR }}
+                    strokeWidth="12"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={circumference - (score / 100) * circumference}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                />
+            </svg>
+            <div className="flex h-full w-full items-center justify-center">
+                <Brain
+                    className="h-16 w-16 text-[var(--text-subtle)] md:h-20 md:w-20"
+                    strokeWidth={1.5}
+                />
             </div>
         </div>
     );
 };
+
+/* Data surface: the trace is a reading, so it never sits on a blur. */
+const VitalsTracePanel = ({ score }) => (
+    <div className="well">
+        <div className="section-head">
+            <h2 className="section-title text-[15px]!">Vitals trace</h2>
+            <p className="section-lede">
+                Drawn on as you scroll to it. A progress signal only — it never changes a
+                diagnosis, prescription or treatment decision.
+            </p>
+        </div>
+        <VitalsTrace />
+        <div className="cq-kicker mt-1.5">Vitals trace · {score}/100</div>
+    </div>
+);
 
 export default function HealthScoreDashboard({ patient }) {
     const [healthData, setHealthData] = useState(null);
@@ -155,17 +165,14 @@ export default function HealthScoreDashboard({ patient }) {
                                 </Link>
                             </Button>
                             <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="status-chip">Health journey</span>
-                                    <span className="cq-pixel-label">PROGRESS LAYER</span>
-                                </div>
+                                <div className="section-rule mt-0! mb-2!">Health journey</div>
                                 <MaskedText
                                     as="h1"
-                                    className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
+                                    className="text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
                                 >
                                     Health Journey
                                 </MaskedText>
-                                <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+                                <p className="mt-1 max-w-2xl text-[13px] text-[var(--text-muted)]">
                                     Turn assessments and reports into a trackable care progression.
                                 </p>
                             </div>
@@ -178,114 +185,135 @@ export default function HealthScoreDashboard({ patient }) {
                 </Reveal>
 
                 {healthData?.questionnaire ? (
-                    <Reveal>
-                        <Card tone="data" className="overflow-hidden">
-                            <CardContent className="grid grid-cols-1 gap-6 p-5 md:grid-cols-5 md:items-center md:p-6">
-                                <div className="flex items-center justify-center md:col-span-2">
-                                    <GlowingScoreVisual score={currentScore} />
+                    <>
+                        <Reveal>
+                            <section className="plain-panel">
+                                <div className="section-rule">Your score</div>
+                                <div className="section-head">
+                                    <h2 className="section-title">Overall health score</h2>
+                                    <p className="section-lede">
+                                        Based on your own assessment answers and the reports your
+                                        doctors have filed.
+                                    </p>
                                 </div>
-                                <div className="space-y-4 md:col-span-3">
-                                    <div>
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <span className="nm-metric-xl tabular-nums" style={{ color: ACCENT_COLOR }}>
-                                                {currentScore}
-                                                <span className="text-[16px] text-[var(--text-muted)]">/100</span>
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant={scoreStatus.variant}>{scoreStatus.text}</Badge>
-                                                {healthData?.trend ? getTrendIcon(healthData.trend) : null}
+                                {/* The ring is the one figure on this page that earns a tile;
+                                    everything else is set inline. */}
+                                <div className="well flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-8">
+                                    <ScoreRing score={currentScore} />
+                                    <div className="w-full space-y-4">
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <span className="nm-metric-xl tabular-nums" style={{ color: ACCENT_COLOR }}>
+                                                    {currentScore}
+                                                    <span className="text-[16px] text-[var(--text-muted)]">/100</span>
+                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={scoreStatus.variant}>{scoreStatus.text}</Badge>
+                                                    {healthData?.trend ? getTrendIcon(healthData.trend) : null}
+                                                </div>
                                             </div>
+                                            <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
+                                                Your overall health score based on recent data.
+                                            </p>
                                         </div>
-                                        <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
-                                            Your overall health score based on recent data.
-                                        </p>
-                                    </div>
 
-                                    <div>
-                                        <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
-                                            <span>Overall progress</span>
-                                            <span className="tabular-nums">{currentScore}%</span>
+                                        <div>
+                                            <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
+                                                <span>Overall progress</span>
+                                                <span className="tabular-nums">{currentScore}%</span>
+                                            </div>
+                                            <Progress value={currentScore} className="h-2" />
                                         </div>
-                                        <Progress value={currentScore} className="h-2" />
-                                    </div>
 
-                                    {(questionnaireScore > 0 || aiScore > 0) && (
-                                        <div className="space-y-2">
-                                            <h3 className="nm-card-title">Score breakdown</h3>
-                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                        {(questionnaireScore > 0 || aiScore > 0) && (
+                                            <dl className="stat-strip border-t border-[var(--border-subtle)] pt-3">
                                                 {questionnaireScore > 0 && (
-                                                    <div className="glass-data flex-1 rounded-[18px] px-3.5 py-3">
-                                                        <div className="nm-stat-label">Assessment</div>
-                                                        <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
-                                                            {questionnaireScore}
-                                                        </div>
+                                                    <div className="stat-inline">
+                                                        <dt>Assessment</dt>
+                                                        <dd>{questionnaireScore}</dd>
                                                     </div>
                                                 )}
                                                 {aiScore > 0 && (
-                                                    <div className="glass-data flex-1 rounded-[18px] px-3.5 py-3">
-                                                        <div className="nm-stat-label">AI analysis</div>
-                                                        <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
-                                                            {aiScore}
-                                                        </div>
+                                                    <div className="stat-inline">
+                                                        <dt>AI analysis</dt>
+                                                        <dd>{aiScore}</dd>
                                                     </div>
                                                 )}
-                                            </div>
-                                        </div>
-                                    )}
+                                            </dl>
+                                        )}
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </Reveal>
+                            </section>
+                        </Reveal>
+
+                        {/* Below the fold on purpose: PathMorph scrubs on scroll, so it
+                            is only meaningful once the reader reaches it. */}
+                        <Reveal>
+                            <VitalsTracePanel score={currentScore} />
+                        </Reveal>
+                    </>
                 ) : (
                     <Reveal>
-                        <Card>
-                            <CardContent className="p-8 text-center md:p-10">
-                                <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[var(--primary)] text-[var(--dark-text)]">
-                                    <Heart className="h-6 w-6" strokeWidth={1.75} />
-                                </div>
-                                <h3 className="cq-section-title mt-4">Start your health journey</h3>
-                                <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-6 text-[var(--text-muted)]">
-                                    Take our comprehensive health assessment to get your personalized
-                                    score and AI-powered recommendations.
-                                </p>
-                                <Button onClick={() => setShowQuestionnaire(true)} className="mt-5">
-                                    <Play className="h-4 w-4" strokeWidth={1.75} />
-                                    Take health assessment
-                                </Button>
-                            </CardContent>
-                        </Card>
+                        <section className="plain-panel py-10 text-center">
+                            <div className="section-rule">Assessment</div>
+                            <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[var(--primary)] text-[var(--primary-foreground)]">
+                                <Heart className="h-6 w-6" strokeWidth={1.75} />
+                            </div>
+                            <h2 className="section-title mt-4">Start your health journey</h2>
+                            <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-6 text-[var(--text-muted)]">
+                                Take our comprehensive health assessment to get your personalized
+                                score and AI-powered recommendations.
+                            </p>
+                            <Button onClick={() => setShowQuestionnaire(true)} className="mt-5">
+                                <Play className="h-4 w-4" strokeWidth={1.75} />
+                                Take health assessment
+                            </Button>
+                        </section>
                     </Reveal>
                 )}
 
                 {Object.keys(categoryScores).length > 0 && (
                     <Reveal className="nm-stack-sm">
-                        <h2 className="cq-section-title">Category breakdown</h2>
-                        {/* Readings, not decoration: near-opaque data surface. */}
-                        <div className="nm-grid-2">
-                            {Object.entries({
-                                diet: { title: 'Diet & Nutrition', Icon: Apple },
-                                exercise: { title: 'Physical Activity', Icon: Activity },
-                                sleep: { title: 'Sleep & Rest', Icon: Moon },
-                                mental_health: { title: 'Mental Wellness', Icon: Smile },
-                            }).map(([key, { title, Icon }]) => (
-                                <div key={key} className="glass-data rounded-[18px] p-3.5">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="nm-stat-icon">
-                                                <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        <section>
+                            <div className="section-rule">Assessment</div>
+                            <div className="section-head">
+                                <h2 className="section-title">Category breakdown</h2>
+                                <p className="section-lede">
+                                    Each category scored from your own answers.
+                                </p>
+                            </div>
+                            {/* Readings, not decoration: a ledger of scores with the bar
+                                inline, on one data surface. */}
+                            <div className="well">
+                                <div className="ledger">
+                                    <div className="ledger-head">
+                                        <span>Category</span>
+                                        <span>Score</span>
+                                    </div>
+                                    {Object.entries({
+                                        diet: { title: 'Diet & Nutrition', Icon: Apple },
+                                        exercise: { title: 'Physical Activity', Icon: Activity },
+                                        sleep: { title: 'Sleep & Rest', Icon: Moon },
+                                        mental_health: { title: 'Mental Wellness', Icon: Smile },
+                                    }).map(([key, { title, Icon }]) => (
+                                        <div key={key} className="ledger-row items-center">
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                <Icon className="h-4 w-4 shrink-0 text-[var(--text-muted)]" strokeWidth={1.75} />
+                                                <div className="min-w-0 flex-1">
+                                                    <span className="ledger-title">{title}</span>
+                                                    <div className="mt-2 max-w-[280px]">
+                                                        <Progress value={categoryScores[key] || 0} className="h-1.5" />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <span className="nm-card-title text-[13px]">{title}</span>
+                                            <span className="ledger-title text-[19px] tabular-nums">
+                                                {categoryScores[key] || 0}
+                                            </span>
                                         </div>
-                                        <span className="nm-metric-xl text-[22px] tabular-nums">
-                                            {categoryScores[key] || 0}
-                                        </span>
-                                    </div>
-                                    <div className="mt-3">
-                                        <Progress value={categoryScores[key] || 0} className="h-1.5" />
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        </section>
                     </Reveal>
                 )}
 

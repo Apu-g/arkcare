@@ -86,13 +86,13 @@ export default function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-[16px] border border-white/10 bg-[#15151C] shadow-[var(--shadow-dark-float)]"
+          className="absolute right-0 z-50 mt-2 w-64 rounded-[16px] border border-white/10 bg-[#15151C] shadow-[var(--shadow-dark-float)]"
         >
           <div className="border-b border-white/10 px-4 py-3">
-            <p className="truncate text-[13px] font-semibold text-white">
+            <p className="text-[13px] font-semibold break-words text-white">
               {user.fullName}
             </p>
-            <p className="mt-0.5 truncate text-[11px] text-[#B7B7BE]">
+            <p className="mt-0.5 text-[11px] break-all text-[#B7B7BE]">
               {user.primaryEmailAddress?.emailAddress}
             </p>
             {user.publicMetadata?.role && (
@@ -108,7 +108,7 @@ export default function UserMenu() {
             role="menuitem"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="flex min-h-[42px] w-full items-center gap-2 px-4 text-[13px] font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+            className="flex min-h-[42px] w-full items-center gap-2 rounded-b-[16px] px-4 text-[13px] font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
           >
             <LogOut className="h-4 w-4" strokeWidth={1.75} />
             {signingOut ? "Signing out..." : "Sign out"}

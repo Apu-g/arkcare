@@ -32,50 +32,56 @@ export function usePrefersReducedMotion() {
 /**
  * Reveal-on-enter via IntersectionObserver.
  *
- * Why a hook and not a CSS-only animation: a CSS animation starts on mount and
- * replays on every re-render, which is exactly the "element animates twice"
- * problem. This flips a data attribute once and never again, and disconnects
- * the observer on unmount.
+ * PROGRESSIVE ENHANCEMENT. Returns a `pending` flag alongside `revealed`:
+ * `pending` is only true for elements that are genuinely below the fold when
+ * the component mounts. CSS hides ONLY `[data-reveal-pending="true"]`, so:
+ *   - no JS / no IntersectionObserver  -> content visible
+ *   - element already in the viewport  -> no animation, no layout shift
+ *   - element below the fold           -> animates on approach
  *
- * @param options.threshold  how much of the element must be visible
- * @param options.rootMargin negative margin triggers slightly before entry
- * @param options.once       reveal only the first time (default true)
- * @param options.disabled   skip observation entirely (reduced motion, SSR)
+ * Why not hide by default: an earlier revision did, which made real content
+ * permanently invisible whenever the observer failed to fire. A reveal must
+ * never be load-bearing for readability.
+ *
+ * @param options.margin  px of viewport below the fold to count as "pending"
  */
 export function useRevealOnScroll({
   threshold = 0.12,
-  rootMargin = "0px 0px -8% 0px",
+  rootMargin = "0px 0px -6% 0px",
+  margin = 120,
   once = true,
   disabled = false,
 } = {}) {
   const ref = useRef(null);
   const [revealed, setRevealed] = useState(false);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (disabled) {
-      // Reduced motion: show immediately, observe nothing.
-      setRevealed(true);
-      return undefined;
-    }
+    if (disabled) return undefined; // reduced motion -> never pending, always visible
 
     const node = ref.current;
     if (!node) return undefined;
 
-    // No IntersectionObserver (very old browsers, or jsdom in tests):
-    // degrade to "always visible" rather than an invisible element.
-    if (typeof IntersectionObserver === "undefined") {
-      setRevealed(true);
-      return undefined;
-    }
+    if (typeof IntersectionObserver === "undefined") return undefined;
+
+    const rect = node.getBoundingClientRect();
+    const vh = window.innerHeight || 0;
+    // Already on screen at mount: leave it alone. Animating content the user
+    // is already looking at is noise, and it costs a layout shift.
+    if (rect.top < vh - margin) return undefined;
+
+    setPending(true);
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             setRevealed(true);
+            setPending(false);
             if (once) observer.unobserve(entry.target);
           } else if (!once) {
             setRevealed(false);
+            setPending(true);
           }
         }
       },
@@ -84,9 +90,9 @@ export function useRevealOnScroll({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [threshold, rootMargin, once, disabled]);
+  }, [threshold, rootMargin, margin, once, disabled]);
 
-  return { ref, revealed };
+  return { ref, revealed, pending };
 }
 
 /**

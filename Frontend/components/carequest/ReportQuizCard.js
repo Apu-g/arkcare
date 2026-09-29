@@ -41,7 +41,7 @@ export default function ReportQuizCard({ report, onCompleted }) {
 
   if (report.quizCompleted && !result) {
     return (
-      <div className="rounded-[16px] bg-[var(--success-soft)] p-4 text-[12px] text-[var(--success)]">
+      <div className="rounded-[12px] bg-[var(--success-soft)] p-3.5 text-[12px] text-[var(--success)]">
         <div className="flex items-center gap-2 text-[12.5px] font-semibold">
           <CheckCircle2 className="h-[18px] w-[18px]" strokeWidth={1.75} /> Knowledge check completed
         </div>
@@ -54,38 +54,51 @@ export default function ReportQuizCard({ report, onCompleted }) {
   }
 
   return (
-    <div className="nm-stack-sm glass-data rounded-[16px] p-4">
-      <div className="cq-kicker">KNOWLEDGE CHECK · 4 QUESTIONS</div>
-      {questions.map((question, questionIndex) => (
-        <fieldset key={question.questionId} className="space-y-2">
-          <legend className="text-[12.5px] font-semibold text-[var(--text-strong)]">
-            {questionIndex + 1}. {question.question}
-          </legend>
-          <div className="grid gap-1.5 sm:grid-cols-2">
-            {question.options.map((option) => {
-              const picked = answers[questionIndex] === option;
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  aria-pressed={picked}
-                  onClick={() =>
-                    setAnswers((current) => ({ ...current, [questionIndex]: option }))
-                  }
-                  className={
-                    "min-h-10 rounded-[12px] border px-3 py-2 text-left text-[12px] font-medium transition hover:-translate-y-px " +
-                    (picked
-                      ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--text-strong)]"
-                      : "border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--text)] hover:bg-[var(--surface-hover)]")
-                  }
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      ))}
+    <div className="nm-stack-sm">
+      <div>
+        <div className="section-rule">Knowledge check · 4 questions</div>
+        <p className="text-[11.5px] text-[var(--text-muted)]">
+          Four questions about this report. Answers are graded on the server.
+        </p>
+      </div>
+      {/* The questions are an ordered list, so they read as hairline-separated
+          rows. A plain <fieldset> keeps the legend association valid, so the
+          ledger styling is applied to the fieldset itself. */}
+      <div>
+        {questions.map((question, questionIndex) => (
+          <fieldset key={question.questionId} className="border-b border-[var(--border-subtle)] py-4 last:border-b-0 last:pb-0">
+            <legend className="ledger-title">
+              <span className="timeline-time mr-2">
+                {String(questionIndex + 1).padStart(2, "0")}
+              </span>
+              {question.question}
+            </legend>
+            <div className="mt-2.5 grid gap-1.5 sm:grid-cols-2">
+              {question.options.map((option) => {
+                const picked = answers[questionIndex] === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-pressed={picked}
+                    onClick={() =>
+                      setAnswers((current) => ({ ...current, [questionIndex]: option }))
+                    }
+                    className={
+                      "min-h-10 rounded-[12px] border px-3 py-2 text-left text-[12px] font-medium transition hover:-translate-y-px " +
+                      (picked
+                        ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--text-strong)]"
+                        : "border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--text)] hover:bg-[var(--surface-hover)]")
+                    }
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        ))}
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={submit} disabled={!answered || busy || result}>
@@ -104,7 +117,7 @@ export default function ReportQuizCard({ report, onCompleted }) {
       {error ? <p className="text-[11.5px] text-[var(--destructive)]">{error}</p> : null}
 
       {result ? (
-        <div className="space-y-2 rounded-[14px] bg-[var(--surface-subtle)] p-3.5">
+        <div className="well space-y-2">
           <div className="text-[12.5px] font-semibold text-[var(--text-strong)]">
             You scored {result.correctCount}/{result.total} · +{result.awardedCapsules} Capsules
           </div>

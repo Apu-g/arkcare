@@ -9,9 +9,16 @@ import { Search, Stethoscope, Video } from "lucide-react";
 
 /**
  * Browse every approved doctor grouped by their niche (specialty), so a patient
- * can enter a specialty and meet a clinician. Booking a slot from a niche card
+ * can enter a specialty and meet a clinician. Booking a slot from a niche row
  * starts the real consultation flow; the video meeting itself happens in the
  * appointment chat (that is where the shared chat + Agora token live).
+ *
+ * A doctor is a distinct entity, but within one niche they are structurally
+ * identical records — name, specialty, experience, fee, one action. Three
+ * boxed cards per row made a directory of thirty doctors read as ninety
+ * unrelated objects, so each niche is a ledger: one hairline row per doctor
+ * with the booking action in `.ledger-actions`, and the page frame is
+ * editorial (rule, heading, lede, search in the head) rather than a card.
  */
 export default function DoctorDirectory({ doctors, organizationName }) {
   const [query, setQuery] = useState("");
@@ -38,21 +45,14 @@ export default function DoctorDirectory({ doctors, organizationName }) {
 
   return (
     <div className="nm-stack">
-      <Reveal as="section" className="cq-card p-5 md:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="cq-kicker">Doctor directory</div>
-            <MaskedText
-              as="h1"
-              className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]"
-            >
-              Meet a clinician by niche
-            </MaskedText>
-            <p className="mt-1 max-w-xl text-[13px] leading-6 text-[var(--text-muted)]">
-              Every approved doctor at {organizationName || "this hospital"}. Enter a
-              niche, then book a slot to open a video consultation.
-            </p>
-          </div>
+      <Reveal as="section">
+        <div className="section-rule">
+          <span>Doctor directory</span>
+        </div>
+        <div className="section-head">
+          <MaskedText as="h1" className="section-title">
+            Meet a clinician by niche
+          </MaskedText>
           <div className="relative w-full sm:w-72">
             <Search
               className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--text-subtle)]"
@@ -63,54 +63,77 @@ export default function DoctorDirectory({ doctors, organizationName }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search doctor or niche"
               aria-label="Search doctor or niche"
-              className="nm-input !pl-10"
+              className="nm-input pl-10!"
             />
           </div>
         </div>
+        <p className="section-lede">
+          Every approved doctor at {organizationName || "this hospital"}. Enter a niche,
+          then book a slot to open a video consultation.
+        </p>
+        <dl className="stat-strip mt-4">
+          <div className="stat-inline">
+            <dt>Approved doctors</dt>
+            <dd>{doctors.length}</dd>
+          </div>
+          <div className="stat-inline">
+            <dt>Matching your search</dt>
+            <dd>{filtered.length}</dd>
+          </div>
+          <div className="stat-inline">
+            <dt>Specialties</dt>
+            <dd>{byNiche.length}</dd>
+          </div>
+        </dl>
       </Reveal>
 
       {byNiche.length === 0 ? (
-        <div className="cq-card border-dashed p-8 text-center text-[13px] text-[var(--text-muted)]">
+        <p className="border-l-2 border-[var(--border)] pl-3 text-[13px] text-[var(--text-muted)]">
           No doctors match &ldquo;{query}&rdquo;.
-        </div>
+        </p>
       ) : null}
 
       {byNiche.map(([niche, list]) => (
         <Reveal as="section" key={niche} className="nm-stack-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <Stethoscope
-              className="h-[18px] w-[18px] text-[var(--text-muted)]"
-              strokeWidth={1.75}
-            />
-            <h2 className="cq-section-title">{niche}</h2>
-            <span className="cq-pixel-label">{list.length} doctor(s)</span>
+          <div className="section-rule">
+            <span className="inline-flex items-center gap-2">
+              <Stethoscope className="h-[14px] w-[14px]" strokeWidth={1.75} />
+              {niche}
+            </span>
           </div>
-          <div className="nm-grid-3">
+          <div className="section-head">
+            <h2 className="section-title">
+              {list.length} clinician{list.length === 1 ? "" : "s"} in this niche
+            </h2>
+          </div>
+
+          <div className="ledger">
+            <div className="ledger-head">
+              <span>Clinician</span>
+              <span>Consultation</span>
+            </div>
             {list.map((doctor) => (
-              <article key={doctor.doctor_id} className="cq-card cq-card-hover flex flex-col p-4">
-                <div className="flex items-start gap-3">
+              <article key={doctor.doctor_id} className="ledger-row items-start!">
+                <div className="flex min-w-0 items-start gap-3">
                   <div className="nm-stat-icon shrink-0">
                     <Stethoscope className="h-[18px] w-[18px]" strokeWidth={1.75} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="nm-card-title truncate text-[14px]">{doctor.name}</h3>
-                    <p className="text-[12px] font-semibold text-[var(--text-muted)]">
+                    <h3 className="ledger-title">{doctor.name}</h3>
+                    <p className="ledger-meta mt-0.5">
                       {doctor.specialization}
+                      {doctor.experience ? ` · ${doctor.experience} yrs experience` : ""}
                     </p>
-                    {doctor.experience ? (
-                      <p className="text-[11px] text-[var(--text-subtle)]">
-                        {doctor.experience} yrs experience
-                      </p>
+                    {doctor.qualifications?.length ? (
+                      <p className="ledger-meta mt-1">{doctor.qualifications.join(" · ")}</p>
                     ) : null}
                   </div>
                 </div>
-                {doctor.qualifications?.length ? (
-                  <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[var(--text-muted)]">
-                    {doctor.qualifications.join(" · ")}
-                  </p>
-                ) : null}
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <span className="cq-pixel-label">
+
+                <div className="ledger-actions flex-col items-end gap-2">
+                  {/* A fee is a value: it reads on the near-opaque data surface,
+                      never behind the primary blur. */}
+                  <span className="well px-2.5 py-1 text-[12px] font-semibold text-[var(--text-strong)]">
                     {doctor.consultationFee ? `₹${doctor.consultationFee}` : "—"}
                   </span>
                   <Button

@@ -11,7 +11,6 @@ import {
   Info,
   Link2,
   Lock,
-  MessageCircle,
   RefreshCw,
   ShieldCheck,
   UserCheck,
@@ -188,34 +187,45 @@ export default function StaffHandoffQueue({
       ) : null}
 
       <Reveal delay={60}>
-      <section className="nm-grid-3">
-        {[
-          [open.length, "Open", MessageCircle],
-          [unowned.length, "Unowned", UserCheck],
-          [overdue.length, "Overdue", Clock3],
-        ].map(([value, label, Icon]) => (
-          <div key={label} className="nm-stat">
-            <div className="nm-stat-icon" data-tone={label === "Overdue" ? "copper" : undefined}>
-              <Icon className="h-5 w-5" strokeWidth={1.75} />
+      {/* Queue health reads as three inline figures, not three identical
+          tiles. Only the overdue figure earns emphasis, and it is a tile
+          because "how many are overdue" is the one question this page
+          exists to answer. */}
+      <section>
+        <div className="section-rule">
+          <span>Queue health</span>
+        </div>
+        <div className="flex flex-wrap items-end gap-6">
+          <dl className="stat-strip">
+            <div className="stat-inline">
+              <dt>Open</dt>
+              <dd>{open.length}</dd>
             </div>
-            <div className="mt-3 nm-stat-value">{value}</div>
-            <div className="nm-stat-label">{label}</div>
-          </div>
-        ))}
+            <div className="stat-inline">
+              <dt>Unowned</dt>
+              <dd>{unowned.length}</dd>
+            </div>
+          </dl>
+          {overdue.length ? (
+            <div className="nm-stat py-3!">
+              <div className="nm-stat-icon" data-tone="copper">
+                <Clock3 className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              <div className="mt-3 nm-stat-value">{overdue.length}</div>
+              <div className="nm-stat-label">Overdue</div>
+            </div>
+          ) : null}
+        </div>
       </section>
       </Reveal>
 
       {["nurse", "coordinator"].includes(role) ? (
-        <section className="cq-card p-5">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div>
-              <div className="cq-kicker">Workload feedback</div>
-              <h2 className="nm-card-title mt-1 text-[14px]">Measure the workflow, not staff speed.</h2>
-              <p className="mt-1.5 max-w-2xl text-[12px] leading-relaxed text-muted-foreground">
-                Report duplicate-entry time and alert burden so the hospital can see
-                whether CareQuest is reducing or adding operational work.
-              </p>
-            </div>
+        <section>
+          <div className="section-rule">
+            <span>Workload feedback</span>
+          </div>
+          <div className="section-head">
+            <h2 className="section-title">Measure the workflow, not staff speed.</h2>
             <Button
               variant="outline"
               onClick={() => {
@@ -243,19 +253,39 @@ export default function StaffHandoffQueue({
               Record workload feedback
             </Button>
           </div>
+          <p className="section-lede">
+            Report duplicate-entry time and alert burden so the hospital can see
+            whether CareQuest is reducing or adding operational work.
+          </p>
         </section>
       ) : null}
 
-      <section className="nm-stack-sm">
+      <section>
+        <div className="section-rule">
+          <span>Cases</span>
+          <span>{cases.length}</span>
+        </div>
+        <div className="section-head">
+          <h2 className="section-title">Handoff cases</h2>
+          <p className="section-lede">
+            One owned case per configured help event. Each case reads as a
+            ledger row with its own audit trail beneath it.
+          </p>
+        </div>
+        <div className="ledger">
         {cases.map((item) => {
           const status = statusMeta(item);
           const StatusIcon = status.Icon;
           return (
-          <article key={item._id} className="cq-card overflow-hidden">
-            <div className="p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
+          /* A case is a RECORD, so it is a ledger row, not a card. The
+             action set sits in `.ledger-actions`; the owner/due facts are
+             clinical key-values in a `.dl-grid`. */
+          <article key={item._id} className="ledger-row grid-cols-1! items-start! gap-4!">
+              <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h2 className="ledger-title">
+                      {item.patient?.name || "Authorized patient case"}
+                    </h2>
                     <Badge variant="outline">{item.priority}</Badge>
                     {/* The state indicator. Word + icon, and it transitions:
                         resolving or escalating a case is exactly the moment a
@@ -270,19 +300,16 @@ export default function StaffHandoffQueue({
                       <StatusIcon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
                       {status.word}
                     </span>
+                    {item.source === "direct_help" ? (
+                      <span className="cq-pixel-label inline-flex">
+                        NEED HELP REQUEST
+                      </span>
+                    ) : null}
                   </div>
-                  <h2 className="mt-3 nm-card-title text-[14px]">
-                    {item.patient?.name || "Authorized patient case"}
-                  </h2>
                   {/* Presenting summary is clinical content: data surface. */}
                   <p className="glass-data mt-2 max-w-3xl rounded-[14px] p-3 text-[12px] leading-relaxed text-[var(--text)]">
                     {item.summary}
                   </p>
-                  {item.source === "direct_help" ? (
-                    <span className="cq-pixel-label mt-2 inline-flex">
-                      NEED HELP REQUEST
-                    </span>
-                  ) : null}
                   {item.requestHash ? (
                     <p className="mt-2 flex flex-wrap items-center gap-1.5 break-all font-mono text-[10px] text-muted-foreground">
                       <ShieldCheck className="h-3 w-3 shrink-0 text-[var(--copper)]" strokeWidth={1.75} />
@@ -314,20 +341,18 @@ export default function StaffHandoffQueue({
                       </p>
                     </div>
                   ) : null}
-                </div>
-                <div className="grid min-w-[260px] grid-cols-2 gap-2 text-[11px]">
-                  <div className="glass-data rounded-[16px] p-3">
-                    <div className="cq-kicker">Owner</div>
-                    <div className="mt-1 text-[13px] font-semibold text-[var(--text-strong)]">{item.assignedTo?.name || "Unowned"}</div>
-                  </div>
-                  <div className="glass-data rounded-[16px] p-3">
-                    <div className="cq-kicker">Due</div>
-                    <div className="mt-1 text-[13px] font-semibold text-[var(--text-strong)]">{new Date(item.dueAt).toLocaleString()}</div>
-                  </div>
-                </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              {/* Ownership and due-by are the two facts a coordinator
+                  triages on: a definition list, not two boxes. */}
+              <dl className="dl-grid w-full min-w-[220px] text-[12px]!">
+                <dt>Owner</dt>
+                <dd>{item.assignedTo?.name || "Unowned"}</dd>
+                <dt>Due</dt>
+                <dd>{new Date(item.dueAt).toLocaleString()}</dd>
+              </dl>
+
+              <div className="col-span-full flex flex-wrap gap-2">
                 {["nurse", "coordinator"].includes(role) && item.status !== "resolved" ? (
                   <Button
                     variant="outline"
@@ -416,43 +441,43 @@ export default function StaffHandoffQueue({
                   </Button>
                 ) : null}
               </div>
-            </div>
 
-            {/* Case history is the audit trail: a recessed well one step down
-                from the case body, so provenance reads as reference material
-                rather than as the current state. */}
-            <details className="group border-t border-[var(--border-subtle)] bg-[var(--surface-well)] shadow-[inset_0_1px_3px_rgba(26,34,30,0.08)]">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-5 py-3 text-[11px] font-semibold text-[var(--text-strong)] transition-colors hover:text-[var(--celadon)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--celadon-soft)]">
-                <ChevronRight
-                  className="h-3.5 w-3.5 shrink-0 transition-transform duration-[var(--dur-2)] ease-[var(--ease-soft)] group-open:rotate-90"
-                  strokeWidth={1.75}
-                />
-                <Lock className="h-3.5 w-3.5 shrink-0 text-[var(--copper)]" strokeWidth={1.75} />
-                Immutable case history ({item.events?.length || 0})
-              </summary>
-              <div className="space-y-2 px-5 pb-5">
-                {(item.events || []).map((event) => (
-                  <div
-                    key={event._id}
-                    className="glass-data rounded-[14px] p-3 text-[11px]"
-                  >
-                    <strong className="text-[var(--text-strong)]">{event.eventType}</strong>
-                    <span className="ml-2 text-[var(--text-muted)]">
-                      {new Date(event.createdAt).toLocaleString()}
-                    </span>
-                    {event.note ? (
-                      <p className="mt-1 text-[var(--text-muted)]">{event.note}</p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </details>
+              {/* Case history is the audit trail. A chronology, so it is a
+                  timeline of events, not a stack of event cards. */}
+              <details className="group col-span-full">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 py-2 text-[11px] font-semibold text-[var(--text-strong)] transition-colors hover:text-[var(--celadon)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--celadon-soft)]">
+                  <ChevronRight
+                    className="h-3.5 w-3.5 shrink-0 transition-transform duration-[var(--dur-2)] ease-[var(--ease-soft)] group-open:rotate-90"
+                    strokeWidth={1.75}
+                  />
+                  <Lock className="h-3.5 w-3.5 shrink-0 text-[var(--copper)]" strokeWidth={1.75} />
+                  Immutable case history ({item.events?.length || 0})
+                </summary>
+                <div className="timeline mt-1 pl-1">
+                  {(item.events || []).map((event) => (
+                    <div
+                      key={event._id}
+                      className="timeline-item"
+                      data-tone={event.blockchain?.status === "anchored" ? "copper" : "muted"}
+                    >
+                      <div className="timeline-time">
+                        {new Date(event.createdAt).toLocaleString()}
+                      </div>
+                      <div className="timeline-title">{event.eventType}</div>
+                      {event.note ? (
+                        <p className="timeline-body">{event.note}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </details>
           </article>
           );
         })}
+        </div>
 
         {!cases.length ? (
-          <div className="cq-card flex items-center gap-4 p-8">
+          <div className="well flex items-center gap-4">
             <PixelCharacter variant={role === "doctor" ? "doctor" : "nurse"} mood="idle" size={66} />
             <div>
               <h3 className="nm-card-title text-[14px]">No authorized handoff cases</h3>

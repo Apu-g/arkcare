@@ -6,7 +6,7 @@ import Reveal from "@/components/motion/Reveal";
 import MaskedText from "@/components/motion/MaskedText";
 import ReportQuizCard from "@/components/carequest/ReportQuizCard";
 import Link from "next/link";
-import { FileUp, Link2, Pill, ShieldCheck, Stethoscope } from "lucide-react";
+import { FileUp, Link2, Pill, ShieldCheck } from "lucide-react";
 
 /**
  * "Doctors visited" + report-derived activities for the patient's CareQuest
@@ -32,101 +32,122 @@ export default function PatientReportsTimeline({
     <Reveal>
       <section className="nm-stack-sm" id="carequest-reports">
         <div>
-          <div className="cq-kicker">DOCTORS VISITED</div>
-          <MaskedText as="h2" className="cq-section-title mt-1">
-            Your consultation reports
-          </MaskedText>
-          <p className="mt-1 text-[12px] text-[var(--text-muted)]">
-            Every report is recorded by your doctor, anchored on the local chain, and
-            turned into your daily activities.
-          </p>
+          <div className="section-rule">Doctors visited</div>
+          <div className="section-head">
+            <MaskedText as="h2" className="section-title">
+              Your consultation reports
+            </MaskedText>
+            <p className="section-lede">
+              Every report is recorded by your doctor, anchored on the local chain, and
+              turned into your daily activities.
+            </p>
+          </div>
           <Link
             href="/reports"
-            className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--text-strong)] hover:opacity-70"
+            className="inline-flex min-h-10 items-center gap-1.5 text-[11px] font-semibold text-[var(--text-strong)] hover:opacity-70"
           >
             <FileUp className="h-[15px] w-[15px]" strokeWidth={1.75} />
             Scan or upload a prescription
           </Link>
         </div>
 
-        <div className="px-1">
+        {/* A record list: hairline rows, not a card per report. */}
+        <div className="ledger">
+          <div className="ledger-head">
+            <span>Consultation</span>
+            <span>
+              {reports.length} {reports.length === 1 ? "report" : "reports"}
+            </span>
+          </div>
           {reports.map((report) => {
             const expanded = openId === report._id;
             return (
-              <article key={report._id} className="py-1 first:pt-0 last:pb-0">
-                <div className="nm-row grid-cols-[minmax(0,1fr)_auto] items-start py-3.5">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div className="nm-stat-icon h-9 w-9 shrink-0 rounded-[12px]">
-                      <Stethoscope className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[12px] font-semibold text-[var(--text-strong)]">
-                          {report.doctorName || "Doctor"}
-                        </span>
-                        {report.doctorSpecialization ? (
-                          <span className="cq-pixel-label">{report.doctorSpecialization}</span>
-                        ) : null}
-                        {report.appointmentDate ? (
-                          <span className="text-[11px] text-[var(--text-subtle)]">
-                            {new Date(report.appointmentDate).toLocaleDateString()}
-                          </span>
-                        ) : null}
-                        {report.blockchain?.status === "anchored" ? (
-                          <Badge variant="copper">
-                            <Link2 className="h-3 w-3" strokeWidth={2} />
-                            on-chain
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <h3 className="nm-card-title mt-1 text-[13px]">
-                        {report.remarkSummary || "Consultation summary"}
-                      </h3>
-                      {report.followUpWindow ? (
-                        <p className="mt-1 text-[11px] font-semibold text-[var(--text-strong)]">
-                          Follow-up advised: {report.followUpWindow}
-                        </p>
-                      ) : null}
-                      <p className="mt-1 break-all font-mono text-[10px] text-[var(--text-muted)]">
-                        proof {report.contentHash?.slice(0, 18) || "—"}…
-                        {report.blockchain?.txHash
-                          ? ` · tx ${report.blockchain.txHash.slice(0, 12)}…`
-                          : ""}
-                      </p>
-                    </div>
+              <article key={report._id} className="ledger-row items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="ledger-title">{report.doctorName || "Doctor"}</span>
+                    {report.doctorSpecialization ? (
+                      <span className="cq-pixel-label">{report.doctorSpecialization}</span>
+                    ) : null}
+                    {report.blockchain?.status === "anchored" ? (
+                      <Badge variant="copper">
+                        <Link2 className="h-3 w-3" strokeWidth={2} />
+                        on-chain
+                      </Badge>
+                    ) : null}
                   </div>
+                  <h3 className="ledger-meta mt-0.5 font-semibold text-[var(--text-strong)]">
+                    {report.remarkSummary || "Consultation summary"}
+                  </h3>
+                  {report.appointmentDate ? (
+                    <p className="ledger-meta mt-0.5">
+                      Consultation date{" "}
+                      {new Date(report.appointmentDate).toLocaleDateString()}
+                    </p>
+                  ) : null}
+                  {report.followUpWindow ? (
+                    <p className="mt-1 text-[11px] font-semibold text-[var(--text-strong)]">
+                      Follow-up advised: {report.followUpWindow}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 break-all font-mono text-[10px] text-[var(--text-muted)]">
+                    proof {report.contentHash?.slice(0, 18) || "—"}…
+                    {report.blockchain?.txHash
+                      ? ` · tx ${report.blockchain.txHash.slice(0, 12)}…`
+                      : ""}
+                  </p>
+                </div>
 
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Button
-                      variant={expanded ? "secondary" : "outline"}
-                      size="sm"
-                      aria-expanded={expanded}
-                      onClick={() => onOpenReport?.(expanded ? null : report._id)}
-                    >
-                      {expanded ? "Hide" : "View report"}
-                    </Button>
-                  </div>
+                <div className="ledger-actions">
+                  <Button
+                    variant={expanded ? "secondary" : "outline"}
+                    size="sm"
+                    aria-expanded={expanded}
+                    onClick={() => onOpenReport?.(expanded ? null : report._id)}
+                  >
+                    {expanded ? "Hide" : "View report"}
+                  </Button>
                 </div>
 
                 {expanded ? (
                   // Doses and record metadata: near-opaque data surface, never blurred.
-                  <div className="glass-data nm-stack-sm mb-4 ml-0 rounded-[16px] p-4 sm:ml-12">
+                  <div className="col-[1/-1] well nm-stack-sm mt-1">
                     {report.medications?.length ? (
                       <div>
                         <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-muted)]">
                           <Pill className="h-[15px] w-[15px]" strokeWidth={1.75} />
                           Prescription
                         </div>
-                        <ul className="mt-1.5 space-y-1 text-[12.5px] leading-6 text-[var(--text)]">
+                        {/* Clinical key/value pairs: drug, dose, frequency, duration. */}
+                        <div className="mt-2 grid gap-4">
                           {report.medications.map((med, index) => (
-                            <li key={index}>
-                              • {med.name}
-                              {med.dose ? ` · ${med.dose}` : ""}
-                              {med.frequency ? ` · ${med.frequency}` : ""}
-                              {med.duration ? ` · ${med.duration}` : ""}
-                            </li>
+                            <div key={index}>
+                              <div className="text-[12.5px] font-semibold text-[var(--text-strong)]">
+                                {med.name}
+                              </div>
+                              <dl className="dl-grid mt-1.5">
+                                {med.dose ? (
+                                  <>
+                                    <dt>Dose</dt>
+                                    <dd>{med.dose}</dd>
+                                  </>
+                                ) : null}
+                                {med.frequency ? (
+                                  <>
+                                    <dt>Frequency</dt>
+                                    <dd>{med.frequency}</dd>
+                                  </>
+                                ) : null}
+                                {med.duration ? (
+                                  <>
+                                    <dt>Duration</dt>
+                                    <dd>{med.duration}</dd>
+                                  </>
+                                ) : null}
+                              </dl>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     ) : null}
 

@@ -61,7 +61,7 @@ export default function PromptDialog({
           AI never prescribes, diagnoses or approves anything. What you write here goes to
           your care team.
         </p>
-        <div className="flex justify-end gap-2 pt-1">
+        <div className="flex justify-end gap-2 border-t border-[var(--border-subtle)] pt-4">
           <Button variant="outline" onClick={close}>
             Cancel
           </Button>

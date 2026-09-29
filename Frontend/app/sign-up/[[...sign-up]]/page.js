@@ -53,7 +53,7 @@ export default function SignUpPage() {
   const inputClass = "nm-input";
 
   return (
-    <main className="flex min-h-screen items-center px-4 py-10 md:px-8">
+    <main className="px-4 py-10 md:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[1.05fr_.95fr]">
         <Reveal as="section" className="cq-card p-5 md:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
@@ -65,15 +65,17 @@ export default function SignUpPage() {
               Back to ArkCare
             </Link>
 
-            <div className="mb-7 flex items-center gap-3">
+            <div className="mb-7 flex items-center gap-3 border-b border-[var(--border-subtle)] pb-5">
               <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-cta)]">
                 <HeartPulse className="h-5 w-5" strokeWidth={1.75} />
               </div>
               <div>
-                <p className="cq-kicker">New profile</p>
+                <div className="section-rule mt-0">
+                  <span>New profile</span>
+                </div>
                 <MaskedText
                   as="h1"
-                  className="text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]"
+                  className="mt-2 text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]"
                 >
                   Start your ArkCare journey
                 </MaskedText>
@@ -135,9 +137,11 @@ export default function SignUpPage() {
           </div>
         </Reveal>
 
-        <Reveal as="section" delay={90} className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
+        {/* The single ink anchor for this screen. The two setup steps are a
+            sequence, so they are numbered rows rather than two more boxes. */}
+        <Reveal as="section" delay={90} className="nm-dark-card hidden flex-col justify-between p-8 lg:flex">
           <div>
-            <span className="cq-pixel-label !bg-white/10 !text-white/80">
+            <span className="cq-pixel-label bg-white!/10 text-white!/80">
               Journey initialization
             </span>
             <MaskedText
@@ -151,28 +155,28 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-[18px] bg-white/[.07] p-5">
+          <ol className="grid gap-4">
+            <li className="border-b border-white/10 pb-4">
               <div className="flex items-center justify-between">
                 <Activity className="h-5 w-5 text-white/80" strokeWidth={1.75} />
-                <span className="cq-kicker !text-white/60">Step 01</span>
+                <span className="cq-kicker text-white!/60">Step 01</span>
               </div>
-              <h3 className="mt-5 font-semibold text-white">Identity</h3>
+              <h3 className="mt-3 font-semibold text-white">Identity</h3>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
                 <span className="block h-full w-[34%] rounded-full bg-white/80" />
               </div>
-            </div>
-            <div className="rounded-[18px] bg-white/[.07] p-5">
+            </li>
+            <li>
               <div className="flex items-center justify-between">
                 <Sparkles className="h-5 w-5 text-white/80" strokeWidth={1.75} />
-                <span className="cq-kicker !text-white/60">Step 02</span>
+                <span className="cq-kicker text-white!/60">Step 02</span>
               </div>
-              <h3 className="mt-5 font-semibold text-white">Role + care experience</h3>
+              <h3 className="mt-3 font-semibold text-white">Role + care experience</h3>
               <p className="mt-2 text-[12px] leading-relaxed text-white/60">
                 Unlocked immediately after registration.
               </p>
-            </div>
-          </div>
+            </li>
+          </ol>
         </Reveal>
       </div>
     </main>

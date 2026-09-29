@@ -38,7 +38,7 @@ export default function DoctorReportsPanel() {
 
   if (!data) {
     return (
-      <div className="cq-card flex items-center gap-2 p-6 text-[13px] text-muted-foreground">
+      <div className="well flex items-center gap-2 text-[13px] text-muted-foreground">
         {error ? (
           <>
             <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
@@ -56,35 +56,16 @@ export default function DoctorReportsPanel() {
 
   return (
     <section className="nm-stack">
+      {/* Section header, never boxed: a rule + a title + a lede. */}
       <Reveal>
-      <div className="cq-card p-5 md:p-6">
-        <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-          <div>
-            <div className="cq-kicker">MY PATIENTS</div>
-            <MaskedText as="h2" className="mt-1 text-[15px] font-semibold text-[var(--text-strong)]">
-              Reports &amp; activity
-            </MaskedText>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              {data.totals.patients} patients · {data.totals.reports} reports filed ·{" "}
-              {data.totals.capsulesOnChain} capsules earned by your patients
-            </p>
-            {data.hospital?.name ? (
-              <p className="mt-1 inline-flex flex-wrap items-center gap-2 text-xs">
-                <span className="cq-pixel-label">
-                  <Building2 className="mr-1 h-3 w-3" strokeWidth={1.75} /> {data.hospital.name}
-                </span>
-                <span className="cq-pixel-label cq-real-label">
-                  reputation {data.hospital.reputationScore}/100 · {data.hospital.reputationLabel}
-                </span>
-                <Link
-                  href="/patient/hospitals"
-                  className="font-semibold text-[var(--text-strong)] hover:underline"
-                >
-                  check hospital reputation
-                </Link>
-              </p>
-            ) : null}
-          </div>
+      <div>
+        <div className="section-rule">
+          <span>My patients</span>
+        </div>
+        <div className="section-head">
+          <MaskedText as="h2" className="section-title">
+            Reports &amp; activity
+          </MaskedText>
           <Button variant="outline" onClick={load} disabled={busy}>
             {busy ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
@@ -94,6 +75,44 @@ export default function DoctorReportsPanel() {
             Refresh
           </Button>
         </div>
+        <p className="section-lede">
+          Every patient you have interacted with, the reports you filed, and how
+          they are engaging with the plan you published.
+        </p>
+        {/* Practice totals read inline, not as a row of tiles. */}
+        <dl className="stat-strip mt-3">
+          <div className="stat-inline">
+            <dt>Patients</dt>
+            <dd>{data.totals.patients}</dd>
+          </div>
+          <div className="stat-inline">
+            <dt>Reports filed</dt>
+            <dd>{data.totals.reports}</dd>
+          </div>
+          <div className="stat-inline">
+            <dt>Capsules earned</dt>
+            <dd>
+              {data.totals.capsulesOnChain}{" "}
+              <small>by your patients</small>
+            </dd>
+          </div>
+        </dl>
+        {data.hospital?.name ? (
+          <p className="mt-3 inline-flex flex-wrap items-center gap-2 text-xs">
+            <span className="cq-pixel-label">
+              <Building2 className="mr-1 h-3 w-3" strokeWidth={1.75} /> {data.hospital.name}
+            </span>
+            <span className="cq-pixel-label cq-real-label">
+              reputation {data.hospital.reputationScore}/100 · {data.hospital.reputationLabel}
+            </span>
+            <Link
+              href="/patient/hospitals"
+              className="font-semibold text-[var(--text-strong)] hover:underline"
+            >
+              check hospital reputation
+            </Link>
+          </p>
+        ) : null}
       </div>
       </Reveal>
 
@@ -104,6 +123,9 @@ export default function DoctorReportsPanel() {
         </div>
       ) : null}
 
+      {/* A patient is a distinct actionable entity, so a patient CARD is the
+          right primitive here. What used to be a nested report card per
+          record is now a ledger, and the engagement figures are inline. */}
       <Reveal delay={60}>
       <div className="nm-grid-2">
         {data.patients.map((patient) => {
@@ -113,9 +135,9 @@ export default function DoctorReportsPanel() {
           return (
             <article key={patient.patientId} className="cq-card p-5">
               <div className="flex items-start justify-between gap-2">
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <Stethoscope className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.75} />
+                    <Stethoscope className="h-4 w-4 shrink-0 text-[var(--text-muted)]" strokeWidth={1.75} />
                     <h3 className="nm-card-title text-[14px]">{patient.name}</h3>
                   </div>
                   <p className="mt-1 text-[11px] text-muted-foreground">
@@ -129,34 +151,39 @@ export default function DoctorReportsPanel() {
                 </div>
               </div>
 
-              {/* Engagement figures: counts a doctor acts on, so they sit on
-                  the data surface rather than behind a blur. */}
-              <div className="glass-data mt-3 grid grid-cols-3 gap-2 rounded-[16px] p-1.5">
-                <div className="rounded-[14px] p-2 text-center">
-                  <div className="text-[16px] font-bold text-[var(--text-strong)]">{patient.missionsCompleted}</div>
-                  <div className="mt-0.5 text-[10px] text-muted-foreground">missions done</div>
+              {/* Engagement figures: inline, hairline-divided, on the data
+                  surface. A 3-up grid of boxed numbers was the card-in-a-card
+                  problem in miniature. */}
+              <dl className="stat-strip glass-data mt-3 rounded-[16px] px-3.5 py-2">
+                <div className="stat-inline">
+                  <dt>Missions done</dt>
+                  <dd>{patient.missionsCompleted}</dd>
                 </div>
-                <div className="rounded-[14px] p-2 text-center">
-                  <div className="text-[16px] font-bold text-[var(--text-strong)]">{patient.missionsDue}</div>
-                  <div className="mt-0.5 text-[10px] text-muted-foreground">due now</div>
+                <div className="stat-inline">
+                  <dt>Due now</dt>
+                  <dd>{patient.missionsDue}</dd>
                 </div>
-                <div className="rounded-[14px] p-2 text-center">
-                  <div className="text-[16px] font-bold text-[var(--copper)]">{patient.capsulesEarned}</div>
-                  <div className="mt-0.5 text-[10px] text-muted-foreground">capsules</div>
+                <div className="stat-inline">
+                  <dt>Capsules</dt>
+                  <dd className="text-[var(--copper)]!">
+                    {patient.capsulesEarned}
+                  </dd>
                 </div>
-              </div>
+              </dl>
 
               {patientReports.length ? (
-                <div className="mt-3 nm-stack-sm">
+                <div className="mt-3">
+                  <div className="ledger-head">
+                    <span>Filed report</span>
+                    <span>Proof</span>
+                  </div>
                   {patientReports.map((report) => (
-                    /* Remarks, medications and hashes are the record itself:
-                       near-opaque, always fully readable. */
                     <div
                       key={report._id}
-                      className="glass-data rounded-[16px] p-3 text-[11px]"
+                      className="ledger-row grid-cols-1! items-start! gap-1!.5 py-3!"
                     >
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-[var(--text-strong)]">rev {report.revision}</span>
+                        <span className="ledger-title">rev {report.revision}</span>
                         {/* Anchor state indicator: the one element here whose
                             change is animated, because "is this provable yet"
                             is the question this panel answers. */}
@@ -174,38 +201,42 @@ export default function DoctorReportsPanel() {
                           <Badge variant="warning">needs review</Badge>
                         ) : null}
                       </div>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
-                        <span>consulted {report.patientName || "patient"}</span>
-                        {report.hospitalName ? (
-                          <>
-                            <span>· at {report.hospitalName}</span>
-                            {typeof report.hospitalReputationScore === "number" ? (
-                              <span className="cq-pixel-label cq-real-label">
-                                rep {report.hospitalReputationScore}
-                              </span>
-                            ) : null}
-                          </>
-                        ) : null}
-                      </div>
-                      {report.remarkSummary || report.clinicalSummary ? (
-                        <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--text)]">
-                          {report.remarkSummary || report.clinicalSummary?.slice(0, 120)}
-                        </p>
-                      ) : null}
-                      {report.medications?.length ? (
-                        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
-                          <Pill className="h-3 w-3 shrink-0" strokeWidth={1.75} />
-                          {report.medications
-                            .map((m) => m.name + (m.dose ? ` ${m.dose}` : ""))
-                            .join(", ")}
+                      {/* Remarks, medications and hashes are the record itself:
+                          near-opaque, always fully readable. */}
+                      <div className="glass-data rounded-[14px] px-3 py-2 text-[11px]">
+                        <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+                          <span>consulted {report.patientName || "patient"}</span>
+                          {report.hospitalName ? (
+                            <>
+                              <span>· at {report.hospitalName}</span>
+                              {typeof report.hospitalReputationScore === "number" ? (
+                                <span className="cq-pixel-label cq-real-label">
+                                  rep {report.hospitalReputationScore}
+                                </span>
+                              ) : null}
+                            </>
+                          ) : null}
                         </div>
-                      ) : null}
-                      <div className="mt-1.5 flex items-start gap-1.5 break-all border-t border-[var(--border-subtle)] pt-1.5 font-mono text-[10px] text-[var(--text-muted)]">
-                        <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0 text-[var(--copper)]" strokeWidth={1.75} />
-                        {report.contentHash?.slice(0, 20)}…
-                        {report.blockchain?.txHash
-                          ? ` · tx ${report.blockchain.txHash.slice(0, 10)}…`
-                          : ""}
+                        {report.remarkSummary || report.clinicalSummary ? (
+                          <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--text)]">
+                            {report.remarkSummary || report.clinicalSummary?.slice(0, 120)}
+                          </p>
+                        ) : null}
+                        {report.medications?.length ? (
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+                            <Pill className="h-3 w-3 shrink-0" strokeWidth={1.75} />
+                            {report.medications
+                              .map((m) => m.name + (m.dose ? ` ${m.dose}` : ""))
+                              .join(", ")}
+                          </div>
+                        ) : null}
+                        <div className="mt-1.5 flex items-start gap-1.5 break-all border-t border-[var(--border-subtle)] pt-1.5 font-mono text-[10px] text-[var(--text-muted)]">
+                          <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0 text-[var(--copper)]" strokeWidth={1.75} />
+                          {report.contentHash?.slice(0, 20)}…
+                          {report.blockchain?.txHash
+                            ? ` · tx ${report.blockchain.txHash.slice(0, 10)}…`
+                            : ""}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -222,7 +253,7 @@ export default function DoctorReportsPanel() {
       </Reveal>
 
       {data.patients.length === 0 ? (
-        <div className="cq-card p-8 text-center text-[13px] text-muted-foreground">
+        <div className="well p-8 text-center text-[13px] text-muted-foreground">
           You have not interacted with any patients yet.
         </div>
       ) : null}

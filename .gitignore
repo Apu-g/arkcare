@@ -5,6 +5,10 @@ Blockchain/cache/
 Blockchain/artifacts/
 *.log
 
+# Blockchain chain config — contains BRIDGEKEY_PRIVATE_KEY for the remote testnet.
+# Only .env.example is tracked. See Blockchain/.env.example.
+Blockchain/.env
+
 # Local development runtime (pids, logs, local mongo data/binary)
 .runtime/
 

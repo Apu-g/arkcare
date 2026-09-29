@@ -384,7 +384,9 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
     /* The media plane is deliberately solid: no glass, ever, over a video
        track. Glass is reserved for the chrome around it. */
     <div className="absolute inset-0 z-50 flex flex-col overflow-hidden bg-[var(--surface-shell)] text-[var(--text)]">
-      <div className="m-3 flex items-center justify-between gap-3 rounded-[20px] border border-[var(--glass-edge)] bg-[var(--glass-1)] px-4 py-3 shadow-[var(--shadow-card),inset_0_1px_0_var(--glass-edge-strong)] backdrop-blur-[20px]">
+      {/* Call chrome is solid, not glass: a clinician must be able to read the
+          connection state at a glance over a moving picture. */}
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-[var(--surface)] px-4 py-3">
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-[var(--text-strong)]">
             {isVideo ? "Video consultation" : "Voice consultation"}
@@ -448,7 +450,7 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
       </div>
 
       {errorMessage && (
-        <div className="mx-3 mb-3 flex items-center gap-2 rounded-[16px] bg-[var(--destructive-soft)] px-4 py-3 text-[12px] leading-relaxed text-[var(--destructive)]">
+        <div className="mx-3 mt-3 flex items-center gap-2 rounded-[14px] bg-[var(--destructive-soft)] px-4 py-3 text-[12px] leading-relaxed text-[var(--destructive)]">
           <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           {errorMessage}
         </div>
@@ -458,7 +460,7 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         <button
           type="button"
           onClick={resumeAudio}
-          className="mx-3 mb-3 inline-flex min-h-10 items-center gap-2 rounded-[16px] bg-[var(--accent)] px-4 py-2.5 text-left text-[12px] font-semibold text-[var(--accent-foreground)] shadow-[var(--shadow-card)]"
+          className="mx-3 mt-3 inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-[var(--primary-soft)] px-4 py-2.5 text-left text-[12px] font-semibold text-[var(--celadon)]"
         >
           <Volume2 className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           Tap to enable call audio
@@ -475,9 +477,10 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
             {!remotePresent && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-[var(--primary)] text-[#fff] shadow-[var(--shadow-dark-float)]">
-                    <Video className="h-8 w-8" strokeWidth={1.75} />
-                  </div>
+                  <Video
+                    className="mx-auto mb-4 h-8 w-8 text-[var(--text-faint)]"
+                    strokeWidth={1.75}
+                  />
                   <p className="text-[13px] font-semibold text-[var(--text-muted)]">
                     Waiting for other participant
                   </p>
@@ -493,9 +496,10 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-[var(--primary)] text-[#fff] shadow-[var(--shadow-dark-float)]">
-                <Mic className="h-10 w-10" strokeWidth={1.75} />
-              </div>
+              <Mic
+                className="mx-auto mb-5 h-10 w-10 text-[var(--text-faint)]"
+                strokeWidth={1.75}
+              />
               <h3 className="text-[15px] font-semibold text-[var(--text-strong)]">
                 Voice consultation
               </h3>
@@ -507,7 +511,7 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         )}
       </div>
 
-      <div className="m-3 flex items-center justify-center gap-3 rounded-[20px] border border-[var(--glass-edge)] bg-[var(--glass-1)] p-3.5 shadow-[var(--shadow-card),inset_0_1px_0_var(--glass-edge-strong)] backdrop-blur-[20px]">
+      <div className="flex items-center justify-center gap-3 border-t border-[var(--border-subtle)] bg-[var(--surface)] p-3.5">
         <Button
           type="button"
           onClick={toggleMic}

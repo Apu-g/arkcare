@@ -123,17 +123,20 @@ export default function NeedHelpButton({ userId: userIdProp }) {
           </DialogHeader>
 
           <div className="nm-stack-sm">
-            <div className="flex flex-wrap gap-1.5">
-              {QUICK.map((text) => (
-                <button
-                  key={text}
-                  type="button"
-                  onClick={() => setProblem(text)}
-                  className="cq-pixel-label hover:bg-[var(--surface-muted)]"
-                >
-                  {text}
-                </button>
-              ))}
+            <div>
+              <div className="cq-kicker">QUICK REQUESTS</div>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {QUICK.map((text) => (
+                  <button
+                    key={text}
+                    type="button"
+                    onClick={() => setProblem(text)}
+                    className="cq-pixel-label min-h-9 hover:bg-[var(--surface-muted)]"
+                  >
+                    {text}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <Textarea
@@ -143,21 +146,24 @@ export default function NeedHelpButton({ userId: userIdProp }) {
               placeholder="Describe what you need help with (non-emergency)."
             />
 
-            <div className="flex flex-wrap gap-1.5">
-              {["general", "medication", "symptoms", "appointment"].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-pressed={category === c}
-                  onClick={() => setCategory(c)}
-                  className={
-                    "cq-pixel-label " +
-                    (category === c ? "cq-info-label" : "hover:bg-[var(--surface-muted)]")
-                  }
-                >
-                  {c}
-                </button>
-              ))}
+            <div>
+              <div className="cq-kicker">CATEGORY</div>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {["general", "medication", "symptoms", "appointment"].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={category === c}
+                    onClick={() => setCategory(c)}
+                    className={
+                      "cq-pixel-label min-h-9 capitalize " +
+                      (category === c ? "cq-info-label" : "hover:bg-[var(--surface-muted)]")
+                    }
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <Button
@@ -178,7 +184,7 @@ export default function NeedHelpButton({ userId: userIdProp }) {
             ) : null}
 
             {sent ? (
-              <div className="rounded-[16px] bg-[var(--success-soft)] p-3 text-[11.5px] text-[var(--success)]">
+              <div className="rounded-[14px] bg-[var(--success-soft)] p-3 text-[11.5px] text-[var(--success)]">
                 <div className="flex items-center gap-1.5 text-[12px] font-semibold">
                   <CheckCircle2 className="h-[16px] w-[16px]" strokeWidth={1.75} /> Help request sent
                 </div>
@@ -194,32 +200,33 @@ export default function NeedHelpButton({ userId: userIdProp }) {
             ) : null}
 
             {mine.length ? (
-              <div className="nm-stack-sm border-t border-[var(--border-subtle)] pt-3">
-                <div className="cq-kicker">MY REQUESTS</div>
-                {/* Divider rows, not boxes: this is a case list, not a feed. */}
-                {mine.map((item) => (
-                  <div
-                    key={item._id}
-                    className="nm-row grid-cols-1 items-start py-3 text-[11.5px]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-[var(--text-strong)]">
-                        {item.status === "resolved" ? "Resolved" : "In progress"}
-                      </span>
+              <div className="border-t border-[var(--border-subtle)] pt-3">
+                <div className="section-rule mt-0! mb-2!">My requests</div>
+                {/* A case list reads as a ledger, not a feed of boxes. */}
+                <div className="ledger">
+                  {mine.map((item) => (
+                    <div key={item._id} className="ledger-row items-start">
+                      <div className="min-w-0">
+                        <span className="ledger-title">{item.summary}</span>
+                        <p className="ledger-meta mt-0.5">
+                          {item.status === "resolved" ? "Resolved" : "In progress"}
+                        </p>
+                        {item.status === "resolved" && item.outcome ? (
+                          <p className="mt-1 text-[11.5px] font-semibold text-[var(--success)]">
+                            Done: {item.outcome}
+                          </p>
+                        ) : null}
+                      </div>
                       {item.resolution?.blockchain?.status === "anchored" ? (
-                        <Badge variant="copper">
-                          <Link2 className="h-3 w-3" strokeWidth={2} /> on-chain
-                        </Badge>
+                        <div className="ledger-actions">
+                          <Badge variant="copper">
+                            <Link2 className="h-3 w-3" strokeWidth={2} /> on-chain
+                          </Badge>
+                        </div>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-[var(--text-muted)]">{item.summary}</p>
-                    {item.status === "resolved" && item.outcome ? (
-                      <p className="mt-1 text-[var(--success)]">
-                        Done: {item.outcome}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : null}
 

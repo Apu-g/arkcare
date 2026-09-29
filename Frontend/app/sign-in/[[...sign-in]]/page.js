@@ -40,9 +40,11 @@ function SignInForm() {
   const inputClass = "nm-input";
 
   return (
-    <main className="flex min-h-screen items-center px-4 py-10 md:px-8">
+    <main className="px-4 py-10 md:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[.9fr_1.1fr]">
-        <Reveal as="section" className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
+        {/* The single ink anchor for this screen: the trust/framing half. The
+            form column stays on the light clinical base. */}
+        <Reveal as="section" className="nm-dark-card hidden flex-col justify-between p-8 lg:flex">
           <div>
             <Link
               href="/"
@@ -52,7 +54,7 @@ function SignInForm() {
               Back to ArkCare
             </Link>
             <div className="mt-16">
-              <span className="cq-pixel-label !bg-white/10 !text-white/80">
+              <span className="cq-pixel-label bg-white!/10 text-white!/80">
                 Session checkpoint
               </span>
               <MaskedText
@@ -67,28 +69,30 @@ function SignInForm() {
             </div>
           </div>
 
-          <div className="grid gap-2.5">
+          <ol className="grid gap-2.5">
             {[
               "Identity-aware dashboards",
               "Private consultation channels",
               "Future reward rails ready",
             ].map((item, index) => (
-              <div
+              <li
                 key={item}
-                className="flex min-h-12 items-center gap-3 rounded-[14px] bg-white/[.07] px-4 text-[13px] font-medium text-white/85"
+                className="flex min-h-12 items-center gap-3 border-b border-white/10 pb-2.5 text-[13px] font-medium text-white/85 last:border-b-0"
               >
-                <span className="grid size-7 shrink-0 place-items-center rounded-[10px] bg-white/10 text-[11px] font-bold text-white/80">
+                <span className="font-mono text-[11px] font-bold text-white/60">
                   0{index + 1}
                 </span>
                 {item}
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </Reveal>
 
         <Reveal as="section" delay={90} className="cq-card p-5 md:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
-            <div className="mb-8 flex items-center justify-between">
+            {/* The identity strip is a masthead, not another box: a rule, the
+                wordmark and the gateway label. */}
+            <div className="mb-7 flex items-center justify-between border-b border-[var(--border-subtle)] pb-5">
               <div className="flex items-center gap-3">
                 <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-cta)]">
                   <HeartPulse className="h-5 w-5" strokeWidth={1.75} />
@@ -107,7 +111,9 @@ function SignInForm() {
             </div>
 
             <div className="mb-7">
-              <p className="cq-kicker">Welcome back</p>
+              <div className="section-rule mt-0">
+                <span>Welcome back</span>
+              </div>
               <MaskedText
                 as="h2"
                 className="mt-2 text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]"

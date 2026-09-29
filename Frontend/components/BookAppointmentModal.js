@@ -485,7 +485,8 @@ function BookAppointmentModal({
                 {doctor.name} · {doctor.specialization}
               </p>
             </div>
-            <div className="glass-data shrink-0 rounded-[16px] px-4 py-3 text-right">
+            {/* An amount the patient is about to pay: data surface, never a blur. */}
+            <div className="well shrink-0 px-4 py-3 text-right">
               <div className="text-[11px] font-semibold text-[var(--text-muted)]">
                 Consultation fee
               </div>
@@ -498,7 +499,7 @@ function BookAppointmentModal({
 
         {paymentStep === "success" ? (
           <div className="p-8 text-center">
-            <div className="nm-stat-icon mx-auto !h-14 !w-14 !rounded-full">
+            <div className="nm-stat-icon mx-auto h-14! w-14! rounded-full!">
               <CheckCircle2 className="h-6 w-6" strokeWidth={1.75} />
             </div>
             <h3 className="mt-5 text-[18px] font-bold text-[var(--text-strong)]">
@@ -511,7 +512,7 @@ function BookAppointmentModal({
             </p>
 
             {paymentResult && !paymentResult.demoBooking ? (
-              <div className="glass-data mx-auto mt-5 max-w-md rounded-[18px] p-4 text-left text-[12px]">
+              <div className="well mx-auto mt-5 max-w-md text-left text-[12px]">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-[var(--text-strong)]">
                     Payment verified
@@ -521,24 +522,30 @@ function BookAppointmentModal({
                     {checkoutMode === "live" ? "Razorpay live" : "Razorpay test"}
                   </Badge>
                 </div>
-                <div className="mt-3 grid gap-2 text-[var(--text-muted)]">
-                  <div>
-                    Amount:{" "}
-                    <strong className="text-[var(--text-strong)]">
-                      ₹{Number(paymentResult.amount || doctor.consultationFee || 0).toLocaleString("en-IN")}
-                    </strong>
-                  </div>
+                {/* Amount and gateway identifiers: clinical/financial record data,
+                    so they sit on a near-opaque surface. */}
+                <dl className="dl-grid mt-3">
+                  <dt>Amount</dt>
+                  <dd>
+                    ₹{Number(paymentResult.amount || doctor.consultationFee || 0).toLocaleString("en-IN")}
+                  </dd>
                   {paymentResult.paymentId ? (
-                    <div className="select-all break-all font-mono text-[11px]">
-                      Payment {paymentResult.paymentId}
-                    </div>
+                    <>
+                      <dt>Payment ID</dt>
+                      <dd className="select-all break-all font-mono text-[11px]">
+                        {paymentResult.paymentId}
+                      </dd>
+                    </>
                   ) : null}
                   {paymentResult.orderId ? (
-                    <div className="select-all break-all font-mono text-[11px]">
-                      Order {paymentResult.orderId}
-                    </div>
+                    <>
+                      <dt>Order ID</dt>
+                      <dd className="select-all break-all font-mono text-[11px]">
+                        {paymentResult.orderId}
+                      </dd>
+                    </>
                   ) : null}
-                </div>
+                </dl>
               </div>
             ) : null}
 
@@ -577,11 +584,14 @@ function BookAppointmentModal({
             ) : null}
 
             <div>
-              <div className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-[var(--text-strong)]">
-                <CalendarDays className="h-[18px] w-[18px] text-[var(--primary)]" strokeWidth={1.75} />
-                Choose a date
+              <div className="section-head mb-2!">
+                <h3 className="section-title text-[14px]! flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-[var(--primary)]" strokeWidth={1.75} />
+                  1 · Choose a date
+                </h3>
+                <p className="section-lede">Greyed-out days have no bookable slots.</p>
               </div>
-              <div className="glass-data rounded-[18px] p-3">
+              <div className="well">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -598,29 +608,29 @@ function BookAppointmentModal({
 
             {selectedDate ? (
               <div>
-                <div className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-[var(--text-strong)]">
-                  <Clock3 className="h-[18px] w-[18px] text-[var(--primary)]" strokeWidth={1.75} />
-                  Available times
-                </div>
-                <div className="mb-2 flex items-center justify-between gap-3 text-[11px] text-[var(--text-muted)]">
-                  <span>
+                <div className="section-head mb-2!">
+                  <h3 className="section-title text-[14px]! flex items-center gap-2">
+                    <Clock3 className="h-4 w-4 text-[var(--primary)]" strokeWidth={1.75} />
+                    2 · Available times
+                  </h3>
+                  <p className="section-lede">
                     {availabilityLoading
                       ? "Refreshing live availability..."
                       : liveAvailability?.timezone
                         ? `Live · ${liveAvailability.timezone}`
                         : "Checking live availability"}
-                  </span>
-                  {liveAvailability?.refreshedAt ? (
-                    <span>
-                      refreshed{" "}
-                      {new Date(liveAvailability.refreshedAt).toLocaleTimeString(
-                        "en-IN",
-                        { hour: "2-digit", minute: "2-digit" }
-                      )}
-                    </span>
-                  ) : null}
+                    {liveAvailability?.refreshedAt
+                      ? ` · refreshed ${new Date(
+                          liveAvailability.refreshedAt
+                        ).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}`
+                      : ""}
+                  </p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {/* Slot choices are an inline list of times, not a tile grid. */}
+                <div className="flex flex-wrap gap-x-2">
                   {slotRows.map((row) => (
                     <button
                       key={row.time}
@@ -631,11 +641,11 @@ function BookAppointmentModal({
                         setError("");
                       }}
                       className={
-                        "min-h-10 rounded-[14px] border px-3 text-[13px] font-semibold transition hover:-translate-y-px " +
+                        "min-h-10 rounded-[12px] border px-3.5 text-[13px] font-semibold transition hover:-translate-y-px " +
                         (selectedSlot === row.time
                           ? "border-[var(--primary)] bg-[var(--primary)] text-white"
                           : row.available
-                            ? "border-transparent bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-card)] hover:bg-[var(--surface-hover)]"
+                            ? "border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-hover)]"
                             : "cursor-not-allowed border-transparent bg-[var(--surface-muted)] text-[var(--text-muted)] line-through opacity-70")
                       }
                     >
@@ -655,12 +665,14 @@ function BookAppointmentModal({
             ) : null}
 
             <div>
-              <label
-                htmlFor="reason"
-                className="mb-2 block text-[13px] font-semibold text-[var(--text-strong)]"
-              >
-                Reason for visit{" "}
-                <span className="font-normal text-[var(--text-muted)]">(optional)</span>
+              <div className="section-head mb-2!">
+                <h3 className="section-title text-[14px]!">
+                  3 · Reason for visit
+                </h3>
+                <p className="section-lede">Optional. Your doctor sees this before you arrive.</p>
+              </div>
+              <label htmlFor="reason" className="sr-only">
+                Reason for visit (optional)
               </label>
               <Textarea
                 id="reason"
@@ -673,35 +685,29 @@ function BookAppointmentModal({
             </div>
 
             {appointmentDay && selectedSlot ? (
-              <div className="glass-data rounded-[18px] p-4">
+              <div className="well">
                 <div className="cq-kicker">Booking summary</div>
-                <div className="mt-3 grid gap-2 text-[13px] sm:grid-cols-2">
-                  <div>
-                    <span className="text-[var(--text-muted)]">Date</span>
-                    <div className="font-semibold text-[var(--text-strong)]">
-                      {selectedDate.toLocaleDateString("en-IN", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[var(--text-muted)]">Time</span>
-                    <div className="font-semibold text-[var(--text-strong)]">
-                      {selectedSlot}
-                    </div>
-                  </div>
-                </div>
+                <dl className="dl-grid mt-2.5">
+                  <dt>Date</dt>
+                  <dd>
+                    {selectedDate.toLocaleDateString("en-IN", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </dd>
+                  <dt>Time</dt>
+                  <dd>{selectedSlot}</dd>
+                </dl>
               </div>
             ) : null}
 
-            <div className="cq-card-soft p-4 text-[12px] leading-5 text-[var(--text-muted)]">
+            <div className="well text-[12px] leading-5 text-[var(--text-muted)]">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 font-semibold text-[var(--text-strong)]">
                   <CreditCard className="h-[18px] w-[18px] text-[var(--primary)]" strokeWidth={1.75} />
-                  Secure payment
+                  4 · Secure payment
                 </div>
                 {gatewayStatus ? (
                   <span
@@ -731,13 +737,21 @@ function BookAppointmentModal({
               ) : null}
             </div>
 
+            {/*
+              `w-full sm:w-auto sm:flex-1` matters here. buttonVariants sets
+              `shrink-0`, so two `w-full` buttons inside an `sm:flex-row` each
+              demand 100% of the row and cannot shrink: the total is 200%, which
+              pushes the Pay button off the right edge where the modal's
+              overflow hides it. `flex-1` (flex: 1 1 0%) re-enables shrinking
+              and splits the row evenly.
+            */}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleClose}
                 disabled={loading}
-                className="w-full"
+                className="w-full sm:w-auto sm:flex-1"
               >
                 Cancel
               </Button>
@@ -754,7 +768,7 @@ function BookAppointmentModal({
                   gatewayStatus?.ready !== true ||
                   Number(doctor.consultationFee || 0) <= 0
                 }
-                className="w-full"
+                className="w-full sm:w-auto sm:flex-1"
               >
                 {loading ? (
                   <Loader2 className="h-[18px] w-[18px] animate-spin" strokeWidth={1.75} />
@@ -775,7 +789,7 @@ function BookAppointmentModal({
                 variant="outline"
                 onClick={handleTestBooking}
                 disabled={loading || !appointmentDay || !selectedSlot}
-                className="w-full !border-dashed !text-[12px] !text-[var(--text-muted)]"
+                className="w-full border-dashed! text-[12px]! text-[var(--text-muted)]!"
               >
                 Demo Book — Skip Payment
               </Button>

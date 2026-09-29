@@ -91,51 +91,62 @@ button:not(:disabled):active, [role="button"]:active { transform: translateY(1px
   }
 }
 
-/* ============================================================ app frame (spec §7.2)
-   The dashboard floats inside the pale outer field. On desktop the shell owns
-   its own scroll so the rounded frame, sidebar and header stay put; below
-   lg it collapses to normal page flow for mobile. */
-.ark-shell, .ark-content, .ark-page { min-height: 100vh; }
+/* ============================================================ app frame
+   The dashboard floats inside the pale outer field.
+
+   SCROLLING MODEL — the document scrolls. An earlier revision made the shell
+   itself a fixed-height box with an inner scroller. That was a mistake: the
+   page grid carries `min-height: 100vh`, so it never resolved to a definite
+   height, the inner scroller could not be constrained, and everything past the
+   fold was clipped by the shell's `overflow: hidden` with no way to reach it.
+   Document scrolling is the robust, accessible default: it keeps native
+   scrollbar behaviour, keyboard paging, find-in-page and mobile momentum.
+   The floating frame is preserved, and the rail/header are made `sticky`
+   instead of relying on a scroll container. */
+.ark-shell, .ark-content, .ark-page { min-height: 100%; }
 .ark-page { position: relative; color: var(--text); }
+.ark-scroll { position: relative; }
 
 @media (min-width: 1024px) {
   .ark-shell {
     width: min(1440px, calc(100vw - 64px));
-    height: calc(100vh - 64px);
-    min-height: 0;
+    min-height: calc(100vh - 64px);
     margin: 32px auto;
-    display: flex;
-    overflow: hidden;
     background: var(--surface-shell);
     border-radius: var(--radius-shell);
     box-shadow: var(--shadow-soft);
   }
-  .ark-content {
-    min-height: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .ark-page {
-    min-height: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  /* Inner scroller: the app frame itself never scrolls on desktop. */
-  .ark-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-gutter: stable;
-  }
+  .ark-content { display: block; }
+  .ark-page { display: block; }
+  /* The shell grows with its content; the page scrolls, never the shell. */
+  .ark-scroll { overflow: visible; }
 }
 @media (max-width: 1023px) {
-  .ark-shell { background: var(--surface-shell); }
+  .ark-shell { background: var(--surface-shell); border-radius: 0; }
   .ark-scroll { overflow: visible; }
+}
+
+/* Sticky app chrome. These are pinned to the viewport, not to a scroll box, so
+   they behave identically under document scrolling. */
+.cq-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: color-mix(in srgb, var(--surface-shell) 86%, transparent);
+  border-right: 1px solid var(--border-subtle);
+}
+.cq-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--surface-shell) 82%, transparent);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
 }
 
 /* ====================================================== glass surface system
@@ -417,15 +428,9 @@ button:not(:disabled):active, [role="button"]:active { transform: translateY(1px
 }
 
 /* ============================================================ nav (spec §8) */
-.cq-app-shell { min-height: 100vh; }
-.cq-sidebar {
-  background: var(--surface-shell);
-  border-right: 1px solid var(--line-subtle, var(--border-subtle));
-}
-.cq-topbar {
-  background: var(--surface-shell);
-  border-bottom: 1px solid var(--border-subtle);
-}
+.cq-app-shell { min-height: 100%; }
+/* .cq-sidebar / .cq-topbar sticky + surface rules live in the app-frame block
+   above, so they are not redefined here. */
 
 /* Icon-rail nav item: 42px square, soft shadow on hover, dark when active. */
 .cq-nav-link {
@@ -615,13 +620,22 @@ button:not(:disabled):active, [role="button"]:active { transform: translateY(1px
 .nm-btn-accent { background: var(--info); color: #fff; }
 
 /* ============================================================ motion primitives
-   One language, shared by every surface. Components toggle `data-revealed`
-   rather than re-running keyframes, so a re-render never restarts a reveal
-   and an element can never animate twice. */
-[data-reveal] {
+   PROGRESSIVE ENHANCEMENT, NOT PROGRESSIVE DISAPPEARANCE.
+
+   The earlier revision shipped `[data-reveal] { opacity: 0 }` as a default
+   style. That is a correctness bug, not a taste call: if JavaScript never runs,
+   or the IntersectionObserver never fires, real content — including clinical
+   data and headings — stays permanently invisible. It also means above-the-fold
+   content animates in for no benefit.
+
+   So the resting state is VISIBLE. A reveal only happens when JS explicitly
+   marks an element as pending (`data-reveal-pending`), which the <Reveal> and
+   <MaskedText> components do only for elements that are genuinely below the
+   fold at mount. No JS, no observer, or a disabled observer = content visible,
+   always. */
+[data-reveal][data-reveal-pending="true"] {
   opacity: 0;
   transform: translate3d(0, var(--reveal-y), 0) scale(var(--reveal-scale));
-  will-change: transform, opacity;
 }
 [data-reveal][data-revealed="true"] {
   opacity: 1;
@@ -630,25 +644,22 @@ button:not(:disabled):active, [role="button"]:active { transform: translateY(1px
     opacity var(--dur-3) var(--ease-expo),
     transform var(--dur-3) var(--ease-expo);
   transition-delay: var(--reveal-delay, 0ms);
-  will-change: auto;
 }
 
-/* Masked text reveal — extracted from the "Capsules" preloader. Each unit
-   sits inside an overflow-hidden mask and slides out of it. */
-.mask-line {
-  display: block;
-  overflow: hidden;
-}
+/* Masked text reveal — the overflow-mask technique. Same rule: the unit is
+   visible by default and only clipped once JS has decided to animate it. */
 .mask-unit {
   display: inline-block;
+  transform: none;
+}
+.mask-line[data-reveal-pending="true"] .mask-unit {
   transform: translate3d(0, 105%, 0);
+}
+.mask-line[data-revealed="true"] .mask-unit,
+.mask-line[data-reveal-pending="true"][data-revealed="true"] .mask-unit {
+  transform: translate3d(0, 0, 0);
   transition: transform var(--dur-4) var(--ease-expo);
   transition-delay: var(--mask-delay, 0ms);
-  will-change: transform;
-}
-[data-revealed="true"] .mask-unit,
-.mask-line[data-revealed="true"] .mask-unit {
-  transform: translate3d(0, 0, 0);
 }
 .mask-unit-inline {
   display: inline-block;
@@ -790,6 +801,223 @@ button:not(:disabled):active, [role="button"]:active { transform: translateY(1px
   stroke-linejoin: round;
 }
 .nm-chart-axis { stroke: var(--line-soft, #e4e7ee); stroke-width: 1; }
+
+/* ====================================================== editorial primitives
+   The previous pass put nearly everything in a rounded card, which flattened
+   the information hierarchy: everything looked equally important. These give
+   the page a middle ground between "box" and "bare text" — rules, ledgers,
+   timelines and inline stats that read as document structure rather than as a
+   grid of tiles. Prefer these over `.cq-card` for grouped content. */
+
+/* A plain surface: no rounding, no shadow, just a hairline and space.
+   Use for sections and panels that should read as part of the page. */
+.plain-panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Horizontal rule between editorial sections, with an optional label. */
+.section-rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 40px 0 22px;
+}
+.section-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--border) 0%,
+    color-mix(in srgb, var(--border) 30%, transparent) 100%
+  );
+}
+.section-rule > * {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+
+/* Section heading: title + optional lede on one baseline row. */
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  color: var(--text-strong);
+}
+.section-lede {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+
+/* Inline statistics: figures set inline in a row with hairline dividers,
+   instead of one boxed tile per number. */
+.stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+.stat-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 20px 2px 0;
+  margin-right: 20px;
+  border-right: 1px solid var(--border-subtle);
+}
+.stat-inline:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+.stat-inline > dt {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.stat-inline > dd {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.stat-inline > dd small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+/* Ledger: record rows separated by hairlines. The primary presentation for
+   appointments, audit events, reports, handoffs and any list of records. */
+.ledger {
+  display: grid;
+}
+.ledger-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.ledger-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--dur-1) var(--ease-quint);
+}
+.ledger-row:last-child { border-bottom: 0; }
+.ledger-row:hover { background: var(--glass-2); }
+.ledger-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.ledger-meta {
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.ledger-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+/* Timeline: vertical, for audits, mission history and care episodes. */
+.timeline { display: grid; gap: 0; }
+.timeline-item {
+  position: relative;
+  padding: 0 0 20px 24px;
+  border-left: 1px solid var(--border);
+}
+.timeline-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -4.5px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--celadon);
+}
+.timeline-item[data-tone="copper"]::before { box-shadow: 0 0 0 2px var(--copper); }
+.timeline-item[data-tone="muted"]::before { box-shadow: 0 0 0 2px var(--text-faint); }
+.timeline-time {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.timeline-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-top: 2px;
+}
+.timeline-body {
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Definition list for clinical key/value pairs (dose, frequency, duration). */
+.dl-grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 20px;
+  font-size: var(--text-sm);
+}
+.dl-grid dt {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.dl-grid dd {
+  color: var(--text-strong);
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quiet bordered well: a data surface without the "card" reading. */
+.well {
+  background: var(--glass-data);
+  -webkit-backdrop-filter: blur(var(--glass-blur-primary)) saturate(150%);
+  backdrop-filter: blur(var(--glass-blur-primary)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: inset 0 1px 0 var(--glass-edge-strong);
+}
 
 /* ============================================================ misc */
 .cq-grid-paper {

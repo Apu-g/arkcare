@@ -82,6 +82,11 @@ export default function CapsuleGauge({ max = 2000, refreshSignal = 0 }) {
       <div className="cq-capsule-bar mt-1.5">
         <span style={{ width: `${pct}%` }} />
       </div>
+      {state.programName ? (
+        <div className="mt-1 truncate text-[10px] font-semibold text-[var(--text-subtle)]">
+          {state.programName}
+        </div>
+      ) : null}
     </div>
   );
 }

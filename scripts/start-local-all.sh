@@ -276,8 +276,37 @@ start_frontend
 start_blockchain
 start_backend_env
 
+# --- Chain RPC ------------------------------------------------------------
+# Blockchain/.env may point the chain at a real testnet (MST_RPC_URL +
+# BRIDGEKEY_PRIVATE_KEY) instead of the throwaway local Hardhat node. Load it
+# here so every blockchain step below sees the real values.
+CHAIN_RPC_URL="$EVM_URL"
+CHAIN_IS_REMOTE=0
+if [ -f "$CHAIN_DIR/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$CHAIN_DIR/.env"
+  set +a
+  ok "Loaded $CHAIN_DIR/.env"
+fi
+if [ -n "${MST_RPC_URL:-}" ]; then
+  CHAIN_RPC_URL="$MST_RPC_URL"
+fi
+case "$CHAIN_RPC_URL" in
+  *127.0.0.1*|*localhost*) CHAIN_IS_REMOTE=0 ;;
+  *) CHAIN_IS_REMOTE=1 ;;
+esac
+
 # --- Hardhat EVM ---------------------------------------------------------
-if evm_ok; then
+if [ "$CHAIN_IS_REMOTE" -eq 1 ]; then
+  if [ -z "${BRIDGEKEY_PRIVATE_KEY:-}" ]; then
+    die "MST_RPC_URL points at a remote network but BRIDGEKEY_PRIVATE_KEY is unset.
+   Add it to Blockchain/.env and fund that account."
+  fi
+  info "Using remote chain RPC: $CHAIN_RPC_URL (skipping local Hardhat node)"
+  ok "Remote chain configured"
+  EVM_WAS_RUNNING=0
+elif evm_ok; then
   ok "Hardhat EVM already running on ${EVM_PORT}"
   EVM_WAS_RUNNING=1
 else
@@ -299,18 +328,25 @@ fi
 chain_has_contracts() {
   local dep="$CHAIN_DIR/runtime/deployment.json" addr
   [ -f "$dep" ] || return 1
+  # The recorded deployment must belong to the chain we are actually targeting,
+  # or a stale local deployment.json would be reused against the testnet.
+  local want have
+  want="$(cd "$CHAIN_DIR" && node scripts/print-chain-id.js 2>/dev/null)" || return 1
+  have="$(grep -oE '"chainId"[[:space:]]*:[[:space:]]*[0-9]+' "$dep" \
+          | grep -oE '[0-9]+' | head -1)"
+  [ -n "$have" ] && [ "$have" = "$want" ] || return 1
   addr="$(grep -oE '"capsuleAddress"[[:space:]]*:[[:space:]]*"0x[0-9a-fA-F]{40}"' "$dep" \
           | grep -oE '0x[0-9a-fA-F]{40}' | head -1)"
   [ -n "$addr" ] || return 1
   local code
-  code="$(curl -fsS --max-time 5 -H 'Content-Type: application/json' -X POST \
+  code="$(curl -fsS --max-time 8 -H 'Content-Type: application/json' -X POST \
     -d "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getCode\",\"params\":[\"$addr\",\"latest\"],\"id\":1}" \
-    "$EVM_URL" 2>/dev/null | grep -oE '"result":"0x[0-9a-fA-F]*"' | cut -d'"' -f4)"
+    "$CHAIN_RPC_URL" 2>/dev/null | grep -oE '"result":"0x[0-9a-fA-F]*"' | cut -d'"' -f4)"
   [ -n "$code" ] && [ "$code" != "0x" ]
 }
 
 if chain_has_contracts; then
-  ok "CareQuest contracts already deployed on the running chain; skipping deploy"
+  ok "CareQuest contracts already deployed on the target chain; skipping deploy"
 else
   info "Deploying CareQuest contracts..."
   ( cd "$CHAIN_DIR" && node scripts/deploy.js ) | sed 's/^/    /' \

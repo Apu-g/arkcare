@@ -174,21 +174,20 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
             {/* On-chain proof: the immutable-record readout. Near-opaque data
                 surface + mono, so a hash is never read through a blur. */}
             <div className="glass-data rounded-[16px] p-3 text-[11px]">
-              <div className="flex items-center gap-2 text-[12px] font-semibold text-[var(--text-strong)]">
-                <Lock className="h-3.5 w-3.5 text-[var(--copper)]" strokeWidth={1.75} /> On-chain proof
+              <div className="section-rule m-0!">
+                <span>On-chain proof</span>
+                <Lock className="h-3 w-3 text-[var(--copper)]" strokeWidth={1.75} />
               </div>
-              <div className="mt-1.5 flex items-start gap-2">
-                <span className="shrink-0 text-[var(--text-subtle)]">hash</span>
-                <span className="break-all font-mono text-[11px] text-[var(--text)]">
+              <dl className="dl-grid mt-2 text-[11px]!">
+                <dt>hash</dt>
+                <dd className="break-all font-mono font-normal! text-[var(--text)]">
                   {result.contentHash}
-                </span>
-              </div>
-              <div className="mt-0.5 flex items-start gap-2">
-                <span className="shrink-0 text-[var(--text-subtle)]">tx</span>
-                <span className="break-all font-mono text-[11px] text-[var(--text)]">
+                </dd>
+                <dt>tx</dt>
+                <dd className="break-all font-mono font-normal! text-[var(--text)]">
                   {result.blockchain?.txHash || result.blockchain?.status}
-                </span>
-              </div>
+                </dd>
+              </dl>
             </div>
             <Button
               onClick={() => {
@@ -324,7 +323,9 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                  section appearing — never one per medication line. */
               <Reveal>
               <div className="glass-data space-y-3 rounded-[18px] p-4">
-                <div className="cq-kicker">AI-STRUCTURED PREVIEW</div>
+                <div className="section-rule m-0!">
+                  <span>AI-structured preview</span>
+                </div>
                 {preview.parsed.needsReview || preview.warnings?.length ? (
                   <div className="rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11px] leading-relaxed text-[var(--warning)]">
                     <div className="flex items-center gap-1.5 font-semibold">
@@ -339,48 +340,64 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 ) : null}
                 {preview.parsed.medications?.length ? (
                   <div>
-                    <div className="text-[12px] font-semibold text-[var(--text-strong)]">Medications</div>
-                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-[var(--text)]">
+                    <div className="section-rule m-0!">
+                      <span>Medications</span>
+                      <span>{preview.parsed.medications.length}</span>
+                    </div>
+                    {/* Drug / dose / frequency is a clinical key-value set, so
+                        it reads as a definition list rather than as list items. */}
+                    <dl className="dl-grid mt-2">
                       {preview.parsed.medications.map((med, index) => (
-                        <li key={index} className="flex flex-wrap items-baseline gap-x-1.5">
-                          <span className="font-semibold text-[var(--text-strong)]">
+                        <div
+                          key={index}
+                          className="contents"
+                        >
+                          <dt>
                             {med.name}
-                          </span>
-                          <span className="font-mono">
-                            {med.dose || ""}
+                            {med.needsReview ? (
+                              <span className="ml-1.5 inline-flex items-center gap-1 text-[var(--warning)]">
+                                <AlertTriangle className="h-3 w-3" strokeWidth={1.75} />
+                                verify
+                              </span>
+                            ) : null}
+                          </dt>
+                          <dd className="font-mono">
+                            {med.dose || "—"}
                             {med.frequency ? ` · ${med.frequency}` : ""}
-                          </span>
-                          {med.needsReview ? (
-                            <span className="inline-flex items-center gap-1 text-[var(--warning)]">
-                              <AlertTriangle className="h-3 w-3" strokeWidth={1.75} />
-                              verify
-                            </span>
-                          ) : null}
-                        </li>
+                          </dd>
+                        </div>
                       ))}
-                    </ul>
+                    </dl>
                   </div>
                 ) : null}
                 {preview.parsed.conditions?.length ? (
                   <div>
-                    <div className="text-[12px] font-semibold text-[var(--text-strong)]">Conditions detected</div>
-                    <div className="mt-1 text-[11px] text-[var(--text-muted)]">
+                    <div className="section-rule m-0!">
+                      <span>Conditions detected</span>
+                    </div>
+                    <div className="mt-2 text-[11px] text-[var(--text-muted)]">
                       {preview.parsed.conditions.map((c) => c.label).join(", ")}
                     </div>
                   </div>
                 ) : null}
                 {preview.quizPreview?.length ? (
                   <div>
-                    <div className="text-[12px] font-semibold text-[var(--text-strong)]">
-                      Knowledge check (4 questions from the quiz bank)
+                    <div className="section-rule m-0!">
+                      <span>Knowledge check</span>
                     </div>
-                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-[var(--text-muted)]">
+                    <div className="ledger mt-1">
                       {preview.quizPreview.map((item) => (
-                        <li key={item.questionId}>
-                          • [{item.categoryTitle}] {item.question}
-                        </li>
+                        <div
+                          key={item.questionId}
+                          className="ledger-row grid-cols-1! items-start! gap-1! py-2!"
+                        >
+                          <span className="ledger-meta text-[var(--text-subtle)]!">
+                            [{item.categoryTitle}]
+                          </span>
+                          <span className="ledger-meta">{item.question}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 ) : null}
                 <div className="flex items-start gap-1.5 border-t border-[var(--border-subtle)] pt-2.5 text-[10px] leading-relaxed text-[var(--text-muted)]">

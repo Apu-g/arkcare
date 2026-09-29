@@ -34,15 +34,15 @@ export default function InstantSignIn({ compact = false }) {
     }
   };
 
-  const buttonClass = "nm-btn-secondary w-full";
+  const buttonClass = "nm-btn-secondary";
 
   /* Judge access only ever opens a real, isolated demo session — the copy
      states that so a viewer is never misled about the data behind it. */
   const entries = [
-    ["patient", UserRound, "Demo Patient"],
-    ["doctor", Stethoscope, "Demo Doctor"],
-    ["nurse", ClipboardList, "Demo Nurse"],
-    ["hospital_admin", Building2, "Demo Hospital Admin"],
+    ["patient", UserRound, "Demo Patient", "Patient journey"],
+    ["doctor", Stethoscope, "Demo Doctor", "Clinical workspace"],
+    ["nurse", ClipboardList, "Demo Nurse", "Handoff queue"],
+    ["hospital_admin", Building2, "Demo Hospital Admin", "Program and audit"],
   ];
 
   return (
@@ -52,23 +52,41 @@ export default function InstantSignIn({ compact = false }) {
           Synthetic judge accounts only.
         </p>
       ) : null}
-      <Reveal className="grid gap-2 sm:grid-cols-2">
-        {entries.map(([role, Icon, label]) => (
-          <button
-            key={role}
-            type="button"
-            onClick={() => signInAs(role)}
-            disabled={pending !== null}
-            className={buttonClass}
-          >
-            {pending === role ? (
-              <Loader2 className="h-[18px] w-[18px] animate-spin" strokeWidth={1.75} />
-            ) : (
-              <Icon className="h-[18px] w-[18px] text-[var(--celadon)]" strokeWidth={1.75} />
-            )}
-            {pending === role ? "Starting…" : label}
-          </button>
-        ))}
+      {/* A short list of equivalent actions reads as a ledger of roles, not a
+          grid of identical cards. Each row says where it lands, so a judge
+          knows what they are opening before they press the button. */}
+      <Reveal>
+        <div className="ledger">
+          <div className="ledger-head">
+            <span>Role</span>
+            <span>Opens</span>
+          </div>
+          {entries.map(([role, Icon, label, lands]) => (
+            <div key={role} className="ledger-row">
+              <div className="flex items-center gap-2.5">
+                <Icon
+                  className="h-[18px] w-[18px] shrink-0 text-[var(--celadon)]"
+                  strokeWidth={1.75}
+                />
+                <span className="ledger-title">{label}</span>
+              </div>
+              <div className="ledger-actions gap-2">
+                <span className="cq-pixel-label">{lands}</span>
+                <button
+                  type="button"
+                  onClick={() => signInAs(role)}
+                  disabled={pending !== null}
+                  className={buttonClass}
+                >
+                  {pending === role ? (
+                    <Loader2 className="h-[18px] w-[18px] animate-spin" strokeWidth={1.75} />
+                  ) : null}
+                  {pending === role ? "Starting…" : "Enter"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </Reveal>
       {error ? (
         <p

@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity,
   CheckCircle2,
-  Cpu,
-  Footprints,
   Play,
   ShieldCheck,
   Smartphone,
@@ -112,7 +109,8 @@ export default function ActivitySimulationCard({
 
   return (
     <Reveal>
-    <section className="cq-card overflow-hidden p-5 md:p-6">
+    <section className="plain-panel">
+      <div className="section-rule">Active care mission · {organization.name}</div>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2">
@@ -120,15 +118,16 @@ export default function ActivitySimulationCard({
             <SimulationBadge>SIMULATED COMPUTE</SimulationBadge>
             <SimulationBadge>SIMULATED MARKET</SimulationBadge>
           </div>
-          <div className="cq-kicker mt-3">ACTIVE CARE MISSION · {organization.name}</div>
-          <MaskedText as="h2" className="cq-section-title mt-1">
-            Walking activity demo
-          </MaskedText>
-          <p className="mt-1.5 max-w-2xl text-[12.5px] leading-6 text-[var(--text-muted)]">
-            The phone/wearable, proof-of-work and public-value stream are virtual.
-            Eligibility, duplicate protection, Capsule award, audit and hospital program
-            accounting after submission are real application logic.
-          </p>
+          <div className="section-head mt-3">
+            <MaskedText as="h2" className="section-title">
+              Walking activity demo
+            </MaskedText>
+            <p className="section-lede">
+              The phone/wearable, proof-of-work and public-value stream are virtual.
+              Eligibility, duplicate protection, Capsule award, audit and hospital program
+              accounting after submission are real application logic.
+            </p>
+          </div>
         </div>
         <PixelCharacter
           variant="walker"
@@ -138,42 +137,37 @@ export default function ActivitySimulationCard({
         />
       </div>
 
-      {/* Live readings: steps, hash rate, shares and reward are all values you
-          act on, so each tile is a near-opaque data surface. */}
-      <div className="mt-5 nm-grid-3">
-        <div className="glass-data rounded-[18px] p-3.5">
-          <div className="nm-stat-icon">
-            <Footprints className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </div>
-          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">{steps.toLocaleString()}</div>
-          <div className="nm-stat-label mt-0.5">of {goal.toLocaleString()} steps</div>
+      {/* Live readings set inline on one data surface, rather than four tiles. */}
+      <dl className="stat-strip well mt-5">
+        <div className="stat-inline">
+          <dt>Steps</dt>
+          <dd>
+            {steps.toLocaleString()}
+            <small> of {goal.toLocaleString()}</small>
+          </dd>
         </div>
-        <div className="glass-data rounded-[18px] p-3.5">
-          <div className="nm-stat-icon">
-            <Cpu className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </div>
-          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">{hashRate} H/s</div>
-          <div className="nm-stat-label mt-0.5">virtual hash rate</div>
+        <div className="stat-inline">
+          <dt>Virtual hash rate</dt>
+          <dd>
+            {hashRate}
+            <small> H/s</small>
+          </dd>
         </div>
-        <div className="glass-data rounded-[18px] p-3.5">
-          <div className="nm-stat-icon">
-            <Activity className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </div>
-          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">
-            {Math.max(0, Math.round(steps / 420))}
-          </div>
-          <div className="nm-stat-label mt-0.5">virtual accepted shares</div>
+        <div className="stat-inline">
+          <dt>Virtual shares</dt>
+          <dd>{Math.max(0, Math.round(steps / 420))}</dd>
         </div>
-        <div className="glass-data rounded-[18px] p-3.5">
-          <div className="nm-stat-icon" data-tone="copper">
-            <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </div>
-          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">+{reward}</div>
-          <div className="nm-stat-label mt-0.5">
-            {program.capsuleSymbol} at verified goal
-          </div>
+        <div className="stat-inline">
+          <dt className="flex items-center gap-1.5">
+            <ShieldCheck className="h-[13px] w-[13px] text-[var(--copper)]" strokeWidth={1.75} />
+            Reward at verified goal
+          </dt>
+          <dd>
+            +{reward}
+            <small> {program.capsuleSymbol}</small>
+          </dd>
         </div>
-      </div>
+      </dl>
 
       <div className="mt-5">
         <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
@@ -186,12 +180,12 @@ export default function ActivitySimulationCard({
       </div>
 
       {!activityOccurrence ? (
-        <div className="cq-card-soft mt-5 p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
+        <div className="well mt-5 text-[12.5px] leading-6 text-[var(--text-muted)]">
           No clinician-approved activity mission is available in this hospital journey.
           The virtual phone/mining demo cannot start without one.
         </div>
       ) : activityOccurrence.status !== "due" ? (
-        <div className="cq-card-soft mt-5 p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
+        <div className="well mt-5 text-[12.5px] leading-6 text-[var(--text-muted)]">
           This activity is approved but scheduled for{" "}
           <strong className="text-[var(--text-strong)]">
             {new Date(activityOccurrence.scheduledFor).toLocaleString()}
@@ -247,23 +241,19 @@ export default function ActivitySimulationCard({
             </span>
           </div>
           {/* Money-shaped figures: data surface, never a blur. */}
-          <div className="glass-data mt-4 grid gap-3 rounded-[14px] p-3.5 sm:grid-cols-4">
+          <dl className="stat-strip well mt-4">
             {[
-              ["₹" + result.mining.simulatedGrossValueInr, "virtual gross"],
-              ["₹" + result.mining.patientShareInr, "patient share"],
-              ["₹" + result.mining.hospitalShareInr, "hospital share"],
-              ["₹" + result.mining.platformShareInr, "platform share"],
+              ["₹" + result.mining.simulatedGrossValueInr, "Virtual gross"],
+              ["₹" + result.mining.patientShareInr, "Patient share"],
+              ["₹" + result.mining.hospitalShareInr, "Hospital share"],
+              ["₹" + result.mining.platformShareInr, "Platform share"],
             ].map(([value, label]) => (
-              <div key={label}>
-                <div className="text-[16px] font-bold text-[var(--text-strong)] tabular-nums">
-                  {value}
-                </div>
-                <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
-                  {label}
-                </div>
+              <div key={label} className="stat-inline">
+                <dt>{label}</dt>
+                <dd className="text-[16px]">{value}</dd>
               </div>
             ))}
-          </div>
+          </dl>
           <p className="mt-3 text-[11px] leading-5 text-[var(--text-muted)]">
             Concept simulation only. These values are not payments, hospital revenue or
             public-chain assets.
@@ -272,7 +262,7 @@ export default function ActivitySimulationCard({
       ) : null}
 
       {message ? (
-        <div className="cq-card-soft cq-achievement mt-4 px-4 py-3 text-[12.5px] leading-6 text-[var(--text)]">
+        <div className="well cq-achievement mt-4 text-[12.5px] leading-6 text-[var(--text)]">
           {message}
         </div>
       ) : null}

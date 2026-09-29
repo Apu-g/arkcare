@@ -4,6 +4,7 @@ import Script from "next/script";
 import AuthProvider from "@/components/AuthProvider";
 import SocketProvider from "@/components/SocketProvider";
 import AppChrome from "@/components/motion/AppChrome";
+import RouteCurtain from "@/components/motion/RouteCurtain";
 
 // Design spec §3: Inter is the preferred family for the soft-neumorphic UI.
 // Geist_Mono stays for hashes, addresses and other monospace readouts.
@@ -41,6 +42,7 @@ export default function RootLayout({ children }) {
                 <SocketProvider>{children}</SocketProvider>
               </AuthProvider>
             </div>
+            <RouteCurtain />
           </AppChrome>
         </div>
       </body>

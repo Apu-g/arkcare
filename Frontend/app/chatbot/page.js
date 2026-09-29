@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MaskedText from "@/components/motion/MaskedText";
+import Reveal from "@/components/motion/Reveal";
 import PDFUploaderModal from './PDFUploaderModal';
 import {
     Send,
@@ -114,100 +115,109 @@ export default function ChatbotPage() {
         });
     };
 
+    /* SCROLLING: the transcript is page content, so the DOCUMENT scrolls it.
+       There is no inner scroller here — an earlier revision had one, which
+       clipped the conversation behind a fixed-height box and made the newest
+       message unreachable. Both auto-follow and the explicit control scroll
+       the transcript into view instead of moving an element's scrollTop. */
     useEffect(() => {
-        if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-        }
+        const node = scrollAreaRef.current;
+        if (!node || typeof node.scrollIntoView !== "function") return;
+        node.scrollIntoView({ behavior: "smooth", block: "end" });
     }, [messages, loading]);
 
     const handleScrollToBottom = () => {
-        if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        const node = scrollAreaRef.current;
+        if (!node) return;
+        if (typeof node.scrollIntoView === "function") {
+            node.scrollIntoView({ behavior: "smooth", block: "end" });
+            return;
         }
+        node.scrollTop = node.scrollHeight;
     };
 
     return (
-        <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-3 px-4 py-4">
-            {/* Top Header with Navigation */}
-            <header className="cq-card flex flex-wrap items-center justify-between gap-3 p-4">
-                <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => router.push('/patient')}
-                        aria-label="Go back"
-                    >
-                        <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    </Button>
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4">
+            {/* Masthead, not a card: the transcript is the page's dominant
+                surface and a boxed header competed with it. */}
+            <header>
+                <div className="section-rule mt-0">
+                    <span>Care quest</span>
+                </div>
+                <div className="section-head">
                     <div className="flex items-center gap-2">
                         <div className="nm-stat-icon">
                             <Bot className="h-[18px] w-[18px]" strokeWidth={1.75} />
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <MaskedText
-                                    as="h1"
-                                    className="text-[15px] font-semibold text-[var(--text-strong)]"
-                                >
-                                    ArkCare AI Guide
-                                </MaskedText>
-                                <span className="status-chip hidden sm:inline-flex">Care quest</span>
-                            </div>
+                            <MaskedText
+                                as="h1"
+                                className="text-[16px] font-semibold text-[var(--text-strong)]"
+                            >
+                                ArkCare AI Guide
+                            </MaskedText>
                             <p className="text-[11px] text-[var(--text-muted)]">
                                 Private session • triage + specialist discovery
                             </p>
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => setIsUploaderOpen(true)}>
+                            <FileText className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                            Upload Reports
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => router.push('/patient')}
+                            aria-label="Go back"
+                        >
+                            <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        </Button>
+                    </div>
                 </div>
-                <Button variant="outline" onClick={() => setIsUploaderOpen(true)}>
-                    <FileText className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    Upload Reports
-                </Button>
             </header>
             <PDFUploaderModal isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} />
 
-            {/* Chat area */}
-            <div className="relative flex min-h-0 flex-1 flex-col">
-                <div
-                    ref={scrollAreaRef}
-                    className="flex-1 overflow-y-auto py-2"
-                    style={{
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: 'rgba(116,116,121,0.35) transparent'
-                    }}
-                >
+            {/* Chat area. The transcript grows the document and the page
+                scrolls it normally — no inner scroller, no fixed height. */}
+            <div className="relative">
+                <div ref={scrollAreaRef} className="py-2">
                     {messages.length === 0 ? (
-                        <div className="cq-card flex h-full items-center justify-center p-8">
-                            <div className="max-w-md text-center">
-                                <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[var(--surface-subtle)] shadow-[var(--shadow-inset)]">
-                                    <Bot className="h-8 w-8 text-[var(--text-muted)]" strokeWidth={1.75} />
-                                </div>
-                                <h3 className="text-[15px] font-semibold text-[var(--text-strong)]">
-                                    Start a care conversation
-                                </h3>
-                                <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
-                                    Describe what you are experiencing. ArkCare can organize the concern, suggest an appropriate specialty, and surface bookable doctors when relevant.
-                                </p>
-                                <div className="mt-5">
-                                    <p className="text-[12px] leading-5 text-[var(--text-muted)]">
-                                        <span className="font-semibold text-[var(--text)]">Example:</span>{" "}
-                                        &ldquo;I have a persistent headache and feel dizzy&rdquo;
-                                    </p>
-                                </div>
+                        <div className="well flex flex-col items-center p-8 text-center">
+                            <div className="mb-5 grid size-16 place-items-center rounded-full bg-[var(--surface-subtle)] shadow-[var(--shadow-inset)]">
+                                <Bot className="h-8 w-8 text-[var(--text-muted)]" strokeWidth={1.75} />
                             </div>
+                            <h3 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                                Start a care conversation
+                            </h3>
+                            <p className="mt-2 max-w-md text-[13px] leading-6 text-[var(--text-muted)]">
+                                Describe what you are experiencing. ArkCare can organize the concern, suggest an appropriate specialty, and surface bookable doctors when relevant.
+                            </p>
+                            <p className="mt-5 text-[12px] leading-5 text-[var(--text-muted)]">
+                                <span className="font-semibold text-[var(--text)]">Example:</span>{" "}
+                                &ldquo;I have a persistent headache and feel dizzy&rdquo;
+                            </p>
                         </div>
                     ) : (
-                        <div className="nm-stack-sm max-w-3xl">
+                        /* A conversation is chronological, so it reads as a
+                           timeline rather than a stack of bubbles-in-boxes. */
+                        <div className="timeline max-w-3xl">
                             {messages.map((message, index) => (
                                 <div
                                     key={index}
-                                    className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+                                    className={
+                                        message.isUser
+                                            ? "flex justify-end pb-5"
+                                            : "timeline-item"
+                                    }
+                                    data-tone={message.isUser ? "muted" : "copper"}
                                 >
                                     <div
                                         className={
-                                            "max-w-[88%] rounded-[18px] px-4 py-3 " +
+                                            "max-w-[88%] rounded-[16px] px-4 py-3 " +
                                             (message.isUser
-                                                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
+                                                ? "ml-auto bg-[var(--primary)] text-[var(--primary-foreground)]"
                                                 : message.isError
                                                     ? "border border-[var(--destructive)] bg-[var(--destructive-soft)] text-[var(--destructive)]"
                                                     // AI text is clinical content, so it sits on the
@@ -218,10 +228,11 @@ export default function ChatbotPage() {
                                         <div className="mb-2 flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-2">
                                                 {message.isUser ? (
-                                                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white/15">
+                                                    <span className="grid size-6 place-items-center rounded-full bg-white/15">
                                                         <User className="h-3 w-3" strokeWidth={1.75} />
                                                     </span>
-                                                ) : (                                                    <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px] !p-0 !text-[12px]">
+                                                ) : (
+                                                    <span className="nm-stat-icon h-6! w-6! rounded-[9px]! p-0!">
                                                         <Bot className="h-3 w-3" strokeWidth={1.75} />
                                                     </span>
                                                 )}
@@ -259,34 +270,37 @@ export default function ChatbotPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="nm-stack-sm">
+                                                {/* Suggested doctors are a record list the user
+                                                    can act on, so they are a ledger with one
+                                                    action per row. */}
+                                                <div className="ledger">
                                                     {message.specialists.map((specialist, specIndex) => (
                                                         <div
                                                             key={specialist.doctor_id || specIndex}
                                                             data-doctor-id={specialist.doctor_id || ""}
-                                                            className="cq-card-soft p-3"
+                                                            className="ledger-row"
                                                         >
-                                                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                                                <div className="min-w-0 flex-1">
-                                                                    <h4 className="nm-card-title">
-                                                                        {specialist.name}
-                                                                    </h4>
-                                                                    <p className="text-[12px] font-semibold text-[var(--text-muted)]">
-                                                                        {specialist.specialization}
-                                                                    </p>
-                                                                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--text-muted)]">
-                                                                        <span>{specialist.experience} years exp</span>
-                                                                        {Number.isFinite(Number(specialist.consultationFee)) && (
-                                                                            <span>₹{Number(specialist.consultationFee).toLocaleString("en-IN")}</span>
-                                                                        )}
-                                                                        {specialist.phone && (
-                                                                            <span className="flex items-center gap-1">
-                                                                                <Phone className="h-3 w-3" strokeWidth={1.75} />
-                                                                                {specialist.phone}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
+                                                            <div className="min-w-0">
+                                                                <h4 className="ledger-title">
+                                                                    {specialist.name}
+                                                                </h4>
+                                                                <p className="ledger-meta">
+                                                                    {specialist.specialization}
+                                                                </p>
+                                                                <p className="ledger-meta mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                                    <span>{specialist.experience} years exp</span>
+                                                                    {Number.isFinite(Number(specialist.consultationFee)) && (
+                                                                        <span>₹{Number(specialist.consultationFee).toLocaleString("en-IN")}</span>
+                                                                    )}
+                                                                    {specialist.phone && (
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Phone className="h-3 w-3" strokeWidth={1.75} />
+                                                                            {specialist.phone}
+                                                                        </span>
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                            <div className="ledger-actions">
                                                                 <Button
                                                                     onClick={() => handleBookAppointment(specialist)}
                                                                 >
@@ -304,10 +318,10 @@ export default function ChatbotPage() {
                             ))}
 
                             {loading && (
-                                <div className="flex justify-start">
-                                    <div className="glass-data rounded-[18px] px-4 py-3">
+                                <div className="timeline-item" data-tone="muted">
+                                    <div className="glass-data inline-block rounded-[16px] px-4 py-3">
                                         <div className="flex items-center gap-3">
-                                            <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px] !p-0 !text-[12px]">
+                                            <span className="nm-stat-icon h-6! w-6! rounded-[9px]! p-0!">
                                                 <Bot className="h-3 w-3" strokeWidth={1.75} />
                                             </span>
                                             <span className="text-[13px] text-[var(--text-muted)]">
@@ -321,56 +335,63 @@ export default function ChatbotPage() {
                     )}
                 </div>
 
-                {/* Scroll to Bottom */}
+                {/* Scroll to the newest message. It sits in the flow rather than
+                    absolutely positioned over the transcript, so it can never
+                    cover a message. */}
                 {messages.length > 0 && (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={handleScrollToBottom}
-                        className="absolute bottom-2 right-2"
-                        aria-label="Scroll to bottom"
-                        title="Scroll to bottom"
-                    >
-                        <ArrowDown className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    </Button>
+                    <div className="flex justify-end pt-1">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleScrollToBottom}
+                            aria-label="Scroll to the newest message"
+                            title="Scroll to the newest message"
+                        >
+                            <ArrowDown className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                            Newest
+                        </Button>
+                    </div>
                 )}
             </div>
 
-            {/* Input Area */}
-            <div className="cq-card p-4">
-                <form onSubmit={handleSubmit} className="flex gap-3">
-                    <div className="flex-1">
-                        <Input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="Describe your symptoms or ask a health question…"
-                            disabled={loading}
-                            aria-label="Describe your symptoms or ask a health question"
-                            className="!h-12"
-                        />
+            {/* Composer — the single card on the page, because it is a
+                distinct, always-present control surface. */}
+            <Reveal>
+                <div className="cq-card p-4">
+                    <form onSubmit={handleSubmit} className="flex gap-3">
+                        <div className="flex-1">
+                            <Input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Describe your symptoms or ask a health question…"
+                                disabled={loading}
+                                aria-label="Describe your symptoms or ask a health question"
+                                className="h-12!"
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            size="icon"
+                            disabled={loading || !input.trim()}
+                            aria-label="Send message"
+                        >
+                            <Send className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        </Button>
+                    </form>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border-subtle)] pt-3">
+                        <p className="text-[11px] text-[var(--text-muted)]">
+                            Try: &ldquo;I have chest pain and shortness of breath&rdquo; or
+                            &ldquo;What are the symptoms of diabetes?&rdquo;
+                        </p>
+                        <span className="status-chip">AI Assistant online</span>
                     </div>
-                    <Button
-                        type="submit"
-                        size="icon"
-                        disabled={loading || !input.trim()}
-                        aria-label="Send message"
-                    >
-                        <Send className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    </Button>
-                </form>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[11px] text-[var(--text-muted)]">
-                        Try: &ldquo;I have chest pain and shortness of breath&rdquo; or
-                        &ldquo;What are the symptoms of diabetes?&rdquo;
+                    <p className="mt-2 text-[11px] text-[var(--text-subtle)]">
+                        AI never diagnoses, prescribes, changes a dose or approves anything.
+                        Only a clinician can.
                     </p>
-                    <span className="status-chip">AI Assistant online</span>
                 </div>
-                <p className="mt-2 text-[11px] text-[var(--text-subtle)]">
-                    AI never diagnoses, prescribes, changes a dose or approves anything.
-                    Only a clinician can.
-                </p>
-            </div>
+            </Reveal>
 
             {/* Booking Modal */}
             {selectedDoctor && (

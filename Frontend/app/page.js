@@ -71,11 +71,11 @@ export default function Home() {
   }, [isLoaded, user, router]);
 
   return (
-    <main className="min-h-screen">
+    <main>
       {/* ------------------------------------------------------------- nav */}
       <div className="px-4 pt-4 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <nav className="cq-card flex items-center justify-between gap-3 px-4 py-3">
+          <nav className="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
             <div className="flex items-center gap-3">
               <div className="nm-stat-icon">
                 <HeartPulse className="h-[18px] w-[18px]" strokeWidth={1.75} />
@@ -125,7 +125,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="cq-card-soft mt-6 flex items-center gap-4 p-4 sm:max-w-xl">
+            <div className="mt-6 flex items-center gap-4 border-t border-[var(--border-subtle)] pt-5 sm:max-w-xl">
               <PixelCharacter variant="guide" mood="wave" size={52} />
               <p className="text-[12px] leading-5 text-[var(--text-muted)]">
                 &ldquo;Done&rdquo;, &ldquo;Not done&rdquo; and &ldquo;Need help&rdquo; all
@@ -135,6 +135,8 @@ export default function Home() {
             </div>
           </Reveal>
 
+          {/* The scene is the hero's one picture, so it keeps the one card on
+              this screen — everything else is document structure. */}
           <Reveal delay={90}>
             <div className="cq-card p-5">
               <PixelCareScene />
@@ -143,30 +145,39 @@ export default function Home() {
         </div>
       </section>
 
-      {/* -------------------------------------------------------- care loop */}
+      {/* -------------------------------------------------------- care loop
+          A sequence, so it reads as numbered steps down a rule rather than
+          four tiles in a row. */}
       <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="max-w-2xl">
-            <div className="cq-kicker">The care loop</div>
+          <div className="section-rule">
+            <span>The care loop</span>
+          </div>
+          <div className="section-head">
             <MaskedText
               as="h2"
-              className="cq-section-title mt-1"
+              className="section-title"
               lines={["Gamification that ends in", "real healthcare workflow."]}
             />
           </div>
-          <div className="mt-5 nm-grid-3">
+          <div className="mt-2 grid gap-0">
             {careLoop.map(({ icon: Icon, step, title, text }) => (
-              <article key={title} className="cq-card p-5">
-                <div className="flex items-center justify-between">
-                  <div className="nm-stat-icon">
-                    <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              <article
+                key={title}
+                className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 border-b border-[var(--border-subtle)] py-5 last:border-b-0 md:grid-cols-[auto_14rem_minmax(0,1fr)]"
+              >
+                <span className="nm-stat-icon shrink-0">
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="cq-kicker">{step}</span>
+                    <h3 className="nm-card-title text-[14px]">{title}</h3>
                   </div>
-                  <span className="font-mono text-[11px] font-semibold text-[var(--text-muted)]">
-                    {step}
-                  </span>
                 </div>
-                <h3 className="mt-4 nm-card-title text-[14px]">{title}</h3>
-                <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">{text}</p>
+                <p className="col-start-2 text-[12px] leading-5 text-[var(--text-muted)] md:col-start-3">
+                  {text}
+                </p>
               </article>
             ))}
           </div>
@@ -177,13 +188,15 @@ export default function Home() {
       <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[.9fr_1.1fr]">
           <div>
-            <div className="cq-kicker">Multi-hospital passport</div>
+            <div className="section-rule">
+              <span>Multi-hospital passport</span>
+            </div>
             <MaskedText
               as="h2"
-              className="cq-section-title mt-1"
+              className="section-title"
               lines={["One patient. Separate", "hospital journeys."]}
             />
-            <p className="mt-2 max-w-xl text-[13px] leading-6 text-[var(--text-muted)]">
+            <p className="section-lede mt-2">
               Each hospital controls its own program, budget and benefit catalog.
               Balances stay independent and never imply access to another hospital&apos;s
               clinical records.
@@ -198,6 +211,10 @@ export default function Home() {
             </div>
           </div>
 
+          {/* A hospital program is a distinct entity, but these are a
+              comparison pair, not a set of separate actions — so they read as
+              two quiet data wells rather than two raised cards. Two boxes, not
+              a row of six. */}
           <div className="nm-grid-2">
             {[
               {
@@ -215,7 +232,7 @@ export default function Home() {
                 progress: "31%",
               },
             ].map((card) => (
-              <article key={card.symbol} className="cq-card cq-card-hover p-5">
+              <article key={card.symbol} className="well p-5">
                 <div className="flex items-center justify-between gap-3">
                   <Building2
                     className="h-[18px] w-[18px] text-[var(--text-muted)]"
@@ -224,8 +241,9 @@ export default function Home() {
                   <span className="cq-pixel-label">{card.symbol}</span>
                 </div>
                 <h3 className="mt-3 nm-card-title text-[14px]">{card.hospital}</h3>
-                {/* A capsule balance is a value: data surface, not glass. */}
-                <div className="glass-data mt-3 rounded-[14px] px-3 py-2">
+                {/* A capsule balance is a value: it reads on the near-opaque
+                    data surface, never behind the primary blur. */}
+                <div className="mt-3">
                   <div className="nm-metric-xl text-[26px] tabular-nums">{card.balance}</div>
                   <div className="nm-stat-label">{card.symbol} capsules</div>
                   <div className="cq-progress mt-3">
@@ -241,16 +259,18 @@ export default function Home() {
         </div>
       </Reveal>
 
-      {/* ------------------------------------------------- simulation panel */}
+      {/* ------------------------------------------------- simulation panel
+          The single ink anchor for the marketing page: this is where the
+          simulated layer is labelled, so it earns the weight. */}
       <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr]">
-          <div className="cq-card cq-grid-paper p-5 md:p-6">
+          <div data-scope="ink" className="nm-dark-card cq-grid-paper p-5 md:p-6">
             <div className="flex flex-wrap items-center gap-2">
               <SimulationBadge>Simulated device</SimulationBadge>
               <SimulationBadge>Simulated compute</SimulationBadge>
               <SimulationBadge>Simulated market</SimulationBadge>
             </div>
-            <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+            <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-b border-[var(--glass-hairline)] pb-4">
               <div>
                 <div className="cq-kicker">Active activity mission</div>
                 <h3 className="nm-metric-xl mt-1">3,842 / 5,000 steps</h3>
@@ -260,35 +280,35 @@ export default function Home() {
               </div>
               <PixelCharacter variant="walker" mood="wave" size={68} />
             </div>
-            <div className="cq-progress mt-4 !h-2.5">
+            <div className="cq-progress mt-4 h-2!">
               <span style={{ width: "76%" }} />
             </div>
-            <div className="mt-4 nm-grid-3">
-              {[
-                ["18.4 H/s", "virtual hash rate"],
-                ["1,429", "virtual work units"],
-                ["+3 CITY", "Capsules at goal"],
-              ].map(([value, label]) => (
-                <div key={label} className="glass-data rounded-[16px] p-3">
-                  <div className="text-[18px] font-bold text-[var(--text-strong)]">
-                    {value}
-                  </div>
-                  <div className="mt-0.5 text-[11px] font-medium text-[var(--text-muted)]">
-                    {label}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <dl className="stat-strip mt-5">
+              <div className="stat-inline">
+                <dt>Virtual hash rate</dt>
+                <dd>18.4 H/s</dd>
+              </div>
+              <div className="stat-inline">
+                <dt>Virtual work units</dt>
+                <dd>1,429</dd>
+              </div>
+              <div className="stat-inline">
+                <dt>Capsules at goal</dt>
+                <dd>+3 CITY</dd>
+              </div>
+            </dl>
           </div>
 
           <div>
-            <div className="cq-kicker">Concept simulation</div>
+            <div className="section-rule">
+              <span>Concept simulation</span>
+            </div>
             <MaskedText
               as="h2"
-              className="cq-section-title mt-1"
+              className="section-title"
               lines={["Show the future idea without", "pretending the phone is mining today."]}
             />
-            <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
+            <p className="section-lede mt-2">
               The demo simulates wearable sync, proof-of-work metrics and external token
               value. The actual CareQuest backend after that boundary—eligibility,
               idempotency, hospital Capsules, budgets, audit and local EVM settlement—is
@@ -305,10 +325,21 @@ export default function Home() {
       {/* ------------------------------------------------------------ roles */}
       <Reveal as="section" className="px-4 pb-12 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="cq-kicker">Built for every role</div>
-          <div className="mt-4 nm-grid-3">
+          <div className="section-rule">
+            <span>Built for every role</span>
+          </div>
+          <div className="section-head">
+            <h2 className="section-title">One platform, four working surfaces.</h2>
+            <p className="section-lede">
+              Every role gets its own console over the same hospital-scoped record.
+            </p>
+          </div>
+          <div className="grid gap-0 md:grid-cols-2 md:gap-x-10">
             {roles.map(([title, text], index) => (
-              <article key={title} className="cq-card flex gap-3 p-5">
+              <article
+                key={title}
+                className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 border-b border-[var(--border-subtle)] py-4"
+              >
                 <span className="font-mono text-[11px] font-semibold text-[var(--text-subtle)]">
                   0{index + 1}
                 </span>
@@ -324,57 +355,76 @@ export default function Home() {
         </div>
       </Reveal>
 
-      {/* ------------------------------------------------- trust boundaries */}
+      {/* ------------------------------------------------- trust boundaries
+          Three claims, so a ledger of them: they are assertions about the
+          product, not entities the user can act on. */}
       <Reveal as="section" className="px-4 pb-12 md:px-8">
-        <div className="mx-auto nm-grid-3 max-w-7xl">
-          <article className="cq-card p-5">
-            <WalletCards
-              className="h-[18px] w-[18px] text-[var(--text-muted)]"
-              strokeWidth={1.75}
-            />
-            <h3 className="mt-3 nm-card-title text-[14px]">Funded patient benefits</h3>
-            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
-              Hospital-specific reward budgets and redemptions stay separate from token
-              supply and actual consultation payments.
+        <div className="mx-auto max-w-7xl">
+          <div className="section-rule">
+            <span>Trust boundaries</span>
+          </div>
+          <div className="section-head">
+            <h2 className="section-title">What is real, and where the line is.</h2>
+            <p className="section-lede">
+              Three claims the product is willing to be measured against.
             </p>
-          </article>
-          <article className="cq-card p-5">
-            <Network
-              className="h-[18px] w-[18px] text-[var(--text-muted)]"
-              strokeWidth={1.75}
-            />
-            <h3 className="mt-3 nm-card-title text-[14px]">Blockchain with boundaries</h3>
-            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
-              Local Solidity/EVM proof rails support Capsules and audit commitments while
-              clinical content remains off-chain.
-            </p>
-            {/* Proof gets the copper tone, never celadon. */}
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--copper-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--copper)]">
-              <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
-              Verification &amp; provenance
-            </span>
-          </article>
-          <article className="cq-card p-5">
-            <Coins
-              className="h-[18px] w-[18px] text-[var(--text-muted)]"
-              strokeWidth={1.75}
-            />
-            <h3 className="mt-3 nm-card-title text-[14px]">Economics you can explain</h3>
-            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
-              Actual payments, reward costs and simulated compute economics are shown as
-              distinct systems instead of one inflated revenue number.
-            </p>
-          </article>
+          </div>
+          <div className="grid gap-0 md:grid-cols-3 md:gap-x-10">
+            {[
+              [
+                WalletCards,
+                "Funded patient benefits",
+                "Hospital-specific reward budgets and redemptions stay separate from token supply and actual consultation payments.",
+              ],
+              [
+                Network,
+                "Blockchain with boundaries",
+                "Local Solidity/EVM proof rails support Capsules and audit commitments while clinical content remains off-chain.",
+              ],
+              [
+                Coins,
+                "Economics you can explain",
+                "Actual payments, reward costs and simulated compute economics are shown as distinct systems instead of one inflated revenue number.",
+              ],
+            ].map(([Icon, title, text]) => (
+              <article
+                key={title}
+                className="border-b border-[var(--border-subtle)] py-4 md:border-b-0"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon
+                    className="h-[18px] w-[18px] text-[var(--text-muted)]"
+                    strokeWidth={1.75}
+                  />
+                  <h3 className="nm-card-title text-[14px]">{title}</h3>
+                </div>
+                <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
+                  {text}
+                </p>
+                {title === "Blockchain with boundaries" ? (
+                  /* Proof gets the copper tone, never celadon. */
+                  <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--copper-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--copper)]">
+                    <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
+                    Verification &amp; provenance
+                  </span>
+                ) : null}
+              </article>
+            ))}
+          </div>
         </div>
       </Reveal>
 
-      {/* ------------------------------------------------------------ enter */}
+      {/* ------------------------------------------------------------ enter
+          The role cards inside RoleSelection are the actionable entities, so
+          this section hands the whole column over to them. */}
       <Reveal as="section" id="enter" className="px-4 pb-10 md:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[.8fr_1.2fr]">
           <div>
-            <div className="cq-kicker">Enter the care network</div>
-            <h2 className="cq-section-title mt-1">Pick a demo role.</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
+            <div className="section-rule">
+              <span>Enter the care network</span>
+            </div>
+            <h2 className="section-title">Pick a demo role.</h2>
+            <p className="section-lede mt-2">
               The seeded demo world lets judges move between the patient journey, clinical
               plan approval, staff handoffs and hospital program analytics.
             </p>
@@ -387,7 +437,9 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="cq-card p-5 md:p-6">
+          {/* No wrapper card: the two role cards below ARE the action targets,
+              and boxing them again stacked three surfaces deep. */}
+          <div>
             <RoleSelection />
           </div>
         </div>

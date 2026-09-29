@@ -5,26 +5,37 @@ import Reveal from "@/components/motion/Reveal";
 import MaskedText from "@/components/motion/MaskedText";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 
+/**
+ * Hospital programs are a short list of contexts the patient switches between,
+ * so it reads as a selectable ledger rather than a grid of identical cards. The
+ * selected row is the only one that gets a surface and a ring; the rest are
+ * hairline rows. The balance is a number the patient acts on, so it stays on a
+ * near-opaque data surface.
+ */
 export default function CarePassport({ passport, selectedProgramId, onSelect }) {
   const programs = passport?.programs || [];
 
   return (
     <Reveal>
       <section className="nm-stack-sm">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <div className="cq-kicker">YOUR CARE PASSPORT</div>
-            <MaskedText as="h2" className="cq-section-title mt-1">
+        <div>
+          <div className="section-rule">Your care passport</div>
+          <div className="section-head">
+            <MaskedText as="h2" className="section-title">
               Hospital programs
             </MaskedText>
-            <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+            <p className="section-lede">
               Each hospital keeps its own Capsule balance, benefits and program terms.
             </p>
           </div>
-          <PixelCharacter variant="guide" mood="idle" size={54} />
         </div>
+        <PixelCharacter variant="guide" mood="idle" size={54} />
 
-        <div className="nm-grid-2">
+        <div className="ledger">
+          <div className="ledger-head">
+            <span>Hospital program</span>
+            <span>Context</span>
+          </div>
           {programs.map((card) => {
             const selected = String(card.program._id) === String(selectedProgramId);
             return (
@@ -34,58 +45,51 @@ export default function CarePassport({ passport, selectedProgramId, onSelect }) 
                 onClick={() => onSelect(card.program._id)}
                 aria-pressed={selected}
                 className={
-                  "cq-card cq-card-hover overflow-hidden p-5 text-left " +
+                  "ledger-row items-start text-left " +
                   (selected
-                    ? "ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[var(--surface-shell)]"
+                    ? "rounded-[14px] bg-[var(--surface)] px-3.5 ring-2 ring-[var(--primary)]"
                     : "")
                 }
               >
-                <div
-                  className={
-                    "-mx-5 -mt-5 mb-4 h-1.5 " +
-                    (card.program.visualTheme?.accent === "lavender"
-                      ? "bg-[var(--lavender)]"
-                      : "bg-[var(--sky)]")
-                  }
-                />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--text-muted)]">
-                      <Building2
-                        className="h-[16px] w-[16px] shrink-0 text-[var(--text-strong)]"
-                        strokeWidth={1.75}
-                      />
-                      <span className="truncate">{card.organization.name}</span>
-                    </div>
-                    <h3 className="nm-card-title mt-2 text-[14px]">{card.program.name}</h3>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Building2
+                      className="h-4 w-4 shrink-0 text-[var(--text-muted)]"
+                      strokeWidth={1.75}
+                    />
+                    <span className="ledger-title">{card.organization.name}</span>
+                    <span className="cq-pixel-label">{card.program.capsuleSymbol}</span>
                   </div>
-                  <span className="cq-pixel-label">{card.program.capsuleSymbol}</span>
+                  <p className="ledger-meta mt-0.5">{card.program.name}</p>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] font-semibold text-[var(--text-muted)]">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Gift className="h-[14px] w-[14px]" strokeWidth={1.75} />
+                      {card.catalog?.length || 0} benefits
+                    </span>
+                  </p>
                 </div>
 
-                <div className="mt-4 flex items-end justify-between gap-4">
+                <div className="ledger-actions flex-col items-end gap-2">
                   {/* Capsule balance: a numeric value, so it sits on a data surface. */}
-                  <div className="glass-data rounded-[14px] px-3 py-2">
-                    <div className="nm-metric-xl text-[26px] tabular-nums">{card.balance}</div>
-                    <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                  <div className="well px-3 py-1.5 text-right">
+                    <div className="text-[18px] font-bold leading-tight text-[var(--text-strong)] tabular-nums">
+                      {card.balance}
+                    </div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
                       {card.program.capsuleSymbol} capsules
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--text-muted)]">
-                    <Gift className="h-[16px] w-[16px]" strokeWidth={1.75} />
-                    {card.catalog?.length || 0} benefits
-                  </div>
-                </div>
-
-                <div
-                  className={
-                    "mt-4 flex items-center gap-2 text-[11px] font-semibold " +
-                    (selected
-                      ? "text-[var(--text-strong)]"
-                      : "text-[var(--text-muted)]")
-                  }
-                >
-                  <WalletCards className="h-[16px] w-[16px]" strokeWidth={1.75} />
-                  {selected ? "Current hospital context" : "Open this hospital journey"}
+                  <span
+                    className={
+                      "inline-flex items-center gap-1.5 text-[11px] font-semibold " +
+                      (selected
+                        ? "text-[var(--text-strong)]"
+                        : "text-[var(--text-muted)]")
+                    }
+                  >
+                    <WalletCards className="h-[15px] w-[15px]" strokeWidth={1.75} />
+                    {selected ? "Current hospital context" : "Open this hospital journey"}
+                  </span>
                 </div>
               </button>
             );

@@ -5,13 +5,10 @@ import Link from "next/link";
 import {
   BookOpenCheck,
   CheckCircle2,
-  ClipboardList,
   Clock3,
   FileCheck2,
-  Gift,
   HelpCircle,
   HeartPulse,
-  LifeBuoy,
   Pause,
   RefreshCw,
   ShieldCheck,
@@ -247,8 +244,10 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
     <div className="nm-dash">
       {/* ============================================== main column */}
       <div className="nm-dash-col nm-stack">
+        {/* Page masthead: a rule and a heading, not a boxed header. */}
         <Reveal>
-          <section className="cq-card p-5 md:p-6">
+          <section className="plain-panel">
+            <div className="section-rule">CareQuest</div>
             <div className="grid items-center gap-5 lg:grid-cols-[1fr_auto]">
               <div>
                 <div className="flex flex-wrap gap-2">
@@ -316,61 +315,69 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
 
         <Reveal>
           <section className="nm-stack-sm">
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-              <div>
-                <div className="cq-kicker">CLINICIAN-APPROVED JOURNEY</div>
-                <MaskedText as="h2" className="cq-section-title mt-1">
-                  Mission timeline
-                </MaskedText>
-                <p className="mt-1 text-[12px] text-[var(--text-muted)]">
-                  Upcoming tasks stay visible even if a notification channel fails.
-                </p>
-              </div>
-              {!selectedOccurrences.length ? (
-                <span className="cq-pixel-label">
-                  No clinician-approved missions in this hospital journey yet
-                </span>
-              ) : null}
+            <div className="section-rule">Clinician-approved journey</div>
+            <div className="section-head">
+              <MaskedText as="h2" className="section-title">
+                Mission timeline
+              </MaskedText>
+              <p className="section-lede">
+                Upcoming tasks stay visible even if a notification channel fails.
+              </p>
             </div>
+            {!selectedOccurrences.length ? (
+              <span className="cq-pixel-label w-fit">
+                No clinician-approved missions in this hospital journey yet
+              </span>
+            ) : null}
 
-            {selectedOccurrences.length
-              ? selectedOccurrences.map((occurrence) => {
+            {/* Missions are a chronological narrative, so they read as a timeline
+                rather than one card per mission. */}
+            {selectedOccurrences.length ? (
+              <div className="timeline">
+                {selectedOccurrences.map((occurrence) => {
                   const final = ["responded", "completed", "cancelled", "expired"].includes(
                     occurrence.status
                   );
                   return (
-                    <article key={occurrence._id} className="cq-card cq-card-hover p-5">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline">{occurrence.activityType}</Badge>
-                            <Badge variant={final ? "secondary" : "info"}>{occurrence.status}</Badge>
-                            {occurrence.deliveryStatus === "failed" ? (
-                              <SimulationBadge>DELIVERY FAILED</SimulationBadge>
-                            ) : null}
-                          </div>
-                          <h3 className="nm-card-title mt-2.5 text-[14px]">{occurrence.title}</h3>
-                          <p className="mt-1.5 max-w-2xl text-[12.5px] leading-6 text-[var(--text-muted)]">
+                    <article
+                      key={occurrence._id}
+                      className="timeline-item"
+                      data-tone={final ? "muted" : undefined}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="timeline-time">
+                          <Clock3
+                            className="mr-1 inline h-[13px] w-[13px]"
+                            strokeWidth={1.75}
+                          />
+                          {formatWhen(occurrence.scheduledFor)} · {occurrence.timezone}
+                        </span>
+                        <Badge variant="outline">{occurrence.activityType}</Badge>
+                        <Badge variant={final ? "secondary" : "info"}>{occurrence.status}</Badge>
+                        {occurrence.deliveryStatus === "failed" ? (
+                          <SimulationBadge>DELIVERY FAILED</SimulationBadge>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-1.5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-6">
+                        <div className="min-w-0">
+                          <h3 className="timeline-title">{occurrence.title}</h3>
+                          <p className="timeline-body max-w-2xl">
                             {occurrence.instructions}
                           </p>
-                          {/* Scheduled datetime + timezone: a clinical scheduling value. */}
-                          <p className="glass-data mt-2 inline-flex items-center gap-1.5 rounded-[12px] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-muted)]">
-                            <Clock3 className="h-[14px] w-[14px]" strokeWidth={1.75} />
-                            {formatWhen(occurrence.scheduledFor)} · {occurrence.timezone}
-                          </p>
                           {occurrence.currentResponse ? (
-                            <p className="mt-2 text-[12px] font-semibold text-[var(--text-strong)]">
+                            <p className="mt-1.5 text-[12px] font-semibold text-[var(--text-strong)]">
                               You reported: {occurrence.currentResponse.replace("_", " ")}
                             </p>
                           ) : null}
                           {occurrence.safetyText ? (
-                            <div className="mt-3 rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11.5px] leading-5 text-[var(--warning)]">
+                            <div className="mt-2.5 rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11.5px] leading-5 text-[var(--warning)]">
                               {occurrence.safetyText}
                             </div>
                           ) : null}
                         </div>
 
-                        <div className="flex shrink-0 flex-wrap gap-2 lg:w-[250px] lg:justify-end">
+                        <div className="flex flex-wrap gap-2 lg:w-[250px] lg:justify-end">
                           {occurrence.activityType === "lesson" && !final ? (
                             <>
                               <Button
@@ -451,26 +458,26 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
                       </div>
                     </article>
                   );
-                })
-              : (
-                  <div className="cq-card-soft flex items-center gap-4 p-5">
-                    <PixelCharacter variant="walker" mood="idle" size={62} />
-                    <div>
-                      <h3 className="nm-card-title text-[14px]">Independent hospital journey</h3>
-                      <p className="mt-1 text-[12.5px] leading-6 text-[var(--text-muted)]">
-                        This hospital journey has its own membership, Capsule wallet, activity
-                        program, benefits and clinician-approved missions. Nothing is borrowed
-                        from another hospital&apos;s clinical plan.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-            {!selectedOccurrences.length ? (
-              <div className="cq-card p-6 text-center text-[13px] text-[var(--text-muted)]">
-                No missions yet. A doctor must approve a CareQuest plan first.
+                })}
               </div>
-            ) : null}
+            ) : (
+              <div className="plain-panel">
+                <div className="flex items-center gap-4 py-6">
+                  <PixelCharacter variant="walker" mood="idle" size={62} />
+                  <div>
+                    <h3 className="nm-card-title text-[14px]">Independent hospital journey</h3>
+                    <p className="mt-1 text-[12.5px] leading-6 text-[var(--text-muted)]">
+                      This hospital journey has its own membership, Capsule wallet, activity
+                      program, benefits and clinician-approved missions. Nothing is borrowed
+                      from another hospital&apos;s clinical plan.
+                    </p>
+                    <p className="mt-3 text-[13px] text-[var(--text-muted)]">
+                      No missions yet. A doctor must approve a CareQuest plan first.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </Reveal>
 
@@ -479,17 +486,16 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
         ) : null}
 
         <Reveal>
-          <section className="cq-card p-5 md:p-6">
-            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-              <div>
-                <div className="cq-kicker">PREFERENCES &amp; DEMO CONTROLS</div>
-                <h2 className="cq-section-title mt-1">Keep control of the journey</h2>
-                <p className="mt-1.5 max-w-2xl text-[12.5px] leading-6 text-[var(--text-muted)]">
-                  Opting out stops gamified rewards without blocking ordinary care.
-                  Accelerated/failure controls below are synthetic judge tools only.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
+          <section className="plain-panel">
+            <div className="section-rule">Preferences &amp; demo controls</div>
+            <div className="section-head">
+              <h2 className="section-title">Keep control of the journey</h2>
+              <p className="section-lede">
+                Opting out stops gamified rewards without blocking ordinary care.
+                Accelerated/failure controls below are synthetic judge tools only.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   disabled={busy === "preferences"}
@@ -545,37 +551,36 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
                 >
                   Simulate notification failure
                 </Button>
-              </div>
             </div>
           </section>
         </Reveal>
 
         <Reveal>
-          <section className="cq-card p-5 md:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="cq-kicker">BLOCKCHAIN PROOF RAIL</div>
-                <h2 className="cq-section-title mt-1 flex items-center gap-2">
-                  <WalletCards className="h-[18px] w-[18px] text-[var(--text-strong)]" strokeWidth={1.75} />
-                  Local EVM verification
-                </h2>
-                <p className="mt-1.5 max-w-2xl text-[12.5px] leading-6 text-[var(--text-muted)]">
-                  Blockchain remains non-clinical. Care responses and staff workflows continue
-                  even when this local proof rail is offline.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={readBlockchain} disabled={busy === "blockchain"}>
-                  Check
-                </Button>
-                <Button variant="copper" onClick={syncBlockchain} disabled={busy === "blockchain-sync"}>
-                  Sync proof
-                </Button>
-              </div>
+          <section className="plain-panel">
+            <div className="section-rule">Blockchain proof rail</div>
+            <div className="section-head">
+              <h2 className="section-title flex items-center gap-2">
+                <WalletCards className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                Local EVM verification
+              </h2>
+              <p className="section-lede">
+                Blockchain remains non-clinical. Care responses and staff workflows continue
+                even when this local proof rail is offline.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={readBlockchain} disabled={busy === "blockchain"}>
+                Check
+              </Button>
+              <Button variant="copper" onClick={syncBlockchain} disabled={busy === "blockchain-sync"}>
+                Sync proof
+              </Button>
             </div>
             {blockchain ? (
               // Chain head + hashes are provenance data: never behind a blur.
-              <pre className="glass-data mt-4 overflow-auto rounded-[14px] p-4 font-mono text-[11px] leading-5 text-[var(--text-muted)]">
+              // The dump wraps rather than scrolling — the document scrolls, so
+              // a code block must never become a nested scroll container.
+              <pre className="well mt-4 whitespace-pre-wrap break-all font-mono text-[11px] leading-5 text-[var(--text-muted)]">
                 {JSON.stringify(blockchain, null, 2)}
               </pre>
             ) : null}
@@ -589,7 +594,7 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
           <div>
             <div className="cq-kicker">CAPSULE BALANCE</div>
             {/* A balance is a number you act on: near-opaque data surface. */}
-            <div className="glass-data mt-2 rounded-[16px] px-3.5 py-3">
+            <div className="well mt-2">
               <div className="flex items-end gap-2">
                 <div className="nm-metric-xl tabular-nums">{selectedProgram.balance}</div>
                 <CapsuleIcon
@@ -659,47 +664,42 @@ export default function PatientMissionDashboard({ initialData, initialPassport }
           </p>
         </div>
 
-        <div className="nm-stack-sm">
-          <div className="glass-data rounded-[18px] p-4">
-            <div className="nm-stat-icon">
-              <LifeBuoy className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        {/* Three related counts, set inline rather than as three more boxes. */}
+        <div>
+          <div className="cq-kicker">Journey at a glance</div>
+          <dl className="stat-strip mt-2.5 flex-col">
+            <div className="stat-inline mr-0 w-full border-r-0 border-b border-[var(--border-subtle)] pb-3 pr-0 sm:flex-row sm:items-center sm:gap-3">
+              <dt className="sm:w-[150px] sm:shrink-0">Open care-team requests</dt>
+              <dd className="flex flex-wrap items-baseline gap-2">
+                {selectedHandoffs.length}
+                <small className="font-normal normal-case tracking-normal">
+                  {selectedHandoffs.length
+                    ? "owned by the care workflow until a person resolves them"
+                    : "no open handoffs in this hospital context"}
+                </small>
+              </dd>
             </div>
-            <div className="nm-stat-value mt-2.5 text-[24px] tabular-nums">
-              {selectedHandoffs.length}
+            <div className="stat-inline mr-0 w-full border-r-0 border-b border-[var(--border-subtle)] pb-3 pr-0 sm:flex-row sm:items-center sm:gap-3">
+              <dt className="sm:w-[150px] sm:shrink-0">Missions still open</dt>
+              <dd className="flex flex-wrap items-baseline gap-2">
+                {openMissionCount}
+                <small className="font-normal normal-case tracking-normal">
+                  visible even when a notification channel fails
+                </small>
+              </dd>
             </div>
-            <div className="nm-stat-label mt-0.5">Open care-team requests</div>
-            <p className="mt-1.5 text-[10.5px] leading-4 text-[var(--text-muted)]">
-              {selectedHandoffs.length
-                ? "Owned by the care workflow until a person resolves them."
-                : "No open handoffs in this hospital context."}
-            </p>
-          </div>
-
-          <div className="glass-data rounded-[18px] p-4">
-            <div className="nm-stat-icon">
-              <ClipboardList className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            <div className="stat-inline mr-0 w-full border-r-0 pr-0 sm:flex-row sm:items-center sm:gap-3">
+              <dt className="sm:w-[150px] sm:shrink-0">Next funded benefit</dt>
+              <dd className="flex flex-wrap items-baseline gap-2">
+                {selectedProgram?.catalog?.[0]
+                  ? selectedProgram.catalog[0].costCapsules + " " + selectedProgram.program.capsuleSymbol
+                  : "—"}
+                <small className="font-normal normal-case tracking-normal">
+                  hospital-specific, never cash-out tokens
+                </small>
+              </dd>
             </div>
-            <div className="nm-stat-value mt-2.5 text-[24px] tabular-nums">{openMissionCount}</div>
-            <div className="nm-stat-label mt-0.5">Missions still open</div>
-            <p className="mt-1.5 text-[10.5px] leading-4 text-[var(--text-muted)]">
-              Upcoming tasks stay visible even when a notification channel fails.
-            </p>
-          </div>
-
-          <div className="glass-data rounded-[18px] p-4">
-            <div className="nm-stat-icon">
-              <Gift className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            </div>
-            <div className="nm-stat-value mt-2.5 text-[24px] tabular-nums">
-              {selectedProgram?.catalog?.[0]
-                ? selectedProgram.catalog[0].costCapsules + " " + selectedProgram.program.capsuleSymbol
-                : "—"}
-            </div>
-            <div className="nm-stat-label mt-0.5">Next funded benefit</div>
-            <p className="mt-1.5 text-[10.5px] leading-4 text-[var(--text-muted)]">
-              Funded benefits are hospital-specific and never cash-out tokens.
-            </p>
-          </div>
+          </dl>
         </div>
 
         <div className="nm-stack-sm">

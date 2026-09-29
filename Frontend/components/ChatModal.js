@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Send, MessageCircle, User, Stethoscope,
+  Send, User, Stethoscope,
   Image as ImageIcon, Loader2, X, Phone, Video,
   PhoneIncoming, FileText, AlertTriangle,
   Hourglass, ShieldCheck
@@ -586,12 +586,9 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="flex h-[620px] max-w-2xl flex-col overflow-hidden border-0 bg-[var(--surface-shell)] p-0">
-          <DialogHeader className="shrink-0 gap-2 border-b border-[var(--border-subtle)] bg-[var(--glass-1)] px-5 py-4 pr-16 backdrop-blur-[20px]">
+          <DialogHeader className="shrink-0 gap-2 border-b border-[var(--border-subtle)] bg-[var(--surface-shell)] px-5 py-4 pr-16">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2.5">
-                <div className="nm-stat-icon h-9 w-9 rounded-[12px]">
-                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                </div>
                 <div className="min-w-0">
                   <DialogTitle className="truncate text-[14px]">
                     Chat with{" "}
@@ -599,9 +596,13 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                       ? otherUser?.name || "Patient"
                       : otherUser?.name || "Doctor"}
                   </DialogTitle>
+                  {/* Appointment date is scheduling data, so it sits on a
+                      near-opaque well rather than floating on glass. */}
                   <DialogDescription className="truncate">
-                    Appointment on{" "}
-                    {new Date(appointment.appointmentDate).toLocaleDateString()}
+                    <span className="glass-data inline-flex items-center gap-1.5 rounded-[10px] px-2 py-0.5">
+                      Appointment on{" "}
+                      {new Date(appointment.appointmentDate).toLocaleDateString()}
+                    </span>
                   </DialogDescription>
                 </div>
               </div>
@@ -704,14 +705,14 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full min-h-[300px] text-center">
-                      <div className="space-y-2">
-                        <div className="nm-stat-icon mx-auto">
-                          <MessageCircle className="h-5 w-5" strokeWidth={1.75} />
+                      <div>
+                        <div className="section-rule m-0! mb-2! justify-center">
+                          <span>Transcript</span>
                         </div>
                         <p className="text-[13px] font-semibold text-[var(--text-strong)]">
                           No messages yet
                         </p>
-                        <p className="text-[12px] text-muted-foreground">
+                        <p className="mt-1 text-[12px] text-muted-foreground">
                           Start the conversation!
                         </p>
                       </div>
@@ -828,11 +829,12 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
         <Dialog open={true}>
           <DialogContent className="max-w-md">
             <DialogHeader className="items-center text-center">
-              <div className="nm-stat-icon">
-                <PhoneIncoming className="h-5 w-5" strokeWidth={1.75} />
+              <div className="flex items-center gap-1.5 text-[var(--copper)]">
+                <PhoneIncoming className="h-4 w-4" strokeWidth={1.75} />
+                <span className="cq-kicker">Incoming</span>
               </div>
-              <DialogTitle className="mt-2 text-[15px]">
-                Incoming {incomingCall.callType} call
+              <DialogTitle className="mt-1 text-[15px]">
+                {incomingCall.callType === "video" ? "Video" : "Voice"} call
               </DialogTitle>
               <DialogDescription className="text-center">
                 From {incomingCall.initiatorName}

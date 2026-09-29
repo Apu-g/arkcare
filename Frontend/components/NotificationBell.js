@@ -174,7 +174,7 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
               type="button"
               onClick={handleMarkAllRead}
               disabled={marking || unread === 0}
-              className="flex min-h-9 items-center gap-1.5 rounded-[12px] px-2.5 text-[12px] font-semibold text-[var(--success)] transition hover:bg-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex min-h-10 items-center gap-1.5 rounded-[12px] px-2.5 text-[12px] font-semibold text-[var(--success)] transition hover:bg-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {marking ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
@@ -185,6 +185,10 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
             </button>
           </div>
 
+          {/* JUSTIFIED SCROLL CONTAINER: this is a transient popover, not page
+              content. It must not grow the document or push the shell around
+              when there are many notifications, and the document is not the
+              element being scrolled here. Same justification as a dialog body. */}
           <div className="max-h-80 overflow-y-auto">
             {loading && notifications.length === 0 ? (
               <p className="px-4 py-6 text-center text-[13px] text-[var(--text-muted)]">
@@ -195,43 +199,54 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
                 You are all caught up.
               </p>
             ) : (
-              notifications.map((item) => (
-                <div
-                  key={item._id}
-                  className={`border-b border-[var(--border-subtle)] px-4 py-3 last:border-b-0 ${
-                    item.readAt ? "opacity-70" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!item.readAt && (
-                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--info)]" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-[13px] font-semibold text-[var(--text-strong)]">
-                          {item.title}
-                        </p>
+              /* Notifications are a chronological record list, so they read as
+                 a ledger: hairline-separated rows, not stacked boxes. Read
+                 state is dimmed AND carries the word "read" below, so it never
+                 depends on opacity alone. */
+              <div className="ledger">
+                {notifications.map((item) => (
+                  <div
+                    key={item._id}
+                    className={
+                      "border-b border-[var(--border-subtle)] px-4 py-3 last:border-b-0 " +
+                      (item.readAt ? "opacity-70" : "")
+                    }
+                  >
+                    <div className="flex items-start gap-2">
+                      {!item.readAt && (
                         <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            TYPE_ACCENT[item.type] ||
-                            "bg-[var(--surface-muted)] text-[var(--text-muted)]"
-                          }`}
-                        >
-                          {String(item.type || "").replace(/_/g, " ")}
-                        </span>
-                      </div>
-                      {item.body && (
-                        <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-muted)]">
-                          {item.body}
-                        </p>
+                          className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--info)]"
+                          aria-hidden="true"
+                        />
                       )}
-                      <p className="mt-1 text-[10px] text-[var(--text-subtle)]">
-                        {relativeTime(item.createdAt)}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[13px] font-semibold text-[var(--text-strong)]">
+                            {item.title}
+                          </p>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              TYPE_ACCENT[item.type] ||
+                              "bg-[var(--surface-muted)] text-[var(--text-muted)]"
+                            }`}
+                          >
+                            {String(item.type || "").replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        {item.body && (
+                          <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-muted)]">
+                            {item.body}
+                          </p>
+                        )}
+                        <p className="mt-1 text-[10px] text-[var(--text-subtle)]">
+                          {relativeTime(item.createdAt)}
+                          {item.readAt ? " · read" : " · unread"}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>

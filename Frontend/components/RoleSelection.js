@@ -70,7 +70,10 @@ export default function RoleSelection() {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
+      {/* Two paths, and they are the two distinct destinations a visitor can
+          commit to on this screen — so two cards is the correct number of
+          boxes. Everything below them is a ledger, not more tiles. */}
       <Reveal className="nm-grid-2">
         {roles.map(({ id, icon: Icon, label, description, tags }) => (
           <button
@@ -110,12 +113,16 @@ export default function RoleSelection() {
         ))}
       </Reveal>
 
-      <Reveal className="cq-card-soft p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles className="h-[15px] w-[15px] text-[var(--text-muted)]" strokeWidth={1.75} />
-          <span className="cq-kicker">One-click judge demo</span>
+      <Reveal>
+        <div className="section-rule mt-0">
+          <span>One-click judge demo</span>
         </div>
-        <InstantSignIn compact />
+        <p className="section-lede">
+          Open a synthetic demo session for any seeded role. No sign-in required.
+        </p>
+        <div className="mt-4">
+          <InstantSignIn compact />
+        </div>
       </Reveal>
     </div>
   );

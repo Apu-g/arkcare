@@ -12,7 +12,6 @@ import {
 } from "@/actions/carePlanActions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -427,13 +426,20 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
         ) : null}
 
         <Reveal delay={60}>
-        <Card className="cq-card gap-0 border-0 p-0">
-          <CardHeader className="border-b border-[var(--border-subtle)]">
-            <CardTitle className="text-[14px]">
+        <section>
+          <div className="section-rule">
+            <span>Draft</span>
+          </div>
+          <div className="section-head">
+            <h2 className="section-title">
               {editingVersionId ? "Edit draft version" : "Create care-plan draft"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="nm-stack pb-6">
+            </h2>
+            <p className="section-lede">
+              A draft is private. Nothing here reaches the patient until you
+              review it and publish an approved version.
+            </p>
+          </div>
+          <div className="nm-stack">
             {!editingVersionId ? (
               <div className="space-y-2">
                 <Label>Linked consultation</Label>
@@ -565,25 +571,29 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="nm-card-title text-[14px]">Activities</h2>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    Approval generates version-bound CareQuest occurrences; future plan revisions preserve prior mission history.
-                  </p>
-                </div>
+              <div className="section-rule mt-2!">
+                <span>Activities</span>
+                <span>{form.activities.length}</span>
+              </div>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="section-lede">
+                  Approval generates version-bound CareQuest occurrences; future
+                  plan revisions preserve prior mission history.
+                </p>
                 <Button type="button" variant="outline" onClick={addActivity}>
                   <Plus className="mr-2 h-4 w-4" strokeWidth={1.75} />
                   Add activity
                 </Button>
               </div>
 
-              {/* Activity content is clinical instruction text: it lives on
-                  the near-opaque data surface, never behind a blur. */}
+              {/* Activity content is clinical instruction text: each activity
+                  is one ruled band on a near-opaque data surface, not its own
+                  card. */}
+              <div className="ledger">
               {form.activities.map((activity, index) => (
                 <div
                   key={activity.activityKey || index}
-                  className="glass-data space-y-4 rounded-[18px] p-4"
+                  className="ledger-row grid-cols-1! items-start! gap-4!"
                 >
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-2">
@@ -688,6 +698,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 border-t border-[var(--border-subtle)] pt-4">
@@ -735,8 +746,8 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                 </p>
               ) : null}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
         </Reveal>
 
         <DoctorReportsPanel />
@@ -744,61 +755,78 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
         <Reveal delay={60}>
         <section className="nm-stack">
           <div>
-            <div className="cq-kicker">Versions</div>
-            <MaskedText as="h2" className="cq-section-title mt-1">
+            <div className="section-rule">
+              <span>Versions</span>
+            </div>
+            <MaskedText as="h2" className="section-title">
               Plan history
             </MaskedText>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              Approved versions remain preserved when a later revision is published.
+            <p className="section-lede mt-1">
+              Approved versions remain preserved when a later revision is
+              published. Each plan reads as a ledger of versions in the order
+              they were written.
             </p>
           </div>
 
           {(data.plans || []).length === 0 ? (
-            <div className="cq-card p-8 text-center text-[13px] text-muted-foreground">
+            <div className="well p-8 text-center text-[13px] text-muted-foreground">
               No care plans yet.
             </div>
           ) : (
-            <div className="nm-stack-sm">
+            <div className="ledger">
+            <div className="ledger-head">
+              <span>Patient and consultation</span>
+              <span>Plan state</span>
+            </div>
             {data.plans.map((plan) => (
-              <Card key={plan._id} className="cq-card gap-0 border-0 p-0">
-                <CardHeader className="border-b border-[var(--border-subtle)]">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <CardTitle className="text-[14px]">
-                        {plan.patient?.name || "Patient"}
-                      </CardTitle>
-                      <p className="mt-1 text-[12px] text-muted-foreground">
-                        Consultation{" "}
-                        {plan.sourceAppointment?.appointmentDate
-                          ? new Date(
-                              plan.sourceAppointment.appointmentDate
-                            ).toLocaleString()
-                          : "unknown"}{" "}
-                        · {plan.sourceAppointment?.status}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">{plan.status}</Badge>
-                      {plan.currentApprovedVersion ? (
-                        <Badge variant="success">
-                          <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
-                          Current approved v{plan.currentApprovedVersion}
-                        </Badge>
-                      ) : null}
-                    </div>
+              <article key={plan._id} className="ledger-row grid-cols-1! items-start! gap-4!">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h3 className="ledger-title">
+                      {plan.patient?.name || "Patient"}
+                    </h3>
+                    <Badge variant="secondary">{plan.status}</Badge>
+                    {plan.currentApprovedVersion ? (
+                      <Badge variant="success">
+                        <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
+                        Current approved v{plan.currentApprovedVersion}
+                      </Badge>
+                    ) : null}
                   </div>
-                </CardHeader>
-                <CardContent className="nm-stack-sm pb-6">
-                  {(plan.versions || []).map((version) => (
-                    /* Version rows are the record trail: near-opaque surface. */
-                    <div
-                      key={version._id}
-                      className="glass-data flex flex-col gap-3 rounded-[18px] p-4 lg:flex-row lg:items-center lg:justify-between"
-                    >
-                      <div>
+                  <p className="ledger-meta mt-1">
+                    Consultation{" "}
+                    {plan.sourceAppointment?.appointmentDate
+                      ? new Date(
+                          plan.sourceAppointment.appointmentDate
+                        ).toLocaleString()
+                      : "unknown"}{" "}
+                    · {plan.sourceAppointment?.status}
+                  </p>
+                </div>
+
+                <div className="min-w-0 w-full">
+                  {/* Versions are a chronology of one plan: a timeline, not a
+                      stack of version cards. */}
+                  <div className="timeline">
+                    {(plan.versions || []).map((version, versionIndex) => (
+                      <div
+                        key={version._id}
+                        className="timeline-item"
+                        data-tone={
+                          version.status === "approved"
+                            ? undefined
+                            : version.status === "draft"
+                              ? "copper"
+                              : "muted"
+                        }
+                      >
+                        <div className="timeline-time">
+                          Version {version.versionNumber}
+                          {versionIndex === 0 ? " · latest" : ""}
+                        </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="nm-card-title">
-                            v{version.versionNumber} · {version.title}
+                          <span className="timeline-title">
+                            {version.title}
                           </span>
                           {/* Version status is the state indicator that moves
                               when a doctor approves or rejects. */}
@@ -814,7 +842,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                             <Badge variant="outline">AI-origin draft</Badge>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-[11px] text-muted-foreground">
+                        <p className="timeline-body">
                           {version.activities?.length || 0} activities · timezone{" "}
                           {version.timezone}
                         </p>
@@ -827,11 +855,9 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                             Rejected: {version.rejectionReason}
                           </p>
                         ) : null}
-                      </div>
 
-                      <div className="flex flex-wrap gap-2">
                         {version.status === "draft" ? (
-                          <>
+                          <div className="mt-2.5 flex flex-wrap gap-2">
                             <Button
                               variant="outline"
                               onClick={() => {
@@ -858,11 +884,11 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                               <XCircle className="mr-2 h-4 w-4" strokeWidth={1.75} />
                               Reject
                             </Button>
-                          </>
+                          </div>
                         ) : null}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {plan.currentApprovedVersion &&
                   !(plan.versions || []).some(
@@ -870,15 +896,15 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   ) ? (
                     <Button
                       variant="outline"
-                      className="mt-2 self-start"
+                      className="mt-3"
                       onClick={() => startRevision(plan._id)}
                       disabled={busy === plan._id}
                     >
                       Start revision
                     </Button>
                   ) : null}
-                </CardContent>
-              </Card>
+                </div>
+              </article>
             ))}
             </div>
           )}

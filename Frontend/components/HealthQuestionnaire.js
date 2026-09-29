@@ -9,7 +9,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -72,7 +71,10 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="flex h-[620px] w-full max-w-md flex-col p-0">
+            {/* Not a fixed height: the dialog grows with the question and is
+                capped by the viewport, so a long option list scrolls the
+                dialog body rather than clipping the footer buttons. */}
+            <DialogContent className="flex max-h-[88vh] w-full max-w-md flex-col p-0">
 
                 <DialogHeader className="flex-shrink-0 border-b border-[var(--border-subtle)] p-4 sm:p-5">
                     <DialogTitle>Health Assessment</DialogTitle>
@@ -90,48 +92,50 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
                     </div>
                 </DialogHeader>
 
+                {/* A dialog body legitimately scrolls: the assessment is a
+                    stepped flow, and a fixed-height modal is the one place an
+                    inner scroller is correct. Page content never does this. */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-5">
                     {/* cq-reveal: one enter per question, pure CSS, replayed by the
                         existing `key` change — no new JS animation. */}
-                    <Card key={currentQuestion.id} className="cq-reveal border-none bg-transparent shadow-none">
-                        <CardContent className="p-0">
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[12px] font-bold text-[var(--primary-foreground)] tabular-nums">
-                                    {currentQuestionIndex + 1}
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="nm-card-title mb-3 text-[14px]">
-                                        {currentQuestion.question}
-                                    </h3>
-                                    <RadioGroup
-                                        value={responses[currentQuestion.id] || ""}
-                                        onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-                                        className="space-y-2"
-                                    >
-                                        {currentQuestion.options.map((option) => (
-                                            <Label
-                                                key={option.value}
-                                                htmlFor={`${currentQuestion.id}-${option.value}`}
-                                                className={`flex min-h-10 cursor-pointer items-center gap-3 rounded-[14px] border p-3 transition hover:-translate-y-px ${responses[currentQuestion.id] === option.value
-                                                        ? 'border-[var(--primary)] bg-[var(--primary-soft)] shadow-[var(--shadow-card)]'
-                                                        : 'border-[var(--border)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)]'
-                                                    }`}
-                                            >
-                                                <RadioGroupItem
-                                                    value={option.value}
-                                                    id={`${currentQuestion.id}-${option.value}`}
-                                                    className="border-[var(--border-strong)] data-[state=checked]:border-[var(--primary)] data-[state=checked]:text-[var(--primary)]"
-                                                />
-                                                <span className="flex-1 text-[12.5px] font-normal text-[var(--text)]">
-                                                    {option.label}
-                                                </span>
-                                            </Label>
-                                        ))}
-                                    </RadioGroup>
-                                </div>
+                    <div key={currentQuestion.id} className="cq-reveal">
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[12px] font-bold text-[var(--primary-foreground)] tabular-nums">
+                                {currentQuestionIndex + 1}
                             </div>
-                        </CardContent>
-                    </Card>
+                            <div className="flex-1">
+                                <h3 className="nm-card-title mb-3 text-[14px]">
+                                    {currentQuestion.question}
+                                </h3>
+                                {/* The options are an ordered choice list, so they read
+                                    as hairline-separated rows rather than chips. */}
+                                <RadioGroup
+                                    value={responses[currentQuestion.id] || ""}
+                                    onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                                >
+                                    {currentQuestion.options.map((option) => (
+                                        <Label
+                                            key={option.value}
+                                            htmlFor={`${currentQuestion.id}-${option.value}`}
+                                            className={`flex min-h-11 cursor-pointer items-center gap-3 border-b border-[var(--border-subtle)] py-2.5 transition last:border-b-0 hover:bg-[var(--surface-subtle)] ${responses[currentQuestion.id] === option.value
+                                                    ? 'rounded-[12px] bg-[var(--primary-soft)] px-3 font-semibold text-[var(--text-strong)]'
+                                                    : 'px-1 text-[var(--text)]'
+                                                }`}
+                                        >
+                                            <RadioGroupItem
+                                                value={option.value}
+                                                id={`${currentQuestion.id}-${option.value}`}
+                                                className="border-[var(--border-strong)] data-[state=checked]:border-[var(--primary)] data-[state=checked]:text-[var(--primary)]"
+                                            />
+                                            <span className="flex-1 text-[12.5px] font-normal">
+                                                {option.label}
+                                            </span>
+                                        </Label>
+                                    ))}
+                                </RadioGroup>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex-shrink-0 border-t border-[var(--border-subtle)] p-4 sm:p-5">
