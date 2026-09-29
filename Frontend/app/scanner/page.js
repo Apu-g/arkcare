@@ -37,42 +37,56 @@ export default function ScannerPage() {
   }, []);
 
   return (
-    <main className="ark-page min-h-screen p-3 md:p-5">
-      <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-[1600px] flex-col gap-3">
-        <header className="surface-panel flex items-center justify-between rounded-2xl border px-4 py-3">
+    <main className="min-h-screen px-3 py-4 md:px-5 md:py-5">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1600px] flex-col gap-4">
+        <header className="cq-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
               href="/patient"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+              className="nm-stat-icon shrink-0"
               aria-label="Back to patient dashboard"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </Link>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
-              <ScanLine className="h-5 w-5 text-cyan-200" />
+            <div className="nm-stat-icon shrink-0">
+              <ScanLine className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </div>
             <div>
-              <h1 className="font-bold text-white">ArkCare Scanner</h1>
-              <p className="text-xs text-muted-foreground">Capture layer for future verified records</p>
+              <h1 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                ArkCare Scanner
+              </h1>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                Capture layer for future verified records
+              </p>
             </div>
           </div>
           <span className="status-chip hidden sm:inline-flex">Scanner module</span>
         </header>
 
-        <section className="surface-panel relative flex flex-1 overflow-hidden rounded-2xl border">
+        <section className="cq-card relative flex flex-1 overflow-hidden">
           {loading ? (
             <div className="m-auto text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-white/10 border-t-cyan-200" />
-              <p className="text-sm text-muted-foreground">Connecting scanner module...</p>
+              <div
+                className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--primary)]"
+                aria-hidden="true"
+              />
+              <p className="text-[13px] text-[var(--text-muted)]" role="status">
+                Connecting scanner module…
+              </p>
             </div>
           ) : error ? (
             <div className="m-auto max-w-md p-8 text-center">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-300/10">
-                <ShieldCheck className="h-6 w-6 text-violet-200" />
+              <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-[18px] bg-[var(--surface-subtle)] shadow-[var(--shadow-inset)]">
+                <ShieldCheck
+                  className="h-6 w-6 text-[var(--text-muted)]"
+                  strokeWidth={1.75}
+                />
               </div>
-              <h2 className="text-xl font-bold text-white">Scanner module offline</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{error}</p>
-              <p className="mt-4 text-xs text-muted-foreground">
+              <h2 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                Scanner module offline
+              </h2>
+              <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">{error}</p>
+              <p className="mt-4 text-[12px] text-[var(--text-subtle)]">
                 Set NEXT_PUBLIC_SCANNER_URL to attach the external scanning service.
               </p>
             </div>

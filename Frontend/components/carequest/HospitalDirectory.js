@@ -11,98 +11,97 @@ import CapsuleIcon from "@/components/carequest/CapsuleIcon";
  */
 export default function HospitalDirectory({ hospitals }) {
   return (
-    <div className="space-y-6 pb-24 lg:pb-4">
-      <section className="cq-card cq-reveal p-5 md:p-6">
-        <div className="grid items-center gap-5 lg:grid-cols-[1fr_auto]">
-          <div>
-            <div className="cq-kicker">CAREQUEST NETWORK</div>
-            <h1 className="mt-3 text-3xl font-black tracking-tight">
-              Choose a hospital you trust
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Each hospital runs its own clinical program and its own audit chain.
-              Reputation reflects the participation its patients have generated — it is
-              a quality signal, never a cashable balance. Capsules are hospital-specific
-              and cannot be transferred or cashed out.
-            </p>
-          </div>
+    <div className="nm-stack">
+      <section className="nm-dark-card cq-reveal p-5 md:p-6">
+        <div className="cq-kicker !text-white/60">CareQuest network</div>
+        <h1 className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+          Choose a hospital you trust
+        </h1>
+        <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[#B7B7BE]">
+          Each hospital runs its own clinical program and its own audit chain. Reputation
+          reflects the participation its patients have generated — it is a quality
+          signal, never a cashable balance. Capsules are hospital-specific and cannot be
+          transferred or cashed out.
+        </p>
+        <div className="mt-5 border-t border-white/10 pt-4">
           <PixelCharacter
             variant="guardian"
             mood="idle"
-            size={88}
+            size={64}
             speech={`${hospitals.length} hospitals in the network`}
           />
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="nm-grid-2">
         {hospitals.map((hospital, index) => (
-          <article key={hospital.organizationId} className="cq-card p-5">
+          <article key={hospital.organizationId} className="cq-card cq-card-hover p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-                  <Building2 className="h-6 w-6" />
+                <div className="nm-stat-icon shrink-0">
+                  <Building2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="cq-pixel-label">#{index + 1}</span>
-                    <h3 className="text-lg font-black">{hospital.name}</h3>
+                    <h3 className="nm-card-title text-[14px]">{hospital.name}</h3>
                   </div>
-                  <p className="mt-0.5 text-xs font-semibold text-primary">
-                    {hospital.reputationLabel} · reputation {hospital.reputationScore}/100
+                  <p className="mt-0.5 text-[12px] font-semibold text-[var(--text)]">
+                    {hospital.reputationLabel}{" "}
+                    <span className="font-normal text-[var(--text-muted)]">
+                      · reputation {hospital.reputationScore}/100
+                    </span>
                   </p>
                 </div>
               </div>
               {hospital.chainValid ? (
                 <span className="cq-pixel-label cq-real-label">
-                  <Link2 className="h-3 w-3" /> chain valid
+                  <Link2 className="h-[13px] w-[13px]" strokeWidth={1.75} /> chain valid
                 </span>
               ) : null}
             </div>
 
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            <p className="mt-3 text-[13px] leading-6 text-[var(--text-muted)]">
               {hospital.about}
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg border border-border bg-[#fafbf8] p-2">
-                <div className="flex items-center justify-center gap-1 text-lg font-black">
-                  <CapsuleIcon size={15} className="text-primary" />
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="nm-stat !p-3">
+                <div className="flex items-center gap-1.5 text-[18px] font-bold text-[var(--text-strong)]">
+                  <CapsuleIcon size={15} className="text-[var(--primary)]" />
                   {hospital.totalCapsules}
                 </div>
-                <div className="text-[10px] text-muted-foreground">
-                  {hospital.symbol} earned
-                </div>
+                <div className="nm-stat-label">{hospital.symbol} earned</div>
               </div>
-              <div className="rounded-lg border border-border bg-[#fafbf8] p-2">
-                <div className="flex items-center justify-center gap-1 text-lg font-black">
-                  <Stethoscope className="h-4 w-4" />
+              <div className="nm-stat !p-3">
+                <div className="flex items-center gap-1.5 text-[18px] font-bold text-[var(--text-strong)]">
+                  <Stethoscope className="h-[15px] w-[15px]" strokeWidth={1.75} />
                   {hospital.doctorCount}
                 </div>
-                <div className="text-[10px] text-muted-foreground">doctors</div>
+                <div className="nm-stat-label">doctors</div>
               </div>
-              <div className="rounded-lg border border-border bg-[#fafbf8] p-2">
-                <div className="flex items-center justify-center gap-1 text-lg font-black">
-                  <Users className="h-4 w-4" />
+              <div className="nm-stat !p-3">
+                <div className="flex items-center gap-1.5 text-[18px] font-bold text-[var(--text-strong)]">
+                  <Users className="h-[15px] w-[15px]" strokeWidth={1.75} />
                   {hospital.patientCount}
                 </div>
-                <div className="text-[10px] text-muted-foreground">patients</div>
+                <div className="nm-stat-label">patients</div>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-1 text-[10px] text-muted-foreground">
-              <ShieldCheck className="h-3 w-3" />
-              {hospital.appointmentCount} appointments · {hospital.resolvedCases}{" "}
-              handoffs resolved · own audit head verified
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+              <ShieldCheck className="h-[14px] w-[14px]" strokeWidth={1.75} />
+              {hospital.appointmentCount} appointments · {hospital.resolvedCases} handoffs
+              resolved · own audit head verified
             </div>
           </article>
         ))}
       </div>
 
-      <p className="flex items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-        <HeartPulse className="h-3.5 w-3.5" />
-        Reputation is participation, not a health score. A hospital cannot claim or
-        cash out a share of your Capsules.
+      <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-[var(--text-muted)]">
+        <HeartPulse className="h-[15px] w-[15px]" strokeWidth={1.75} />
+        Reputation is participation, not a health score. A hospital cannot claim or cash
+        out a share of your Capsules.
       </p>
     </div>
   );

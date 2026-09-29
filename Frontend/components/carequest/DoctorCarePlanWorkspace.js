@@ -370,16 +370,18 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
   }, [data.plans, appointmentId]);
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-4">
-        <section className="cq-card cq-reveal p-5 md:p-6">
+    <div className="nm-stack">
+        <section className="nm-dark-card p-5 md:p-6">
           <div className="grid items-center gap-5 lg:grid-cols-[1fr_auto]">
             <div>
               <div className="flex flex-wrap gap-2">
-                <span className="cq-pixel-label cq-real-label">CLINICIAN AUTHORITY</span>
-                <span className="cq-pixel-label">VERSIONED PLANS</span>
+                <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">CLINICIAN AUTHORITY</span>
+                <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">VERSIONED PLANS</span>
               </div>
-              <h1 className="mt-4 text-3xl font-black tracking-tight">CareQuest Care Plans</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              <h1 className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[#fff] md:text-[22px]">
+                CareQuest Care Plans
+              </h1>
+              <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-[var(--dark-muted)]">
                 Draft versioned plans here. AI may suggest educational wording, but only
                 an approved doctor action can publish a patient-facing version. The linked
                 consultation must be completed before approval.
@@ -417,20 +419,20 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
           </div>
         ) : null}
 
-        <Card className="cq-card border-border bg-card">
+        <Card className="cq-card gap-0 border-0 p-0">
           <CardHeader>
-            <CardTitle className="text-white">
+            <CardTitle>
               {editingVersionId ? "Edit draft version" : "Create care-plan draft"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="nm-stack pb-6">
             {!editingVersionId ? (
               <div className="space-y-2">
                 <Label>Linked consultation</Label>
                 <select
                   value={appointmentId}
                   onChange={(event) => setAppointmentId(event.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-white"
+                  className="h-10 w-full rounded-[14px] border border-transparent bg-[var(--surface-subtle)] px-3.5 text-[13px] font-semibold text-[var(--text)] shadow-[var(--shadow-inset)] outline-none focus-visible:border-[rgba(79,110,247,0.45)]"
                 >
                   <option value="">Choose consultation</option>
                   {(data.appointments || []).map((appointment) => (
@@ -442,7 +444,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   ))}
                 </select>
                 {selectedAppointment?.status !== "completed" && appointmentId ? (
-                  <p className="text-xs text-amber-300">
+                  <p className="text-[11px] leading-relaxed text-[var(--warning)]">
                     You can draft now, but approval stays blocked until this consultation
                     is marked completed.
                   </p>
@@ -458,8 +460,8 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                       ? "Generating draft..."
                       : "Draft from latest processed report"}
                   </Button>
-                  <div className="mt-2 flex items-start gap-2 rounded-lg bg-[#eeebf3] px-3 py-2 text-xs leading-5 text-[#665f79]">
-                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <div className="mt-2.5 flex items-start gap-2 rounded-[14px] bg-[var(--surface-subtle)] px-3.5 py-2.5 text-[11px] leading-relaxed text-[var(--text-muted)] shadow-[var(--shadow-inset)]">
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
                     <span>
                       AI can draft education and follow-up questions only. It cannot
                       publish, prescribe, change doses, or activate this plan.
@@ -552,13 +554,13 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-white">Activities</h2>
-                  <p className="text-xs text-muted-foreground">
+                  <h2 className="nm-card-title text-[14px]">Activities</h2>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
                     Approval generates version-bound CareQuest occurrences; future plan revisions preserve prior mission history.
                   </p>
                 </div>
                 <Button type="button" variant="outline" onClick={addActivity}>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" strokeWidth={1.75} />
                   Add activity
                 </Button>
               </div>
@@ -566,7 +568,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
               {form.activities.map((activity, index) => (
                 <div
                   key={activity.activityKey || index}
-                  className="space-y-4 rounded-xl border border-border bg-[#fafbf8] p-4"
+                  className="space-y-4 rounded-[18px] bg-[var(--surface-subtle)] p-4 shadow-[var(--shadow-inset)]"
                 >
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-2">
@@ -576,7 +578,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                         onChange={(event) =>
                           updateActivity(index, "type", event.target.value)
                         }
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-white"
+                        className="h-10 w-full rounded-[14px] border border-transparent bg-[var(--surface-subtle)] px-3.5 text-[13px] font-semibold text-[var(--text)] shadow-[var(--shadow-inset)] outline-none focus-visible:border-[rgba(79,110,247,0.45)]"
                       >
                         <option value="lesson">Lesson</option>
                         <option value="reminder">Reminder</option>
@@ -607,7 +609,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   </div>
 
                   {activity.type === "activity" ? (
-                    <div className="rounded-xl border border-[#d6e2db] bg-primary-soft p-4">
+                    <div className="rounded-[14px] bg-[var(--primary-soft)] p-4">
                       <Label>Clinician-approved step goal</Label>
                       <Input
                         className="mt-2 max-w-xs"
@@ -623,7 +625,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                           })
                         }
                       />
-                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      <p className="mt-2 text-[11px] leading-relaxed text-[var(--text)]">
                         This is patient-specific. Do not use 5,000/10,000 steps as a
                         universal health target; edit or remove the mission when it is
                         not clinically suitable.
@@ -639,7 +641,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                         onChange={(event) =>
                           updateRecurrence(index, "kind", event.target.value)
                         }
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-white"
+                        className="h-10 w-full rounded-[14px] border border-transparent bg-[var(--surface-subtle)] px-3.5 text-[13px] font-semibold text-[var(--text)] shadow-[var(--shadow-inset)] outline-none focus-visible:border-[rgba(79,110,247,0.45)]"
                       >
                         <option value="once">Once</option>
                         <option value="daily">Daily</option>
@@ -673,7 +675,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button onClick={saveDraft} disabled={busy === "save"}>
                 {busy === "save"
                   ? "Saving..."
@@ -699,14 +701,14 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   disabled={busy !== ""}
                   className="ml-auto"
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <CheckCircle2 className="mr-2 h-4 w-4" strokeWidth={1.75} />
                   {busy === selectedDraft._id
                     ? "Publishing..."
                     : `Publish plan to patient (v${selectedDraft.versionNumber})`}
                 </Button>
               ) : null}
               {selectedDraft && selectedAppointment?.status !== "completed" ? (
-                <p className="ml-auto self-center text-xs text-amber-300">
+                <p className="ml-auto max-w-sm self-center text-[11px] leading-relaxed text-[var(--warning)]">
                   Draft v{selectedDraft.versionNumber} saved — mark the consultation
                   completed to publish it to the patient.
                 </p>
@@ -717,28 +719,30 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
 
         <DoctorReportsPanel />
 
-        <section className="space-y-4">
+        <section className="nm-stack">
           <div>
-            <h2 className="text-2xl font-bold text-white">Plan history</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="cq-kicker">Versions</div>
+            <h2 className="cq-section-title mt-1">Plan history</h2>
+            <p className="mt-1 text-[12px] text-muted-foreground">
               Approved versions remain preserved when a later revision is published.
             </p>
           </div>
 
           {(data.plans || []).length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
+            <div className="cq-card p-8 text-center text-[13px] text-muted-foreground">
               No care plans yet.
             </div>
           ) : (
-            data.plans.map((plan) => (
-              <Card key={plan._id} className="cq-card border-border bg-card">
+            <div className="nm-stack-sm">
+            {data.plans.map((plan) => (
+              <Card key={plan._id} className="cq-card gap-0 border-0 p-0">
                 <CardHeader>
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <CardTitle className="text-white">
+                      <CardTitle className="text-[14px]">
                         {plan.patient?.name || "Patient"}
                       </CardTitle>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-1 text-[12px] text-muted-foreground">
                         Consultation{" "}
                         {plan.sourceAppointment?.appointmentDate
                           ? new Date(
@@ -749,37 +753,47 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline">{plan.status}</Badge>
+                      <Badge variant="secondary">{plan.status}</Badge>
                       {plan.currentApprovedVersion ? (
-                        <Badge variant="outline">
+                        <Badge variant="success">
                           Current approved v{plan.currentApprovedVersion}
                         </Badge>
                       ) : null}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="nm-stack-sm pb-6">
                   {(plan.versions || []).map((version) => (
                     <div
                       key={version._id}
-                      className="flex flex-col gap-3 rounded-xl border border-border bg-[#fafbf8] p-4 lg:flex-row lg:items-center lg:justify-between"
+                      className="flex flex-col gap-3 rounded-[18px] bg-[var(--surface-subtle)] p-4 lg:flex-row lg:items-center lg:justify-between"
                     >
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-white">
+                          <span className="nm-card-title">
                             v{version.versionNumber} · {version.title}
                           </span>
-                          <Badge variant="outline">{version.status}</Badge>
+                          <Badge
+                            variant={
+                              version.status === "draft" ? "warning" : "outline"
+                            }
+                          >
+                            {version.status}
+                          </Badge>
                           {version.source?.type === "ai_draft" ? (
                             <Badge variant="outline">AI-origin draft</Badge>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
+                        <p className="mt-1 text-[11px] text-muted-foreground">
                           {version.activities?.length || 0} activities · timezone{" "}
                           {version.timezone}
                         </p>
                         {version.rejectionReason ? (
-                          <p className="mt-2 text-sm text-rose-300">
+                          <p className="mt-2 inline-flex items-start gap-1.5 text-[12px] leading-relaxed text-[var(--destructive)]">
+                            <XCircle
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                              strokeWidth={1.75}
+                            />
                             Rejected: {version.rejectionReason}
                           </p>
                         ) : null}
@@ -802,7 +816,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                               onClick={() => approve(version._id)}
                               disabled={busy === version._id}
                             >
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              <CheckCircle2 className="mr-2 h-4 w-4" strokeWidth={1.75} />
                               Approve
                             </Button>
                             <Button
@@ -810,7 +824,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                               onClick={() => reject(version._id)}
                               disabled={busy === version._id}
                             >
-                              <XCircle className="mr-2 h-4 w-4" />
+                              <XCircle className="mr-2 h-4 w-4" strokeWidth={1.75} />
                               Reject
                             </Button>
                           </>
@@ -825,6 +839,7 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   ) ? (
                     <Button
                       variant="outline"
+                      className="mt-2 self-start"
                       onClick={() => startRevision(plan._id)}
                       disabled={busy === plan._id}
                     >
@@ -833,7 +848,8 @@ export default function DoctorCarePlanWorkspace({ initialData }) {
                   ) : null}
                 </CardContent>
               </Card>
-            ))
+            ))}
+            </div>
           )}
         </section>
     </div>

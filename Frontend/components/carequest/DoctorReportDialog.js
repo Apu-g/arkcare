@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Sparkles,
   Upload,
+  XIcon,
 } from "lucide-react";
 import { parseDoctorReportPreview, submitDoctorReport } from "@/actions/reportActions";
 
@@ -145,35 +146,35 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
       <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText className="h-[18px] w-[18px] text-[var(--text-muted)]" strokeWidth={1.75} />
             Consultation report
           </DialogTitle>
           <DialogDescription>
             Document the visit for {appointment?.patient?.name || "this patient"}. Your
             report is anchored on the local chain so it cannot be later denied, and it
-            becomes the patient's care plan.
+            becomes the patient&apos;s care plan.
           </DialogDescription>
         </DialogHeader>
 
         {result?.created ? (
           <div className="space-y-4">
-            <div className="rounded-xl border border-[#c9ddd2] bg-[#eef7f1] p-4 text-sm text-[#2f5c46]">
-              <div className="flex items-center gap-2 font-bold">
-                <CheckCircle2 className="h-4 w-4" /> Report published
+            <div className="rounded-[16px] bg-[var(--success-soft)] p-4 text-[12px] leading-relaxed text-[var(--success)]">
+              <div className="flex items-center gap-2 text-[13px] font-semibold">
+                <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} /> Report published
               </div>
-              <p className="mt-1">
+              <p className="mt-1.5">
                 Care plan v{result.plan?.versionNumber} created with{" "}
                 {result.plan?.occurrenceCount} missions.
               </p>
             </div>
-            <div className="rounded-xl border border-border bg-[#fafbf8] p-3 text-xs">
-              <div className="flex items-center gap-2 font-bold">
-                <Lock className="h-3.5 w-3.5" /> On-chain proof
+            <div className="rounded-[16px] bg-[var(--surface-subtle)] p-3 text-[11px] shadow-[var(--shadow-inset)]">
+              <div className="flex items-center gap-2 text-[12px] font-semibold text-[var(--text-strong)]">
+                <Lock className="h-3.5 w-3.5" strokeWidth={1.75} /> On-chain proof
               </div>
-              <div className="mt-1 break-all font-mono text-[10px] text-muted-foreground">
+              <div className="mt-1.5 break-all font-mono text-[10px] text-[var(--text-muted)]">
                 hash {result.contentHash}
               </div>
-              <div className="break-all font-mono text-[10px] text-muted-foreground">
+              <div className="break-all font-mono text-[10px] text-[var(--text-muted)]">
                 tx {result.blockchain?.txHash || result.blockchain?.status}
               </div>
             </div>
@@ -187,7 +188,7 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
             </Button>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="nm-stack">
             <div className="space-y-2">
               <Label>Consultation remarks (required)</Label>
               <Textarea
@@ -235,31 +236,32 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                   disabled={busy === "upload"}
                 >
                   {busy === "upload" ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
                   ) : (
-                    <Paperclip className="mr-2 h-4 w-4" />
+                    <Paperclip className="mr-2 h-4 w-4" strokeWidth={1.75} />
                   )}
                   Attach prescription photo
                 </Button>
                 {images.map((image) => (
                   <span
                     key={image.url}
-                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-[#fafbf8] px-2 py-1 text-[11px]"
+                    className="inline-flex items-center gap-1.5 rounded-[12px] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] text-[var(--text)] shadow-[var(--shadow-inset)]"
                   >
-                    <Paperclip className="h-3 w-3" /> {image.fileName || "image"}
+                    <Paperclip className="h-3 w-3 shrink-0" strokeWidth={1.75} /> {image.fileName || "image"}
                     <button
                       type="button"
-                      className="ml-1 text-rose-400"
+                      aria-label={`Remove ${image.fileName || "image"}`}
+                      className="-my-2 -mr-1 ml-0.5 grid size-10 place-items-center rounded-full text-[var(--destructive)] transition-colors hover:bg-[var(--destructive-soft)]"
                       onClick={() =>
                         setImages((current) => current.filter((i) => i.url !== image.url))
                       }
                     >
-                      ×
+                      <XIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
                   </span>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
                 Attached images are read with OCR and folded into the report; they are
                 stored as evidence.
               </p>
@@ -273,40 +275,41 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 disabled={busy !== "" || !clinicalSummary.trim()}
               >
                 {busy === "parse" ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
                 ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="mr-2 h-4 w-4" strokeWidth={1.75} />
                 )}
                 Parse with AI
               </Button>
               <Button type="button" onClick={submit} disabled={!canSubmit}>
                 {busy === "submit" ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" strokeWidth={1.75} />
                 ) : (
-                  <Upload className="mr-2 h-4 w-4" />
+                  <Upload className="mr-2 h-4 w-4" strokeWidth={1.75} />
                 )}
                 Submit report &amp; build care plan
               </Button>
             </div>
 
             {message ? (
-              <div className="rounded-xl border border-border bg-[#fafbf8] px-3 py-2 text-sm text-muted-foreground">
+              <div className="rounded-[14px] bg-[var(--surface-subtle)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--text-muted)] shadow-[var(--shadow-inset)]">
                 {message}
               </div>
             ) : null}
             {error ? (
-              <div className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              <div className="flex items-start gap-2 rounded-[14px] bg-[var(--destructive-soft)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--destructive)]">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
                 {error}
               </div>
             ) : null}
 
             {preview?.parsed ? (
-              <div className="space-y-3 rounded-xl border border-border bg-[#fafbf8] p-4">
+              <div className="space-y-3 rounded-[18px] bg-[var(--surface-subtle)] p-4 shadow-[var(--shadow-inset)]">
                 <div className="cq-kicker">AI-STRUCTURED PREVIEW</div>
                 {preview.parsed.needsReview || preview.warnings?.length ? (
-                  <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                    <div className="flex items-center gap-1 font-bold">
-                      <AlertTriangle className="h-3.5 w-3.5" /> Needs review
+                  <div className="rounded-[12px] bg-[var(--warning-soft)] px-3 py-2 text-[11px] leading-relaxed text-[var(--warning)]">
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <AlertTriangle className="h-3.5 w-3.5" strokeWidth={1.75} /> Needs review
                     </div>
                     <ul className="mt-1 list-disc pl-4">
                       {(preview.warnings || []).map((warning, index) => (
@@ -317,8 +320,8 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 ) : null}
                 {preview.parsed.medications?.length ? (
                   <div>
-                    <div className="text-xs font-bold">Medications</div>
-                    <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                    <div className="text-[12px] font-semibold text-[var(--text-strong)]">Medications</div>
+                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
                       {preview.parsed.medications.map((med, index) => (
                         <li key={index}>
                           • {med.name}
@@ -332,18 +335,18 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                 ) : null}
                 {preview.parsed.conditions?.length ? (
                   <div>
-                    <div className="text-xs font-bold">Conditions detected</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="text-[12px] font-semibold text-[var(--text-strong)]">Conditions detected</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
                       {preview.parsed.conditions.map((c) => c.label).join(", ")}
                     </div>
                   </div>
                 ) : null}
                 {preview.quizPreview?.length ? (
                   <div>
-                    <div className="text-xs font-bold">
+                    <div className="text-[12px] font-semibold text-[var(--text-strong)]">
                       Knowledge check (4 questions from the quiz bank)
                     </div>
-                    <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                    <ul className="mt-1 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
                       {preview.quizPreview.map((item) => (
                         <li key={item.questionId}>
                           • [{item.categoryTitle}] {item.question}
@@ -352,8 +355,8 @@ export default function DoctorReportDialog({ appointment, isOpen, onClose, onDon
                     </ul>
                   </div>
                 ) : null}
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <ShieldCheck className="h-3 w-3" />
+                <div className="flex items-start gap-1.5 text-[10px] leading-relaxed text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={1.75} />
                   AI only structures what you wrote. Correct answers never leave the server.
                 </div>
               </div>

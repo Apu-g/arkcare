@@ -48,26 +48,30 @@ export default function SignUpPage() {
     }
   };
 
-  const inputClass =
-    "w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 text-white placeholder:text-muted-foreground outline-none";
+  const inputClass = "nm-input";
 
   return (
-    <main className="ark-page flex min-h-screen items-center px-4 py-10 md:px-8">
+    <main className="flex min-h-screen items-center px-4 py-10 md:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[1.05fr_.95fr]">
-        <section className="surface-panel rounded-[1.75rem] border p-5 md:p-8 lg:p-10">
+        <section className="cq-card p-5 md:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
-            <Link href="/" className="mb-9 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white">
-              <ArrowLeft className="h-4 w-4" />
+            <Link
+              href="/"
+              className="mb-9 inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-strong)]"
+            >
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
               Back to ArkCare
             </Link>
 
             <div className="mb-7 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
-                <HeartPulse className="h-5 w-5 text-cyan-200" />
+              <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-white shadow-[0_6px_14px_rgba(16,14,26,0.18)]">
+                <HeartPulse className="h-5 w-5" strokeWidth={2} />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[.18em] text-cyan-200/70">New profile</p>
-                <h1 className="text-2xl font-black">Start your ArkCare journey</h1>
+                <p className="cq-kicker">New profile</p>
+                <h1 className="text-[20px] font-bold tracking-[-0.01em] text-[var(--text-strong)]">
+                  Start your ArkCare journey
+                </h1>
               </div>
             </div>
 
@@ -79,7 +83,12 @@ export default function SignUpPage() {
                 ["confirmPassword", "Confirm password", "password", "Re-enter password", "new-password"],
               ].map(([field, label, type, placeholder, autoComplete]) => (
                 <div key={field}>
-                  <label htmlFor={field} className="mb-2 block text-sm font-semibold text-zinc-200">{label}</label>
+                  <label
+                    htmlFor={field}
+                    className="mb-2 block text-[12px] font-semibold text-[var(--text-strong)]"
+                  >
+                    {label}
+                  </label>
                   <input
                     id={field}
                     name={field}
@@ -95,56 +104,71 @@ export default function SignUpPage() {
                 </div>
               ))}
 
-              {error && (
-                <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+              {error ? (
+                <p
+                  role="alert"
+                  className="rounded-[14px] border border-[rgba(235,90,90,0.2)] bg-[rgba(235,90,90,0.12)] px-4 py-3 text-[13px] text-[var(--destructive)]"
+                >
                   {error}
                 </p>
-              )}
+              ) : null}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-xl bg-green-500 py-3 font-bold text-white disabled:opacity-60"
-              >
-                {submitting ? "Creating care profile..." : "Create profile"}
+              <button type="submit" disabled={submitting} className="nm-btn-primary w-full">
+                {submitting ? "Creating care profile…" : "Create profile"}
               </button>
             </form>
 
-            <p className="mt-7 text-center text-sm text-muted-foreground">
+            <p className="mt-7 text-center text-[13px] text-[var(--text-muted)]">
               Already have a profile?{" "}
-              <Link href="/sign-in" className="font-semibold text-cyan-200 hover:text-white">Sign in</Link>
+              <Link
+                href="/sign-in"
+                className="font-semibold text-[var(--text-strong)] hover:opacity-70"
+              >
+                Sign in
+              </Link>
             </p>
           </div>
         </section>
 
-        <section className="surface-card hidden min-h-[650px] flex-col justify-between p-8 lg:flex">
+        <section className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
           <div>
-            <span className="status-chip">Journey initialization</span>
-            <h2 className="mt-7 text-5xl font-black leading-[1.02] tracking-[-.045em]">
+            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold text-white/80">
+              Journey initialization
+            </span>
+            <h2 className="mt-6 text-[30px] font-bold leading-[1.15] tracking-[-0.02em] text-white">
               Create identity.
-              <span className="brand-text"> Choose your path.</span>
+              <span className="text-white/60"> Choose your path.</span>
             </h2>
-            <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
-              Your account begins neutral. Next, choose patient or doctor and ArkCare provisions the right workspace.
+            <p className="mt-4 max-w-md text-[13px] leading-relaxed text-[#B7B7BE]">
+              Your account begins neutral. Next, choose patient or doctor and ArkCare
+              provisions the right workspace.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="surface-panel rounded-2xl border p-5">
+            <div className="rounded-[18px] bg-white/[.07] p-5">
               <div className="flex items-center justify-between">
-                <Activity className="h-5 w-5 text-cyan-200" />
-                <span className="text-xs font-bold text-muted-foreground">STEP 01</span>
+                <Activity className="h-5 w-5 text-white/80" strokeWidth={1.75} />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+                  Step 01
+                </span>
               </div>
-              <h3 className="mt-5 font-bold">Identity</h3>
-              <div className="progress-track mt-3"><span /></div>
+              <h3 className="mt-5 font-semibold text-white">Identity</h3>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
+                <span className="block h-full w-[34%] rounded-full bg-white/80" />
+              </div>
             </div>
-            <div className="surface-panel rounded-2xl border p-5">
+            <div className="rounded-[18px] bg-white/[.07] p-5">
               <div className="flex items-center justify-between">
-                <Sparkles className="h-5 w-5 text-violet-200" />
-                <span className="text-xs font-bold text-muted-foreground">STEP 02</span>
+                <Sparkles className="h-5 w-5 text-white/80" strokeWidth={1.75} />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+                  Step 02
+                </span>
               </div>
-              <h3 className="mt-5 font-bold">Role + care experience</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Unlocked immediately after registration.</p>
+              <h3 className="mt-5 font-semibold text-white">Role + care experience</h3>
+              <p className="mt-2 text-[12px] leading-relaxed text-white/60">
+                Unlocked immediately after registration.
+              </p>
             </div>
           </div>
         </section>

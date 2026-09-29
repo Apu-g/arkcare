@@ -69,43 +69,50 @@ export default function RoleSelection() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-4">
+      <div className="nm-grid-2">
         {roles.map(({ id, icon: Icon, label, description, tags }) => (
           <button
             key={id}
             type="button"
             onClick={() => handleRoleSelection(id)}
             disabled={loading !== null}
-            className="cq-card group min-h-[210px] p-5 text-left hover:-translate-y-0.5 disabled:opacity-60"
+            className="cq-card group flex flex-col p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-hover)] disabled:opacity-60"
           >
             <div className="flex items-start justify-between">
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary">
-                <Icon className="h-5 w-5" />
+              <div className="nm-stat-icon">
+                <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" />
+              <ArrowRight
+                className="h-[18px] w-[18px] text-[var(--text-subtle)] transition group-hover:translate-x-0.5 group-hover:text-[var(--text-strong)]"
+                strokeWidth={1.75}
+              />
             </div>
 
-            <h3 className="mt-6 text-lg font-bold">{label}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <h3 className="mt-4 text-[15px] font-semibold text-[var(--text-strong)]">
+              {label}
+            </h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
+              {description}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
               {tags.map((tag) => <span key={tag} className="cq-pixel-label">{tag}</span>)}
             </div>
-            <div className="mt-5 flex items-center gap-2 text-xs font-bold text-primary">
+            <div className="mt-4 flex items-center gap-2 text-[12px] font-semibold text-[var(--text)]">
               {loading === id ? (
-                <><Sparkles className="h-3.5 w-3.5 animate-pulse" /> Preparing...</>
+                <><Sparkles className="h-[15px] w-[15px] animate-pulse" strokeWidth={1.75} /> Preparing…</>
               ) : (
-                <><ShieldCheck className="h-3.5 w-3.5" /> {isSignedIn ? "Continue" : "Sign in to continue"}</>
+                <><ShieldCheck className="h-[15px] w-[15px]" strokeWidth={1.75} /> {isSignedIn ? "Continue" : "Sign in to continue"}</>
               )}
             </div>
           </button>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-dashed border-border bg-[#fafbf8] p-4">
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold text-[#817996]">
-          <Sparkles className="h-3.5 w-3.5" />
-          ONE-CLICK JUDGE DEMO
+      <div className="cq-card-soft p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="h-[15px] w-[15px] text-[var(--text-muted)]" strokeWidth={1.75} />
+          <span className="cq-kicker">One-click judge demo</span>
         </div>
         <InstantSignIn compact />
       </div>

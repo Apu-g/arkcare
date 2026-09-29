@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link"; // Import Link for navigation
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
     Heart, Brain, Activity, Apple, Moon, Smile,
     TrendingUp, TrendingDown, Minus, Play, RefreshCw,
-    ChevronLeft // ✅ CORRECTED: Added ChevronLeft icon to the import
+    ChevronLeft,
+    ShieldCheck
 } from "lucide-react";
 import HealthQuestionnaire from "./HealthQuestionnaire";
 import { getHealthData, updateHealthScore } from "@/actions/healthActions";
 import AIHealthInsights from "./AIHealthInsights";
 
-// Monochrome theme: the accent is the theme's primary (solid black). SVG
+// Monochrome theme: the accent is the theme's primary (charcoal). SVG
 // presentation attributes resolve var() inconsistently across browsers, so it is
 // applied through style rather than stroke/fill attributes.
 const ACCENT_COLOR = "var(--primary)";
@@ -26,10 +27,10 @@ const GlowingScoreVisual = ({ score }) => {
     return (
         <>
             <style jsx global>{`
-                @keyframes pulse-accent { 50% { filter: drop-shadow(0 0 25px ${ACCENT_COLOR}); } }
+                @keyframes pulse-accent { 50% { filter: drop-shadow(0 0 18px ${ACCENT_COLOR}); } }
                 .animate-pulse-accent { animation: pulse-accent 3s infinite ease-in-out; }
             `}</style>
-            <div className="relative w-48 h-48 md:w-56 md:h-56 flex-shrink-0">
+            <div className="relative w-40 h-40 md:w-44 md:h-44 flex-shrink-0">
                 <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 192 192">
                     <circle cx="96" cy="96" r="84" fill="none" style={{ stroke: "var(--surface-muted)" }} strokeWidth="12" />
                     <circle
@@ -44,8 +45,9 @@ const GlowingScoreVisual = ({ score }) => {
                 </svg>
                 <div className="w-full h-full flex items-center justify-center">
                     <Brain
-                        className="w-28 h-28 text-white transition-all duration-1000 animate-pulse-accent"
-                        style={{ filter: `drop-shadow(0 0 15px ${ACCENT_COLOR})` }}
+                        className="w-16 h-16 md:w-20 md:h-20 text-[var(--text-subtle)] transition-all duration-1000 animate-pulse-accent"
+                        strokeWidth={1.5}
+                        style={{ filter: `drop-shadow(0 0 10px ${ACCENT_COLOR})` }}
                     />
                 </div>
             </div>
@@ -88,22 +90,24 @@ export default function HealthScoreDashboard({ patient }) {
 
     const getScoreStatus = (score) => {
         let text = "Needs Improvement";
-        if (score >= 80) text = "Excellent";
-        else if (score >= 60) text = "Good";
-        else if (score >= 40) text = "Fair";
-        return { text, color: `bg-primary/10 text-primary border-primary/20` };
+        let variant = "destructive";
+        if (score >= 80) { text = "Excellent"; variant = "success"; }
+        else if (score >= 60) { text = "Good"; variant = "info"; }
+        else if (score >= 40) { text = "Fair"; variant = "warning"; }
+        return { text, variant };
     };
 
     const getTrendIcon = (trend) => {
-        if (trend === 'improving') return <TrendingUp className="h-5 w-5 text-green-400" />;
-        if (trend === 'declining') return <TrendingDown className="h-5 w-5 text-green-400" />;
-        return <Minus className="h-5 w-5 text-muted-foreground" />;
+        if (trend === 'improving') return <TrendingUp className="h-[18px] w-[18px] text-[var(--success)]" strokeWidth={1.75} />;
+        if (trend === 'declining') return <TrendingDown className="h-[18px] w-[18px] text-[var(--destructive)]" strokeWidth={1.75} />;
+        return <Minus className="h-[18px] w-[18px] text-[var(--text-subtle)]" strokeWidth={1.75} />;
     };
 
     if (loading) {
         return (
-            <div className="ark-page min-h-screen flex items-center justify-center p-8">
-                <RefreshCw className="h-10 w-10 animate-spin text-muted-foreground" />
+            <div className="grid min-h-[40vh] place-items-center">
+                <RefreshCw className="h-8 w-8 animate-spin text-[var(--text-subtle)]" strokeWidth={1.75} />
+                <span className="sr-only">Loading your health data</span>
             </div>
         );
     }
@@ -115,75 +119,83 @@ export default function HealthScoreDashboard({ patient }) {
     const categoryScores = healthData?.questionnaire?.categories || {};
 
     return (
-        <div className="ark-page min-h-screen text-white p-4 md:p-8 relative overflow-hidden">
-            <div className="max-w-6xl mx-auto space-y-8 relative z-10">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    {/* ✅ CORRECTED: Added container for back button and title */}
-                    <div className="flex items-center gap-4">
-                        <Button
-                            asChild
-                            variant="ghost"
-                            className="bg-card hover:bg-muted cursor-pointer rounded-full w-10 h-10 p-0 flex-shrink-0"
-                        >
-                            <Link href="/patient" aria-label="Go back to patient page">
-                                <ChevronLeft className="h-5 w-5" />
+        <div className="nm-dash">
+            <div className="nm-dash-col">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex items-start gap-3">
+                        <Button asChild variant="secondary" size="icon" aria-label="Go back to patient page">
+                            <Link href="/patient">
+                                <ChevronLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
                             </Link>
                         </Button>
                         <div>
-                            <div className="mb-2 flex flex-wrap gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <span className="status-chip">Health journey</span>
-                                <span className="status-chip">Progress layer</span>
+                                <span className="cq-pixel-label">PROGRESS LAYER</span>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">Health Journey</h1>
-                            <p className="text-muted-foreground mt-2 text-base md:text-lg">Turn assessments and reports into a trackable care progression.</p>
+                            <h1 className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)]">
+                                Health Journey
+                            </h1>
+                            <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+                                Turn assessments and reports into a trackable care progression.
+                            </p>
                         </div>
                     </div>
-                    <Button onClick={() => setShowQuestionnaire(true)} size="lg" className="bg-muted hover:bg-muted border border-border text-white h-12 px-6 text-base">
-                        <Play className="h-5 w-5 mr-2" />
-                        {healthData?.questionnaire ? "Retake Assessment" : "Take Assessment"}
+                    <Button onClick={() => setShowQuestionnaire(true)}>
+                        <Play className="h-4 w-4" strokeWidth={1.75} />
+                        {healthData?.questionnaire ? "Retake assessment" : "Take assessment"}
                     </Button>
                 </div>
 
                 {healthData?.questionnaire ? (
-                    <Card className="bg-card border border-border rounded-2xl ">
-                        <CardContent className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
-                            <div className="md:col-span-2 flex justify-center items-center">
+                    <Card className="overflow-hidden">
+                        <CardContent className="grid grid-cols-1 gap-6 p-5 md:grid-cols-5 md:items-center md:p-6">
+                            <div className="flex justify-center items-center md:col-span-2">
                                 <GlowingScoreVisual score={currentScore} />
                             </div>
-                            <div className="md:col-span-3 space-y-6">
+                            <div className="space-y-4 md:col-span-3">
                                 <div>
-                                    <div className="flex items-center gap-4">
-                                        <span className="text-6xl md:text-7xl font-bold" style={{ color: ACCENT_COLOR }}>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <span className="nm-metric-xl tabular-nums" style={{ color: ACCENT_COLOR }}>
                                             {currentScore}
-                                            <span className="text-4xl text-muted-foreground">/100</span>
+                                            <span className="text-[16px] text-[var(--text-muted)]">/100</span>
                                         </span>
-                                        <div className="flex flex-col gap-2">
-                                            <Badge className={`${scoreStatus.color} py-1 px-3 text-sm`}>{scoreStatus.text}</Badge>
-                                            {healthData?.trend && getTrendIcon(healthData.trend)}
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={scoreStatus.variant}>{scoreStatus.text}</Badge>
+                                            {healthData?.trend ? getTrendIcon(healthData.trend) : null}
                                         </div>
                                     </div>
-                                    <p className="text-muted-foreground mt-2">Your overall health score based on recent data.</p>
+                                    <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
+                                        Your overall health score based on recent data.
+                                    </p>
                                 </div>
-                                
-                                <Progress 
-                                    value={currentScore} 
-                                    className="h-3 bg-muted [&>*]:bg-primary" 
-                                />
+
+                                <div>
+                                    <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
+                                        <span>Overall progress</span>
+                                        <span className="tabular-nums">{currentScore}%</span>
+                                    </div>
+                                    <Progress value={currentScore} className="h-2" />
+                                </div>
 
                                 {(questionnaireScore > 0 || aiScore > 0) && (
-                                    <div className="space-y-3 pt-2">
-                                        <h3 className="font-semibold text-zinc-300">Score Breakdown</h3>
-                                        <div className="flex flex-col sm:flex-row gap-4 text-sm">
+                                    <div className="space-y-2">
+                                        <h3 className="nm-card-title">Score breakdown</h3>
+                                        <div className="flex flex-col gap-2 sm:flex-row">
                                             {questionnaireScore > 0 && (
-                                                <div className="flex items-center gap-2 p-2 bg-card rounded-md">
-                                                    <span className="text-muted-foreground">Assessment:</span>
-                                                    <span className="font-bold text-white">{questionnaireScore}</span>
+                                                <div className="nm-stat flex-1">
+                                                    <div className="nm-stat-label">Assessment</div>
+                                                    <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
+                                                        {questionnaireScore}
+                                                    </div>
                                                 </div>
                                             )}
                                             {aiScore > 0 && (
-                                                <div className="flex items-center gap-2 p-2 bg-card rounded-md">
-                                                    <span style={{ color: ACCENT_COLOR }}>AI Analysis:</span>
-                                                    <span className="font-bold text-white">{aiScore}</span>
+                                                <div className="nm-stat flex-1">
+                                                    <div className="nm-stat-label">AI analysis</div>
+                                                    <div className="nm-stat-value mt-1 text-[22px] tabular-nums">
+                                                        {aiScore}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -193,52 +205,100 @@ export default function HealthScoreDashboard({ patient }) {
                         </CardContent>
                     </Card>
                 ) : (
-                    <Card className="bg-card border border-border rounded-2xl ">
-                        <CardContent className="text-center p-12 md:p-16">
-                            <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
-                            <h3 className="text-2xl font-semibold text-white mb-4">Start Your Health Journey</h3>
-                            <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">Take our comprehensive health assessment to get your personalized score and AI-powered recommendations.</p>
-                            <Button onClick={() => setShowQuestionnaire(true)} size="lg" className="text-white h-14 px-8 text-lg" style={{ backgroundColor: ACCENT_COLOR }}>
-                                <Play className="h-5 w-5 mr-3" />
-                                Take Health Assessment
+                    <Card>
+                        <CardContent className="p-8 text-center md:p-10">
+                            <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[var(--primary)] text-[var(--dark-text)]">
+                                <Heart className="h-6 w-6" strokeWidth={1.75} />
+                            </div>
+                            <h3 className="cq-section-title mt-4">Start your health journey</h3>
+                            <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-6 text-[var(--text-muted)]">
+                                Take our comprehensive health assessment to get your personalized
+                                score and AI-powered recommendations.
+                            </p>
+                            <Button onClick={() => setShowQuestionnaire(true)} className="mt-5">
+                                <Play className="h-4 w-4" strokeWidth={1.75} />
+                                Take health assessment
                             </Button>
                         </CardContent>
                     </Card>
                 )}
 
                 {Object.keys(categoryScores).length > 0 && (
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold text-white text-center md:text-left">Category Breakdown</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <section className="nm-stack-sm">
+                        <h2 className="cq-section-title">Category breakdown</h2>
+                        <div className="nm-grid-2">
                             {Object.entries({
                                 diet: { title: 'Diet & Nutrition', Icon: Apple },
                                 exercise: { title: 'Physical Activity', Icon: Activity },
                                 sleep: { title: 'Sleep & Rest', Icon: Moon },
                                 mental_health: { title: 'Mental Wellness', Icon: Smile },
                             }).map(([key, { title, Icon }]) => (
-                                <Card key={key} className="bg-card border border-border rounded-2xl  overflow-hidden">
-                                    <CardContent className="p-6 flex flex-col justify-between gap-4 h-full">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-card border border-border rounded-2xl flex items-center justify-center">
-                                                    <Icon className="h-6 w-6 text-zinc-300" />
-                                                </div>
-                                                <CardTitle className="text-base font-medium text-white">{title}</CardTitle>
+                                <div key={key} className="nm-stat">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="nm-stat-icon">
+                                                <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
                                             </div>
-                                            <span className="text-2xl font-bold text-white">{categoryScores[key] || 0}</span>
+                                            <span className="nm-card-title text-[13px]">{title}</span>
                                         </div>
-                                        <Progress value={categoryScores[key] || 0} className="h-2 [&>*]:bg-zinc-200 bg-muted" />
-                                    </CardContent>
-                                </Card>
+                                        <span className="nm-metric-xl text-[22px] tabular-nums">
+                                            {categoryScores[key] || 0}
+                                        </span>
+                                    </div>
+                                    <div className="mt-3">
+                                        <Progress value={categoryScores[key] || 0} className="h-1.5" />
+                                    </div>
+                                </div>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 )}
 
                 {healthData?.questionnaire && (
                     <AIHealthInsights healthData={healthData} onRefresh={loadHealthData} />
                 )}
             </div>
+
+            {/* ------------------------------------------- right insight rail */}
+            <aside className="nm-rail" aria-label="Score safety notes">
+                <div className="nm-dark-card p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--dark-muted)]">
+                        Current score
+                    </div>
+                    <div className="mt-1.5 text-[30px] font-bold leading-none text-[var(--dark-text)] tabular-nums">
+                        {currentScore}
+                        <span className="text-[13px] font-semibold text-[var(--dark-muted)]">/100</span>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                        <Badge variant={scoreStatus.variant}>{scoreStatus.text}</Badge>
+                        {healthData?.trend ? getTrendIcon(healthData.trend) : null}
+                    </div>
+                    <p className="mt-3 text-[10.5px] leading-4 text-[var(--dark-muted)]">
+                        A progress signal only. It never changes a diagnosis, prescription or
+                        treatment decision.
+                    </p>
+                </div>
+
+                <div className="nm-stack-sm">
+                    <div className="cq-kicker">HOW TO READ THIS</div>
+                    <div className="nm-row justify-start text-[12px] leading-5 text-[var(--text-muted)]">
+                        <ShieldCheck className="h-[18px] w-[18px] shrink-0 text-[var(--text-strong)]" strokeWidth={1.75} />
+                        Your score summarises your own answers and report data.
+                    </div>
+                    <div className="nm-row justify-start text-[12px] leading-5 text-[var(--text-muted)]">
+                        <Brain className="h-[18px] w-[18px] shrink-0 text-[var(--text-strong)]" strokeWidth={1.75} />
+                        AI analysis is informational and never prescriptive.
+                    </div>
+                    <div className="nm-row justify-start text-[12px] leading-5 text-[var(--text-muted)]">
+                        <StethoscopeIcon />
+                        A clinician confirms anything that affects your care.
+                    </div>
+                </div>
+
+                <Link href="/patient" className="nm-btn-secondary w-full">
+                    Back to patient home
+                </Link>
+            </aside>
 
             {showQuestionnaire && (
                 <HealthQuestionnaire
@@ -249,5 +309,30 @@ export default function HealthScoreDashboard({ patient }) {
                 />
             )}
         </div>
+    );
+}
+
+function StethoscopeIcon() {
+    return (
+        <span
+            aria-hidden="true"
+            className="inline-block h-[18px] w-[18px] shrink-0"
+        >
+            <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--text-strong)"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            >
+                <path d="M4.8 2.3v5.2a4.2 4.2 0 0 0 8.4 0V2.3" />
+                <path d="M3 2.3h3.4M11.8 2.3h3.4" />
+                <path d="M9 11.7v1.9a4.7 4.7 0 0 0 9.4 0v-1.5" />
+                <circle cx="18.4" cy="10.4" r="1.8" />
+            </svg>
+        </span>
     );
 }

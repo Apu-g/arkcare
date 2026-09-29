@@ -58,17 +58,20 @@ export default function CapsuleGauge({ max = 2000, refreshSignal = 0 }) {
     <div className="cq-capsule-gauge" title={`${state.balance} / ${max} ${state.symbol}`}>
       <div className="flex items-center justify-between gap-2">
         <div
-          className="cq-capsule-chip text-sm font-black"
+          className="cq-capsule-chip text-[13px] font-bold leading-none text-[var(--text-strong)]"
           data-bump={bump ? "true" : "false"}
         >
-          <WalletCards className="h-4 w-4 text-primary" />
-          <span>{state.balance}</span>
-          <CapsuleIcon size={14} className="text-primary" title="Capsules" />
-          <span className="text-[11px] font-bold text-muted-foreground">
+          <WalletCards
+            className="h-[15px] w-[15px] shrink-0 text-[var(--text-muted)]"
+            strokeWidth={1.75}
+          />
+          <span className="tabular-nums">{state.balance}</span>
+          <CapsuleIcon size={13} className="text-[var(--text-muted)]" title="Capsules" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
             {state.symbol || "CAP"}
           </span>
         </div>
-        <div className="text-[10px] font-bold text-muted-foreground">
+        <div className="text-[10px] font-semibold text-[var(--text-subtle)]">
           {Math.round(pct)}% of {max}
         </div>
       </div>

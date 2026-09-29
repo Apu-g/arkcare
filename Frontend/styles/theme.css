@@ -1,60 +1,135 @@
 /*
- * CareQuest light healthcare theme.
- * Muted colors intentionally keep the pixel/game layer supportive rather than
- * arcade-like. Destructive remains reserved for real error/danger feedback.
+ * ArkCare — soft-neumorphic dashboard theme.
+ *
+ * Source of truth: DESIGN_SYSTEM_SOFT_NEUMORPHIC_DASHBOARD.md
+ *
+ * The variable NAMES are unchanged from the previous healthcare theme so every
+ * existing component keeps working; only the values are retuned to the
+ * neumorphic finance palette. The --nm-* block at the bottom is the new
+ * primitive layer added by the design system.
+ *
+ * Balance target: ~82% neutral surfaces, ~12% charcoal, ~6% accent.
  */
 :root,
 [data-theme="light"] {
-  --background: #f7f8f3;
-  --foreground: #22312d;
+  /* ---- canvas & surfaces (spec §2.1) ---- */
+  --background: #dfe2eb; /* --bg-page: scene outside the app shell */
+  --foreground: #17171c;
 
-  --surface: #ffffff;
-  --surface-subtle: #f1f4ef;
-  --surface-muted: #e7ece7;
-  --surface-hover: #edf2ee;
+  --surface: #ffffff; /* --bg-surface: cards, panels */
+  --surface-subtle: #f6f8fc; /* --bg-surface-soft: inputs, recessed controls */
+  --surface-muted: #eceff5; /* --bg-surface-muted: tracks, secondary fills */
+  --surface-hover: #eef1f7;
+  --surface-shell: #f2f5fa; /* --bg-shell: the floating app shell */
 
-  --text: #22312d;
-  --text-muted: #65746f;
-  --text-subtle: #8b9893;
+  /* ---- ink (spec §2.1) ---- */
+  --text: #17171c; /* --ink-900 */
+  --text-strong: #100e1a; /* --ink-950: headings, totals, key labels */
+  --text-muted: #747479; /* --ink-500: metadata, 4.6:1 on white */
+  --text-subtle: #97979e; /* --ink-400 */
+  --text-faint: #bfc0c5; /* --ink-300 */
 
-  --border: #dce4de;
-  --border-strong: #c7d3cb;
+  --border: #e4e7ee; /* --line-soft: separators only */
+  --border-strong: #d7dbe5;
+  --border-subtle: #eef0f5; /* --line-subtle: row dividers */
 
-  --primary: #58776d;
-  --primary-hover: #49675e;
-  --primary-soft: #e6efeb;
+  /* ---- charcoal anchor (spec §2.2, §18) ---- */
+  --primary: #100e1a; /* primary buttons, active nav pill */
+  --primary-hover: #24242b;
+  --primary-soft: #e6e9f1; /* selected/active *background* */
   --primary-foreground: #ffffff;
 
-  --secondary: #eeeaf3;
-  --secondary-foreground: #57516a;
+  --dark-card: #1b1b1e;
+  --dark-card-2: #111116;
+  --dark-elevated: #232329;
+  --dark-text: #ffffff;
+  --dark-muted: #b7b7be;
 
-  --accent: #f4e9e3;
-  --accent-foreground: #765b52;
+  --secondary: #eef0f5;
+  --secondary-foreground: #3a3a42;
 
-  --success: #55796a;
-  --success-soft: #e3efe8;
-  --warning: #967747;
-  --warning-soft: #f7f0df;
-  --destructive: #a94f4f;
-  --destructive-soft: #f9e7e7;
+  --accent: #e8ecfc;
+  --accent-foreground: #405bd0;
 
-  --lavender: #817996;
-  --lavender-soft: #eeebf3;
-  --peach: #b98272;
-  --peach-soft: #f5e9e4;
-  --sky: #6e8790;
-  --sky-soft: #e7eff1;
-  --gold: #9a8150;
-  --gold-soft: #f4efdf;
+  /* ---- semantic (spec §22) ---- */
+  --success: #248a5a;
+  --success-soft: rgba(49, 185, 120, 0.12);
+  --warning: #9a7316;
+  --warning-soft: rgba(244, 198, 78, 0.18);
+  --destructive: #bf4343;
+  --destructive-soft: rgba(235, 90, 90, 0.12);
 
-  --ring: #6b8b80;
-  --input: #cfd9d2;
+  /* ---- accent ramp (spec §2.3, §31) ---- */
+  --accent-blue: #4f6ef7;
+  --accent-cyan: #42c8e8;
+  --accent-mint: #43d6a2;
+  --accent-green: #31b978;
+  --accent-yellow: #f4c64e;
+  --accent-orange: #f39a4a;
+  --accent-red: #eb5a5a;
+  --accent-pink: #eb6fae;
+  --accent-purple: #8b6df6;
+  --accent-gold: #d9b868;
 
-  --shadow-soft: 0 14px 38px rgba(46, 70, 61, 0.07);
-  --shadow-card: 0 8px 22px rgba(46, 70, 61, 0.055);
+  /* Back-compat aliases used by older CareQuest surfaces. */
+  --lavender: #6f6a86;
+  --lavender-soft: #efeef6;
+  --peach: #a9705c;
+  --peach-soft: #f8ece7;
+  --sky: #4a6a80;
+  --sky-soft: #e9f0f5;
+  --gold: #8a6f34;
+  --gold-soft: #f6f0e0;
 
-  --radius-sm: 0.65rem;
-  --radius-md: 0.9rem;
-  --radius-lg: 1.2rem;
-  --radius-xl: 1.6rem;
+  --ring: #4f6ef7;
+  --input: #e4e7ee;
+
+  /* ---- neumorphic elevation (spec §5) ----
+     Never a hard black shadow on a light card: every light-surface shadow
+     pairs a soft dark offset with a light offset so the surface reads as
+     raised rather than painted on. */
+  --shadow-soft:
+    10px 10px 24px rgba(157, 166, 184, 0.18),
+    -10px -10px 24px rgba(255, 255, 255, 0.88);
+  --shadow-card:
+    6px 7px 16px rgba(160, 168, 184, 0.16),
+    -6px -6px 14px rgba(255, 255, 255, 0.95);
+  --shadow-hover:
+    10px 12px 24px rgba(145, 154, 172, 0.21),
+    -8px -8px 18px rgba(255, 255, 255, 0.96);
+  --shadow-inset:
+    inset 3px 3px 8px rgba(157, 166, 184, 0.14),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.92);
+  --shadow-dark-float:
+    0 16px 30px rgba(16, 14, 26, 0.24),
+    0 3px 10px rgba(16, 14, 26, 0.12);
+  --shadow-cta: 0 8px 18px rgba(16, 14, 26, 0.15);
+  --shadow-cta-active: 0 4px 10px rgba(16, 14, 26, 0.14);
+
+  /* ---- radius (spec §4) ---- */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 34px;
+  --radius-control: 14px;
+  --radius-card: 24px;
+  --radius-shell: 32px;
+  --radius-pill: 999px;
+
+  /* ---- type scale (spec §3.1) ---- */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+
+  /* ---- motion (spec §23) ---- */
+  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 260ms;
 }

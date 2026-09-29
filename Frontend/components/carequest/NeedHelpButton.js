@@ -101,8 +101,8 @@ export default function NeedHelpButton({ userId: userIdProp }) {
         className="cq-need-help-btn"
         title="Ask a nurse or your care team for help"
       >
-        <LifeBuoy className="h-4 w-4" />
-        <span className="text-xs font-bold">Need Help</span>
+        <LifeBuoy className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        <span className="text-[12px] font-semibold">Need Help</span>
         {openCount > 0 ? (
           <span className="cq-need-help-badge">{openCount}</span>
         ) : null}
@@ -112,7 +112,7 @@ export default function NeedHelpButton({ userId: userIdProp }) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <LifeBuoy className="h-5 w-5 text-primary" /> Need help
+              <LifeBuoy className="h-[18px] w-[18px]" strokeWidth={1.75} /> Need help
             </DialogTitle>
             <DialogDescription>
               Tell a nurse (and your care team) what you need. Your request is hashed
@@ -121,14 +121,14 @@ export default function NeedHelpButton({ userId: userIdProp }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="nm-stack-sm">
             <div className="flex flex-wrap gap-1.5">
               {QUICK.map((text) => (
                 <button
                   key={text}
                   type="button"
                   onClick={() => setProblem(text)}
-                  className="cq-pixel-label hover:bg-muted"
+                  className="cq-pixel-label hover:bg-[var(--surface-muted)]"
                 >
                   {text}
                 </button>
@@ -147,10 +147,11 @@ export default function NeedHelpButton({ userId: userIdProp }) {
                 <button
                   key={c}
                   type="button"
+                  aria-pressed={category === c}
                   onClick={() => setCategory(c)}
                   className={
                     "cq-pixel-label " +
-                    (category === c ? "cq-real-label" : "")
+                    (category === c ? "cq-info-label" : "hover:bg-[var(--surface-muted)]")
                   }
                 >
                   {c}
@@ -164,19 +165,21 @@ export default function NeedHelpButton({ userId: userIdProp }) {
               onClick={send}
             >
               {busy ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
               ) : (
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="h-4 w-4" strokeWidth={1.75} />
               )}
               Send to my care team
             </Button>
 
-            {error ? <p className="text-xs text-rose-600">{error}</p> : null}
+            {error ? (
+              <p className="text-[11.5px] text-[var(--destructive)]">{error}</p>
+            ) : null}
 
             {sent ? (
-              <div className="rounded-xl border border-[#c9ddd2] bg-[#eef7f1] p-3 text-xs text-[#2f5c46]">
-                <div className="flex items-center gap-1 font-bold">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Help request sent
+              <div className="rounded-[16px] bg-[var(--success-soft)] p-3 text-[11.5px] text-[var(--success)]">
+                <div className="flex items-center gap-1.5 text-[12px] font-semibold">
+                  <CheckCircle2 className="h-[16px] w-[16px]" strokeWidth={1.75} /> Help request sent
                 </div>
                 <p className="mt-1">
                   A nurse will pick this up. Your request is on-chain
@@ -189,26 +192,26 @@ export default function NeedHelpButton({ userId: userIdProp }) {
             ) : null}
 
             {mine.length ? (
-              <div className="space-y-2 border-t border-border pt-3">
+              <div className="nm-stack-sm border-t border-[var(--border-subtle)] pt-3">
                 <div className="cq-kicker">MY REQUESTS</div>
                 {mine.map((item) => (
                   <div
                     key={item._id}
-                    className="rounded-lg border border-border bg-[#fafbf8] p-3 text-xs"
+                    className="rounded-[14px] bg-[var(--surface-subtle)] p-3 text-[11.5px]"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold">
+                      <span className="font-semibold text-[var(--text-strong)]">
                         {item.status === "resolved" ? "Resolved" : "In progress"}
                       </span>
                       {item.resolution?.blockchain?.status === "anchored" ? (
                         <span className="cq-pixel-label cq-real-label">
-                          <Link2 className="mr-1 h-3 w-3" /> on-chain
+                          <Link2 className="mr-1 h-3 w-3" strokeWidth={2} /> on-chain
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-muted-foreground">{item.summary}</p>
+                    <p className="mt-1 text-[var(--text-muted)]">{item.summary}</p>
                     {item.status === "resolved" && item.outcome ? (
-                      <p className="mt-1 text-emerald-700">
+                      <p className="mt-1 text-[var(--success)]">
                         Done: {item.outcome}
                       </p>
                     ) : null}
@@ -217,8 +220,8 @@ export default function NeedHelpButton({ userId: userIdProp }) {
               </div>
             ) : null}
 
-            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <ShieldCheck className="h-3 w-3" />
+            <p className="flex items-center gap-1.5 text-[10.5px] leading-4 text-[var(--text-muted)]">
+              <ShieldCheck className="h-[14px] w-[14px]" strokeWidth={1.75} />
               For emergencies, use local emergency services — this is not urgent care.
             </p>
           </div>

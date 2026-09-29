@@ -52,7 +52,7 @@ export default function PromptDialog({
           onChange={(event) => setValue(event.target.value)}
           placeholder={placeholder}
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-1">
           <Button variant="outline" onClick={close}>
             Cancel
           </Button>

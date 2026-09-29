@@ -8,7 +8,6 @@ import PixelCareScene from "@/components/carequest/PixelCareScene";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 import SimulationBadge from "@/components/carequest/SimulationBadge";
 import {
-  Activity,
   ArrowRight,
   BarChart3,
   BookOpenCheck,
@@ -18,7 +17,6 @@ import {
   HeartPulse,
   Network,
   ShieldCheck,
-  Sparkles,
   Stethoscope,
   WalletCards,
 } from "lucide-react";
@@ -71,213 +69,242 @@ export default function Home() {
   }, [isLoaded, user, router]);
 
   return (
-    <main className="ark-page">
-      <section className="px-4 pb-16 pt-5 md:px-8 lg:px-12">
+    <main className="min-h-screen">
+      {/* ------------------------------------------------------------- nav */}
+      <div className="px-4 pt-4 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <nav className="cq-reveal flex items-center justify-between rounded-2xl border border-border bg-white/90 px-4 py-3 shadow-sm">
+          <nav className="cq-card cq-reveal flex items-center justify-between gap-3 px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#cfddd5] bg-[#e7f0eb]">
-                <HeartPulse className="h-5 w-5 text-primary" />
+              <div className="nm-stat-icon">
+                <HeartPulse className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
               <div>
-                <div className="text-sm font-black tracking-[.08em]">ARKCARE</div>
-                <div className="text-[10px] font-bold text-muted-foreground">CAREQUEST CARE OS</div>
+                <div className="text-[13px] font-bold tracking-[0.08em] text-[var(--text-strong)]">
+                  ARKCARE
+                </div>
+                <div className="cq-kicker">CareQuest care OS</div>
               </div>
             </div>
-            <a
-              href="#enter"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
-            >
-              Enter demo <ArrowRight className="h-4 w-4" />
+            <a href="#enter" className="nm-btn-secondary">
+              Enter demo <ArrowRight className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </a>
           </nav>
+        </div>
+      </div>
 
-          <div className="grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_.95fr] lg:py-20">
-            <div className="cq-reveal">
-              <div className="mb-5 flex flex-wrap gap-2">
-                <span className="cq-pixel-label">CLINICIAN APPROVED</span>
-                <span className="cq-pixel-label">HUMAN HANDOFFS</span>
-                <span className="cq-pixel-label cq-real-label">REAL LOCAL EVM</span>
-              </div>
-              <h1 className="max-w-4xl text-5xl font-black leading-[.98] tracking-[-.055em] text-foreground md:text-7xl">
-                Care after the consult,
-                <span className="text-primary"> built like a journey.</span>
-              </h1>
-              <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                ArkCare turns doctor-approved plans into clear missions, rewards honest
-                participation with hospital-specific Capsules, and converts patient
-                difficulty into real care-team action.
+      {/* ------------------------------------------------------------ hero */}
+      <section className="px-4 py-10 md:px-8 lg:py-14">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="cq-reveal">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <span className="cq-pixel-label">Clinician approved</span>
+              <span className="cq-pixel-label">Human handoffs</span>
+              <SimulationBadge real>Real local EVM</SimulationBadge>
+            </div>
+            <h1 className="max-w-3xl text-[20px] font-bold leading-tight tracking-[-0.01em] text-[var(--text-strong)] md:text-[26px]">
+              Care after the consult, built like a journey.
+            </h1>
+            <p className="mt-4 max-w-2xl text-[14px] leading-7 text-[var(--text-muted)]">
+              ArkCare turns doctor-approved plans into clear missions, rewards honest
+              participation with hospital-specific Capsules, and converts patient
+              difficulty into real care-team action.
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              <a href="#enter" className="nm-btn-primary">
+                Explore CareQuest <ArrowRight className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </a>
+              <p className="text-[12px] leading-5 text-[var(--text-muted)]">
+                No patient leaderboard. No punishment for honest non-completion.
               </p>
-
-              <div className="mt-7 flex flex-wrap items-center gap-4">
-                <a
-                  href="#enter"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-hover"
-                >
-                  Explore CareQuest <Sparkles className="h-4 w-4" />
-                </a>
-                <div className="text-xs leading-5 text-muted-foreground">
-                  No patient leaderboard. No punishment for honest non-completion.
-                </div>
-              </div>
-
-              <div className="mt-8 flex items-center gap-3 rounded-2xl border border-border bg-white/70 p-3 sm:max-w-xl">
-                <PixelCharacter variant="guide" mood="wave" size={58} />
-                <p className="text-sm leading-6 text-muted-foreground">
-                  “Done”, “Not done” and “Need help” all count as participation.
-                  CareQuest rewards communication—not pretending everything went well.
-                </p>
-              </div>
             </div>
 
-            <div className="cq-reveal cq-reveal-delay-1">
+            <div className="cq-card-soft mt-6 flex items-center gap-4 p-4 sm:max-w-xl">
+              <PixelCharacter variant="guide" mood="wave" size={52} />
+              <p className="text-[12px] leading-5 text-[var(--text-muted)]">
+                &ldquo;Done&rdquo;, &ldquo;Not done&rdquo; and &ldquo;Need help&rdquo; all
+                count as participation. CareQuest rewards communication—not pretending
+                everything went well.
+              </p>
+            </div>
+          </div>
+
+          <div className="cq-reveal cq-reveal-delay-1">
+            <div className="cq-card p-5">
               <PixelCareScene />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-white/55 px-4 py-16 md:px-8 lg:px-12">
+      {/* -------------------------------------------------------- care loop */}
+      <section className="px-4 pb-12 md:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
-            <div className="cq-kicker">THE CARE LOOP</div>
-            <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
+            <div className="cq-kicker">The care loop</div>
+            <h2 className="cq-section-title mt-1">
               Gamification that ends in real healthcare workflow.
             </h2>
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 nm-grid-3">
             {careLoop.map(({ icon: Icon, step, title, text }, index) => (
-              <article key={title} className={"cq-card cq-reveal p-5 cq-reveal-delay-" + Math.min(index, 3)}>
+              <article
+                key={title}
+                className={"cq-card p-5 cq-reveal cq-reveal-delay-" + Math.min(index, 3)}
+              >
                 <div className="flex items-center justify-between">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
-                    <Icon className="h-5 w-5" />
+                  <div className="nm-stat-icon">
+                    <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
                   </div>
-                  <span className="font-mono text-xs font-black text-muted-foreground">{step}</span>
+                  <span className="font-mono text-[11px] font-semibold text-[var(--text-muted)]">
+                    {step}
+                  </span>
                 </div>
-                <h3 className="mt-7 text-lg font-bold">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
+                <h3 className="mt-4 nm-card-title text-[14px]">{title}</h3>
+                <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">{text}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-16 md:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[.9fr_1.1fr]">
+      {/* --------------------------------------------------------- passport */}
+      <section className="px-4 pb-12 md:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[.9fr_1.1fr]">
           <div>
-            <div className="cq-kicker">MULTI-HOSPITAL PASSPORT</div>
-            <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
+            <div className="cq-kicker">Multi-hospital passport</div>
+            <h2 className="cq-section-title mt-1">
               One patient. Separate hospital journeys.
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground">
+            <p className="mt-2 max-w-xl text-[13px] leading-6 text-[var(--text-muted)]">
               Each hospital controls its own program, budget and benefit catalog.
               Balances stay independent and never imply access to another hospital&apos;s
               clinical records.
             </p>
-            <div className="mt-6">
+            <div className="mt-5">
               <PixelCharacter
                 variant="walker"
                 mood="idle"
-                size={88}
+                size={72}
                 speech="Your care passport keeps every hospital program separate."
               />
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="nm-grid-2">
             {[
               {
                 hospital: "ArkCare City Hospital",
                 symbol: "CITY",
                 balance: 34,
                 missions: 3,
-                accent: "bg-[#e6efeb]",
+                progress: "68%",
               },
               {
                 hospital: "Lotus Heart Institute",
                 symbol: "LOTUS",
                 balance: 12,
                 missions: 1,
-                accent: "bg-[#eeebf3]",
+                progress: "31%",
               },
             ].map((card) => (
-              <article key={card.symbol} className="cq-card overflow-hidden p-5">
-                <div className={"-mx-5 -mt-5 mb-5 h-2 " + card.accent} />
+              <article key={card.symbol} className="cq-card cq-card-hover p-5">
                 <div className="flex items-center justify-between gap-3">
-                  <Building2 className="h-5 w-5 text-primary" />
+                  <Building2
+                    className="h-[18px] w-[18px] text-[var(--text-muted)]"
+                    strokeWidth={1.75}
+                  />
                   <span className="cq-pixel-label">{card.symbol}</span>
                 </div>
-                <h3 className="mt-5 font-bold">{card.hospital}</h3>
-                <div className="mt-5 text-4xl font-black tracking-tight">{card.balance}</div>
-                <div className="text-xs font-bold text-muted-foreground">{card.symbol} CAPSULES</div>
-                <div className="cq-progress mt-5"><span style={{ width: card.symbol === "CITY" ? "68%" : "31%" }} /></div>
-                <div className="mt-3 text-xs text-muted-foreground">{card.missions} active mission(s)</div>
+                <h3 className="mt-3 nm-card-title text-[14px]">{card.hospital}</h3>
+                <div className="nm-metric-xl mt-3">{card.balance}</div>
+                <div className="nm-stat-label">{card.symbol} capsules</div>
+                <div className="cq-progress mt-3">
+                  <span style={{ width: card.progress }} />
+                </div>
+                <div className="mt-2 text-[11px] text-[var(--text-muted)]">
+                  {card.missions} active mission(s)
+                </div>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-[#f2f4ef] px-4 py-16 md:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_.95fr]">
-          <div className="cq-card cq-grid-paper p-6 md:p-8">
+      {/* ------------------------------------------------- simulation panel */}
+      <section className="px-4 pb-12 md:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="cq-card cq-grid-paper p-5 md:p-6">
             <div className="flex flex-wrap items-center gap-2">
-              <SimulationBadge>SIMULATED DEVICE</SimulationBadge>
-              <SimulationBadge>SIMULATED COMPUTE</SimulationBadge>
-              <SimulationBadge>SIMULATED MARKET</SimulationBadge>
+              <SimulationBadge>Simulated device</SimulationBadge>
+              <SimulationBadge>Simulated compute</SimulationBadge>
+              <SimulationBadge>Simulated market</SimulationBadge>
             </div>
-            <div className="mt-7 flex items-end justify-between gap-3">
+            <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
               <div>
-                <div className="cq-kicker">ACTIVE ACTIVITY MISSION</div>
-                <h3 className="mt-2 text-2xl font-black">3,842 / 5,000 steps</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Demo Health Connect · last sync 10:42</p>
+                <div className="cq-kicker">Active activity mission</div>
+                <h3 className="nm-metric-xl mt-1">3,842 / 5,000 steps</h3>
+                <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+                  Demo Health Connect · last sync 10:42
+                </p>
               </div>
-              <PixelCharacter variant="walker" mood="wave" size={84} />
+              <PixelCharacter variant="walker" mood="wave" size={68} />
             </div>
-            <div className="cq-progress mt-6 h-3"><span style={{ width: "76%" }} /></div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="cq-progress mt-4 !h-2.5">
+              <span style={{ width: "76%" }} />
+            </div>
+            <div className="mt-4 nm-grid-3">
               {[
                 ["18.4 H/s", "virtual hash rate"],
                 ["1,429", "virtual work units"],
                 ["+3 CITY", "Capsules at goal"],
               ].map(([value, label]) => (
-                <div key={label} className="rounded-xl border border-border bg-white/90 p-4">
-                  <div className="text-xl font-black">{value}</div>
-                  <div className="mt-1 text-[11px] font-semibold text-muted-foreground">{label}</div>
+                <div key={label} className="rounded-[16px] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+                  <div className="text-[18px] font-bold text-[var(--text-strong)]">
+                    {value}
+                  </div>
+                  <div className="mt-0.5 text-[11px] font-medium text-[var(--text-muted)]">
+                    {label}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex flex-col justify-center">
-            <div className="cq-kicker">CONCEPT SIMULATION</div>
-            <h2 className="mt-2 text-3xl font-black tracking-tight">
+          <div>
+            <div className="cq-kicker">Concept simulation</div>
+            <h2 className="cq-section-title mt-1">
               Show the future idea without pretending the phone is mining today.
             </h2>
-            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+            <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
               The demo simulates wearable sync, proof-of-work metrics and external token
               value. The actual CareQuest backend after that boundary—eligibility,
               idempotency, hospital Capsules, budgets, audit and local EVM settlement—is
               implemented as real application logic.
             </p>
-            <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-primary">
-              <ShieldCheck className="h-4 w-4" />
+            <div className="mt-4 flex items-center gap-2 text-[12px] font-semibold text-[var(--text)]">
+              <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
               Real and simulated ledgers remain visibly separate.
             </div>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-16 md:px-8 lg:px-12">
+      {/* ------------------------------------------------------------ roles */}
+      <section className="px-4 pb-12 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="cq-kicker">BUILT FOR EVERY ROLE</div>
-          <div className="mt-7 grid gap-4 md:grid-cols-2">
+          <div className="cq-kicker">Built for every role</div>
+          <div className="mt-4 nm-grid-3">
             {roles.map(([title, text], index) => (
-              <article key={title} className="cq-card flex gap-4 p-5">
-                <div className="font-mono text-xs font-black text-primary">0{index + 1}</div>
+              <article key={title} className="cq-card flex gap-3 p-5">
+                <span className="font-mono text-[11px] font-semibold text-[var(--text-subtle)]">
+                  0{index + 1}
+                </span>
                 <div>
-                  <h3 className="font-bold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
+                  <h3 className="nm-card-title">{title}</h3>
+                  <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
+                    {text}
+                  </p>
                 </div>
               </article>
             ))}
@@ -285,28 +312,38 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-white/65 px-4 py-16 md:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
-          <article className="cq-card p-6">
-            <WalletCards className="h-5 w-5 text-primary" />
-            <h3 className="mt-5 text-xl font-bold">Funded patient benefits</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+      {/* ------------------------------------------------- trust boundaries */}
+      <section className="px-4 pb-12 md:px-8">
+        <div className="mx-auto nm-grid-3 max-w-7xl">
+          <article className="cq-card p-5">
+            <WalletCards
+              className="h-[18px] w-[18px] text-[var(--text-muted)]"
+              strokeWidth={1.75}
+            />
+            <h3 className="mt-3 nm-card-title text-[14px]">Funded patient benefits</h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
               Hospital-specific reward budgets and redemptions stay separate from token
               supply and actual consultation payments.
             </p>
           </article>
-          <article className="cq-card p-6">
-            <Network className="h-5 w-5 text-[#817996]" />
-            <h3 className="mt-5 text-xl font-bold">Blockchain with boundaries</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <article className="cq-card p-5">
+            <Network
+              className="h-[18px] w-[18px] text-[var(--text-muted)]"
+              strokeWidth={1.75}
+            />
+            <h3 className="mt-3 nm-card-title text-[14px]">Blockchain with boundaries</h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
               Local Solidity/EVM proof rails support Capsules and audit commitments while
               clinical content remains off-chain.
             </p>
           </article>
-          <article className="cq-card p-6">
-            <Coins className="h-5 w-5 text-[#9a8150]" />
-            <h3 className="mt-5 text-xl font-bold">Economics you can explain</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <article className="cq-card p-5">
+            <Coins
+              className="h-[18px] w-[18px] text-[var(--text-muted)]"
+              strokeWidth={1.75}
+            />
+            <h3 className="mt-3 nm-card-title text-[14px]">Economics you can explain</h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
               Actual payments, reward costs and simulated compute economics are shown as
               distinct systems instead of one inflated revenue number.
             </p>
@@ -314,27 +351,38 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="enter" className="px-4 py-16 md:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-7xl gap-8 rounded-[1.8rem] border border-border bg-white/90 p-5 shadow-sm md:p-8 lg:grid-cols-[.8fr_1.2fr]">
-          <div className="flex flex-col justify-center">
-            <div className="cq-kicker">ENTER THE CARE NETWORK</div>
-            <h2 className="mt-2 text-3xl font-black tracking-tight">Pick a demo role.</h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              The seeded demo world lets judges move between the patient journey,
-              clinical plan approval, staff handoffs and hospital program analytics.
+      {/* ------------------------------------------------------------ enter */}
+      <section id="enter" className="px-4 pb-10 md:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[.8fr_1.2fr]">
+          <div>
+            <div className="cq-kicker">Enter the care network</div>
+            <h2 className="cq-section-title mt-1">Pick a demo role.</h2>
+            <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
+              The seeded demo world lets judges move between the patient journey, clinical
+              plan approval, staff handoffs and hospital program analytics.
             </p>
-            <div className="mt-5">
-              <PixelCharacter variant="guide" mood="celebrate" size={86} speech="Ready when you are." />
+            <div className="mt-4">
+              <PixelCharacter
+                variant="guide"
+                mood="celebrate"
+                size={72}
+                speech="Ready when you are."
+              />
             </div>
           </div>
-          <RoleSelection />
+          <div className="cq-card p-5 md:p-6">
+            <RoleSelection />
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-border px-4 py-8 text-xs text-muted-foreground md:px-8 lg:px-12">
+      <footer className="border-t border-[var(--border)] px-4 py-6 text-[11px] text-[var(--text-muted)] md:px-8">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-2 sm:flex-row">
           <span>ArkCare · CareQuest 2026</span>
-          <span>Clinician authority · honest participation · human handoffs · auditable rewards</span>
+          <span>
+            Clinician authority · honest participation · human handoffs · auditable
+            rewards
+          </span>
         </div>
       </footer>
     </main>

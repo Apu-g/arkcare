@@ -72,60 +72,57 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            {/* 🎨 REFINED: Dialog now uses the glassmorphism theme */}
-            <DialogContent className="h-[650px] w-full max-w-md flex flex-col p-0 bg-card border border-border text-white ">
+            <DialogContent className="flex h-[620px] w-full max-w-md flex-col p-0">
 
-                <DialogHeader className="p-4 sm:p-6 border-b border-border flex-shrink-0">
-                    <DialogTitle className="text-xl text-white">Health Assessment</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">
+                <DialogHeader className="flex-shrink-0 border-b border-[var(--border-subtle)] p-4 sm:p-5">
+                    <DialogTitle>Health Assessment</DialogTitle>
+                    <DialogDescription>
                         Answer all {HEALTH_QUESTIONS.length} questions for your health score.
                     </DialogDescription>
-                    <div className="mt-3">
-                        <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                    <div className="mt-2.5">
+                        <div className="mb-1.5 flex justify-between text-[11px] font-semibold text-[var(--text-muted)]">
                             <span>{Object.keys(responses).length} of {HEALTH_QUESTIONS.length} answered</span>
-                            <span>{Math.round(progress)}%</span>
+                            <span className="tabular-nums">{Math.round(progress)}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                            <div
-                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${progress}%` }}
-                            />
+                        <div className="cq-progress">
+                            <span style={{ width: `${progress}%` }} />
                         </div>
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-                    <Card key={currentQuestion.id} className="border-none shadow-none bg-transparent">
-                        <CardContent className="p-1">
-                            <div className="flex items-start space-x-4">
-                                <div className="flex-shrink-0 w-8 h-8 bg-muted border border-border rounded-full flex items-center justify-center text-sm font-medium text-zinc-200">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+                    <Card key={currentQuestion.id} className="border-none bg-transparent shadow-none">
+                        <CardContent className="p-0">
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[12px] font-bold text-[var(--dark-text)] tabular-nums">
                                     {currentQuestionIndex + 1}
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-lg font-medium text-zinc-100 mb-4">
+                                    <h3 className="nm-card-title mb-3 text-[14px]">
                                         {currentQuestion.question}
                                     </h3>
                                     <RadioGroup
                                         value={responses[currentQuestion.id] || ""}
                                         onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-                                        className="space-y-3"
+                                        className="space-y-2"
                                     >
                                         {currentQuestion.options.map((option) => (
-                                            // 🎨 REFINED: Radio button options with glassmorphism style
                                             <Label
                                                 key={option.value}
                                                 htmlFor={`${currentQuestion.id}-${option.value}`}
-                                                className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-all duration-200 ${responses[currentQuestion.id] === option.value
-                                                        ? 'bg-green-500/10 border-green-500/50 ring-2 ring-green-500/50'
-                                                        : 'bg-muted border-border hover:bg-muted'
+                                                className={`flex min-h-10 cursor-pointer items-center gap-3 rounded-[14px] border p-3 ${responses[currentQuestion.id] === option.value
+                                                        ? 'border-[var(--primary)] bg-[var(--primary-soft)] shadow-[var(--shadow-card)]'
+                                                        : 'border-[var(--border)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)]'
                                                     }`}
                                             >
                                                 <RadioGroupItem
                                                     value={option.value}
                                                     id={`${currentQuestion.id}-${option.value}`}
-                                                    className="border-border text-green-500"
+                                                    className="border-[var(--border-strong)] data-[state=checked]:border-[var(--primary)] data-[state=checked]:text-[var(--primary)]"
                                                 />
-                                                <span className="flex-1 text-sm font-normal text-zinc-200">{option.label}</span>
+                                                <span className="flex-1 text-[12.5px] font-normal text-[var(--text)]">
+                                                    {option.label}
+                                                </span>
                                             </Label>
                                         ))}
                                     </RadioGroup>
@@ -135,15 +132,14 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
                     </Card>
                 </div>
 
-                <div className="border-t border-border p-4 sm:p-6 flex-shrink-0">
-                    <div className="flex justify-between items-center">
+                <div className="flex-shrink-0 border-t border-[var(--border-subtle)] p-4 sm:p-5">
+                    <div className="flex items-center justify-between">
                         <Button
                             variant="ghost"
                             onClick={handleBack}
                             disabled={loading || currentQuestionIndex === 0}
-                            className="text-muted-foreground hover:bg-muted hover:text-white"
                         >
-                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
                             Back
                         </Button>
 
@@ -151,25 +147,25 @@ export default function HealthQuestionnaire({ isOpen, onClose, onComplete, previ
                             <Button
                                 onClick={handleSubmit}
                                 disabled={loading || Object.keys(responses).length < HEALTH_QUESTIONS.length}
-                                className="min-w-[150px] bg-green-600 hover:bg-green-500 text-white"
+                                className="min-w-[150px]"
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...
+                                        <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} /> Processing...
                                     </>
                                 ) : (
                                     <>
-                                        <CheckCircle className="h-4 w-4 mr-2" /> Get My Score
+                                        <CheckCircle className="h-4 w-4" strokeWidth={1.75} /> Get my score
                                     </>
                                 )}
                             </Button>
                         ) : (
                             <Button
+                                variant="outline"
                                 onClick={handleNext}
                                 disabled={loading || !responses[currentQuestion.id]}
-                                className="bg-muted hover:bg-muted border border-border text-white"
                             >
-                                Next <ChevronRight className="h-4 w-4 ml-1" />
+                                Next <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
                             </Button>
                         )}
                     </div>

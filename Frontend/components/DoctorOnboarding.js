@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createDoctorProfile } from "@/actions/doctorActions";
-import { Stethoscope, User, GraduationCap, Clock } from "lucide-react";
+import { AlertCircle, Stethoscope, User, GraduationCap, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const CATEGORIES = [
@@ -131,55 +131,56 @@ export default function DoctorOnboarding() {
   };
 
   return (
-    <div className="ark-page min-h-screen py-10 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="surface-frame mb-10 rounded-[1.5rem]">
-          <div className="surface-panel rounded-[1.5rem] border p-6 text-center md:p-8">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-300/10">
-              <Stethoscope className="h-8 w-8 text-violet-200" />
-            </div>
-            <div className="mb-3 flex flex-wrap justify-center gap-2">
-              <span className="status-chip">Doctor onboarding</span>
-              <span className="status-chip">Profile quest</span>
-            </div>
-            <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">Build your care profile</h1>
-            <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-              Complete credentials, consultation details, and availability so patients can discover and book you.
-            </p>
-            <div className="mx-auto mt-6 max-w-md">
-              <div className="progress-track"><span /></div>
-              <p className="mt-2 text-xs text-muted-foreground">Profile setup · verification comes next</p>
-            </div>
+    <div className="nm-stack mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      {/* This page renders outside CareQuestShell, so it supplies its own page
+          padding. Everything below the root uses the shared nm-* primitives. */}
+        <section className="nm-dark-card p-6 text-center md:p-7">
+          <div className="nm-stat-icon mx-auto">
+            <Stethoscope className="h-5 w-5" strokeWidth={1.75} />
           </div>
-        </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">Doctor onboarding</span>
+            <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">Profile quest</span>
+          </div>
+          <h1 className="mt-3 text-[20px] font-bold leading-tight tracking-[-0.01em] text-[#fff] md:text-[22px]">
+            Build your care profile
+          </h1>
+          <p className="mx-auto mt-1.5 max-w-2xl text-[13px] leading-relaxed text-[var(--dark-muted)]">
+            Complete credentials, consultation details, and availability so patients can discover and book you.
+          </p>
+          <div className="mx-auto mt-5 max-w-sm">
+            <div className="progress-track"><span /></div>
+            <p className="mt-2 text-[11px] text-[var(--dark-muted)]">Profile setup · verification comes next</p>
+          </div>
+        </section>
 
-        <form onSubmit={handleSubmit} className="space-y-10">
+        <form onSubmit={handleSubmit} className="nm-stack">
           {/* Personal Information */}
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-3 text-white">
-                <User className="h-6 w-6 text-green-400" />
-                <span className="text-xl">Personal Information</span>
+          <Card className="cq-card gap-0 border-0 p-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2.5">
+                <div className="nm-stat-icon">
+                  <User className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <span className="text-[14px]">Personal information</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="name" className="text-zinc-300 text-base">Full Name *</Label>
+            <CardContent className="nm-stack">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full name *</Label>
                   <Input
                     id="name"
-                    className="bg-card border-border text-white focus:border-green-400 h-12 text-base"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="phone" className="text-zinc-300 text-base">Phone Number *</Label>
+                  <Label htmlFor="phone">Phone number *</Label>
                   <Input
                     id="phone"
                     type="tel"
-                    className="bg-card border-border text-white focus:border-green-400 h-12 text-base"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     required
@@ -190,20 +191,21 @@ export default function DoctorOnboarding() {
           </Card>
 
           {/* Professional Information */}
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-3 text-white">
-                <GraduationCap className="h-6 w-6 text-green-400" />
-                <span className="text-xl">Professional Information</span>
+          <Card className="cq-card gap-0 border-0 p-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2.5">
+                <div className="nm-stat-icon">
+                  <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <span className="text-[14px]">Professional information</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="specialization" className="text-zinc-300 text-base">Specialization *</Label>
+            <CardContent className="nm-stack">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="specialization">Specialization *</Label>
                   <Input
                     id="specialization"
-                    className="bg-card border-border text-white focus:border-green-400 h-12 text-base"
                     value={formData.specialization}
                     onChange={(e) => handleInputChange('specialization', e.target.value)}
                     placeholder="e.g. Internal Medicine"
@@ -211,14 +213,17 @@ export default function DoctorOnboarding() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="category" className="text-zinc-300 text-base">Category *</Label>
+                  <Label htmlFor="category">Category *</Label>
                   <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                    <SelectTrigger className="bg-card border-border text-white h-12 text-base">
+                    <SelectTrigger
+                      id="category"
+                      className="h-10 w-full rounded-[14px] border border-transparent bg-[var(--surface-subtle)] px-3.5 text-[14px] text-[var(--text)] shadow-[var(--shadow-inset)] focus-visible:ring-2 focus-visible:ring-ring/40"
+                    >
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-border text-white">
+                    <SelectContent>
                       {CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category.toLowerCase()} className="hover:bg-muted text-base">
+                        <SelectItem key={category} value={category.toLowerCase()}>
                           {category}
                         </SelectItem>
                       ))}
@@ -227,27 +232,25 @@ export default function DoctorOnboarding() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="experience" className="text-zinc-300 text-base">Years of Experience *</Label>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="experience">Years of experience *</Label>
                   <Input
                     id="experience"
                     type="number"
                     min="0"
-                    className="bg-card border-border text-white focus:border-green-400 h-12 text-base"
                     value={formData.experience}
                     onChange={(e) => handleInputChange('experience', e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="consultationFee" className="text-zinc-300 text-base">Consultation Fee (₹) *</Label>
+                  <Label htmlFor="consultationFee">Consultation fee (₹) *</Label>
                   <Input
                     id="consultationFee"
                     type="number"
                     min="0"
                     step="0.01"
-                    className="bg-card border-border text-white focus:border-green-400 h-12 text-base"
                     value={formData.consultationFee}
                     onChange={(e) => handleInputChange('consultationFee', e.target.value)}
                     required
@@ -255,58 +258,59 @@ export default function DoctorOnboarding() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="qualifications" className="text-zinc-300 text-base">Qualifications *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="qualifications">Qualifications *</Label>
                 <Textarea
                   id="qualifications"
-                  className="bg-card border-border text-white focus:border-green-400 min-h-[120px] text-base"
+                  className="min-h-[120px]"
                   value={formData.qualifications}
                   onChange={(e) => handleInputChange('qualifications', e.target.value)}
                   placeholder="Enter qualifications separated by commas (e.g. MBBS, MD Internal Medicine, Fellowship in Cardiology)"
                   required
                 />
-                <p className="text-sm text-muted-foreground mt-2">Separate multiple qualifications with commas</p>
+                <p className="text-[11px] text-muted-foreground">Separate multiple qualifications with commas</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Availability */}
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-3 text-white">
-                <Clock className="h-6 w-6 text-green-400" />
-                <span className="text-xl">Availability</span>
+          <Card className="cq-card gap-0 border-0 p-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2.5">
+                <div className="nm-stat-icon">
+                  <Clock className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <span className="text-[14px]">Availability</span>
               </CardTitle>
-              <CardDescription className="text-muted-foreground text-base pt-1">
-                Select the days and time slots when you're available for consultations
+              <CardDescription>
+                Select the days and time slots when you are available for consultations
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-8 pt-2">
+            <CardContent className="nm-stack">
               {formData.availability.map((dayAvail, dayIndex) => (
-                <div key={dayAvail.day} className="space-y-4">
-                  <div className="flex items-center space-x-3">
+                <div key={dayAvail.day} className="space-y-3">
+                  <div className="flex items-center gap-3">
                     <Checkbox
                       id={dayAvail.day}
                       checked={dayAvail.selected}
                       onCheckedChange={() => handleDayToggle(dayIndex)}
-                      className="w-5 h-5 border-border data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                      className="size-5 border-[var(--border-strong)] data-[state=checked]:bg-[var(--primary)] data-[state=checked]:border-[var(--primary)]"
                     />
-                    <Label htmlFor={dayAvail.day} className="text-lg font-medium text-white">
+                    <Label htmlFor={dayAvail.day} className="text-[13px] font-semibold text-[var(--text-strong)]">
                       {dayAvail.day}
                     </Label>
                   </div>
-                  
+
                   {dayAvail.selected && (
-                    <div className="ml-8 space-y-4">
-                      <p className="text-base text-muted-foreground">Select available time slots:</p>
-                      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                    <div className="ml-8 space-y-3">
+                      <p className="text-[12px] text-muted-foreground">Select available time slots:</p>
+                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
                         {TIME_SLOTS.map((slot) => (
                           <Button
                             key={slot}
                             type="button"
                             variant={dayAvail.slots.includes(slot) ? "default" : "outline"}
                             size="sm"
-                            className={`text-sm px-3 py-2 ${dayAvail.slots.includes(slot) ? 'bg-green-600 hover:bg-green-700' : 'bg-card border-border text-white hover:bg-muted hover:text-white'}`}
                             onClick={() => handleSlotToggle(dayIndex, slot)}
                           >
                             {slot}
@@ -314,7 +318,7 @@ export default function DoctorOnboarding() {
                         ))}
                       </div>
                       {dayAvail.slots.length > 0 && (
-                        <p className="text-base text-green-400">
+                        <p className="text-[12px] font-semibold text-[var(--success)]">
                           Selected: {dayAvail.slots.length} slots
                         </p>
                       )}
@@ -326,29 +330,32 @@ export default function DoctorOnboarding() {
           </Card>
 
           {error && (
-            <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-[16px] bg-[var(--destructive-soft)] px-4 py-3 text-[12px] leading-relaxed text-[var(--destructive)]"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
               {error}
             </div>
           )}
 
           {/* Submit */}
-          <Card className="bg-card border-border">
-            <CardContent className="py-8">
-              <Button 
-                type="submit" 
-                size="lg" 
-                className="w-full bg-green-600 hover:bg-green-700 text-white h-14 text-lg"
+          <Card className="cq-card gap-0 border-0 p-0">
+            <CardContent className="p-6 text-center">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
                 disabled={loading}
               >
                 {loading ? "Creating Profile..." : "Submit for Review"}
               </Button>
-              <p className="text-base text-muted-foreground text-center mt-6">
-                Your profile will be reviewed by our team and you'll be notified once approved.
+              <p className="mt-4 text-center text-[12px] text-muted-foreground">
+                Your profile will be reviewed by our team and you&apos;ll be notified once approved.
               </p>
             </CardContent>
           </Card>
         </form>
-      </div>
     </div>
   );
 }

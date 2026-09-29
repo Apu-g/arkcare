@@ -109,7 +109,7 @@ export default function ActivitySimulationCard({
   }
 
   return (
-    <section className="cq-card cq-grid-paper overflow-hidden p-5 md:p-6">
+    <section className="cq-card overflow-hidden p-5 md:p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2">
@@ -117,9 +117,9 @@ export default function ActivitySimulationCard({
             <SimulationBadge>SIMULATED COMPUTE</SimulationBadge>
             <SimulationBadge>SIMULATED MARKET</SimulationBadge>
           </div>
-          <div className="mt-4 cq-kicker">ACTIVE CARE MISSION · {organization.name}</div>
-          <h2 className="mt-1 text-2xl font-black tracking-tight">Walking activity demo</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <div className="cq-kicker mt-3">ACTIVE CARE MISSION · {organization.name}</div>
+          <h2 className="cq-section-title mt-1">Walking activity demo</h2>
+          <p className="mt-1.5 max-w-2xl text-[12.5px] leading-6 text-[var(--text-muted)]">
             The phone/wearable, proof-of-work and public-value stream are virtual.
             Eligibility, duplicate protection, Capsule award, audit and hospital program
             accounting after submission are real application logic.
@@ -128,53 +128,65 @@ export default function ActivitySimulationCard({
         <PixelCharacter
           variant="walker"
           mood={result ? "celebrate" : running ? "wave" : "idle"}
-          size={86}
+          size={80}
           speech={result ? "+" + reward + " " + program.capsuleSymbol + "!" : "Ready for a calm activity mission."}
         />
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-4">
-        <div className="rounded-xl border border-border bg-white/90 p-4">
-          <Footprints className="h-4 w-4 text-primary" />
-          <div className="mt-3 text-2xl font-black">{steps.toLocaleString()}</div>
-          <div className="text-xs font-semibold text-muted-foreground">of {goal.toLocaleString()} steps</div>
+      <div className="mt-5 nm-grid-3">
+        <div className="nm-stat">
+          <div className="nm-stat-icon">
+            <Footprints className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </div>
+          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">{steps.toLocaleString()}</div>
+          <div className="nm-stat-label mt-0.5">of {goal.toLocaleString()} steps</div>
         </div>
-        <div className="rounded-xl border border-border bg-white/90 p-4">
-          <Cpu className="h-4 w-4 text-[#817996]" />
-          <div className="mt-3 text-2xl font-black">{hashRate} H/s</div>
-          <div className="text-xs font-semibold text-muted-foreground">virtual hash rate</div>
+        <div className="nm-stat">
+          <div className="nm-stat-icon">
+            <Cpu className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </div>
+          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">{hashRate} H/s</div>
+          <div className="nm-stat-label mt-0.5">virtual hash rate</div>
         </div>
-        <div className="rounded-xl border border-border bg-white/90 p-4">
-          <Activity className="h-4 w-4 text-[#9a8150]" />
-          <div className="mt-3 text-2xl font-black">{Math.max(0, Math.round(steps / 420))}</div>
-          <div className="text-xs font-semibold text-muted-foreground">virtual accepted shares</div>
+        <div className="nm-stat">
+          <div className="nm-stat-icon">
+            <Activity className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </div>
+          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">
+            {Math.max(0, Math.round(steps / 420))}
+          </div>
+          <div className="nm-stat-label mt-0.5">virtual accepted shares</div>
         </div>
-        <div className="rounded-xl border border-border bg-white/90 p-4">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          <div className="mt-3 text-2xl font-black">+{reward}</div>
-          <div className="text-xs font-semibold text-muted-foreground">{program.capsuleSymbol} at verified goal</div>
+        <div className="nm-stat">
+          <div className="nm-stat-icon">
+            <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </div>
+          <div className="nm-stat-value mt-2.5 text-[22px] tabular-nums">+{reward}</div>
+          <div className="nm-stat-label mt-0.5">
+            {program.capsuleSymbol} at verified goal
+          </div>
         </div>
       </div>
 
       <div className="mt-5">
-        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+        <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--text-muted)]">
           <span>{progress}%</span>
           <span>{running ? "Demo stream active" : steps >= goal ? "Goal reached" : "Waiting"}</span>
         </div>
-        <div className="cq-progress mt-2 h-3">
+        <div className="cq-progress mt-2">
           <span style={{ width: progress + "%" }} />
         </div>
       </div>
 
       {!activityOccurrence ? (
-        <div className="mt-5 rounded-xl border border-dashed border-border bg-white/75 p-4 text-sm leading-6 text-muted-foreground">
+        <div className="mt-5 rounded-[16px] bg-[var(--surface-subtle)] p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
           No clinician-approved activity mission is available in this hospital journey.
           The virtual phone/mining demo cannot start without one.
         </div>
       ) : activityOccurrence.status !== "due" ? (
-        <div className="mt-5 rounded-xl border border-border bg-white/75 p-4 text-sm leading-6 text-muted-foreground">
+        <div className="mt-5 rounded-[16px] bg-[var(--surface-subtle)] p-4 text-[12.5px] leading-6 text-[var(--text-muted)]">
           This activity is approved but scheduled for{" "}
-          <strong className="text-foreground">
+          <strong className="text-[var(--text-strong)]">
             {new Date(activityOccurrence.scheduledFor).toLocaleString()}
           </strong>
           . Use the demo clock only when demonstrating the scheduler.
@@ -184,12 +196,12 @@ export default function ActivitySimulationCard({
       <div className="mt-5 flex flex-wrap items-center gap-2">
         {activityOccurrence && activityOccurrence.status === "due" && !consented ? (
           <Button variant="outline" onClick={connectDemoDevice}>
-            <Smartphone className="h-4 w-4" />
+            <Smartphone className="h-4 w-4" strokeWidth={1.75} />
             Connect simulated Health Connect
           </Button>
         ) : (
           <span className="cq-pixel-label cq-real-label">
-            <CheckCircle2 className="h-3 w-3" /> DEMO CONSENT ON
+            <CheckCircle2 className="h-3 w-3" strokeWidth={2} /> DEMO CONSENT ON
           </span>
         )}
 
@@ -199,31 +211,31 @@ export default function ActivitySimulationCard({
         !session &&
         !result ? (
           <Button onClick={start}>
-            <Play className="h-4 w-4" />
+            <Play className="h-4 w-4" strokeWidth={1.75} />
             Start simulated activity
           </Button>
         ) : null}
 
         {session && !result && !running && steps >= goal ? (
           <Button onClick={verify}>
-            <ShieldCheck className="h-4 w-4" />
+            <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
             Verify demo evidence & claim Capsules
           </Button>
         ) : null}
 
         {result ? (
           <span className="cq-pixel-label cq-real-label">
-            <CheckCircle2 className="h-3 w-3" />
+            <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
             Mission evidence processed once
           </span>
         ) : null}
       </div>
 
       {result?.mining ? (
-        <div className="mt-5 rounded-xl border border-[#e6d9bc] bg-[#faf5e8] p-4">
+        <div className="mt-5 rounded-[16px] bg-[var(--gold-soft)] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <SimulationBadge>SIMULATED MINING PAYOUT</SimulationBadge>
-            <span className="font-mono text-xs font-bold text-[#735f38]">
+            <span className="font-mono text-[11px] font-bold text-[var(--gold)]">
               {result.mining.simulatedCoinAmount} {result.mining.simulatedCoinSymbol}
             </span>
           </div>
@@ -235,12 +247,16 @@ export default function ActivitySimulationCard({
               ["₹" + result.mining.platformShareInr, "platform share"],
             ].map(([value, label]) => (
               <div key={label}>
-                <div className="text-lg font-black">{value}</div>
-                <div className="text-[11px] font-semibold text-muted-foreground">{label}</div>
+                <div className="text-[16px] font-bold text-[var(--text-strong)] tabular-nums">
+                  {value}
+                </div>
+                <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                  {label}
+                </div>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+          <p className="mt-3 text-[11px] leading-5 text-[var(--text-muted)]">
             Concept simulation only. These values are not payments, hospital revenue or
             public-chain assets.
           </p>
@@ -248,7 +264,7 @@ export default function ActivitySimulationCard({
       ) : null}
 
       {message ? (
-        <div className="cq-achievement mt-4 rounded-xl border border-border bg-white/90 px-4 py-3 text-sm text-muted-foreground">
+        <div className="cq-card-soft cq-achievement mt-4 px-4 py-3 text-[12.5px] leading-6 text-[var(--text)]">
           {message}
         </div>
       ) : null}

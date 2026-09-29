@@ -5,18 +5,17 @@ import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import PDFUploaderModal from './PDFUploaderModal';
 import {
-    MessageCircle,
     Send,
     Bot,
     User,
     Stethoscope,
     Phone,
     Calendar,
+    ArrowDown,
     ArrowLeft,
-    FileText
+    FileText,
 } from "lucide-react";
 import BookAppointmentModal from "@/components/BookAppointmentModal";
 import { getDoctorForBooking } from "@/actions/doctorActions";
@@ -127,244 +126,241 @@ export default function ChatbotPage() {
     };
 
     return (
-        <div className="fixed inset-0 z-40 flex flex-col bg-transparent">
-            <div className="absolute top-20 left-10 w-2 h-2 bg-green-400 rounded-full animate-pulse opacity-40"></div>
-            <div className="absolute top-40 right-20 w-1 h-1 bg-green-300 rounded-full animate-pulse opacity-30"></div>
-            <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-green-200 rounded-full animate-pulse opacity-35"></div>
-
+        <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-3 px-4 py-4">
             {/* Top Header with Navigation */}
-            <div className="surface-panel relative z-10 m-3 flex items-center justify-between rounded-2xl border p-3 md:m-4 md:p-4">
-                <div className="flex items-center space-x-3">
-                    <button
+            <header className="cq-card flex flex-wrap items-center justify-between gap-3 p-4">
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        size="icon"
                         onClick={() => router.push('/patient')}
-                        className="p-2 rounded-2xl bg-card hover:bg-muted/90 text-zinc-300 hover:text-white transition-all duration-200"
                         aria-label="Go back"
                     >
-                        <ArrowLeft className="h-5 w-5" />
-                    </button>
-                    <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-green-500/15 border border-green-400/20 rounded-2xl">
-                            <Bot className="h-6 w-6 text-green-400" />
+                        <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                    </Button>
+                    <div className="flex items-center gap-2">
+                        <div className="nm-stat-icon">
+                            <Bot className="h-[18px] w-[18px]" strokeWidth={1.75} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-lg font-bold text-white">ArkCare AI Guide</h1>
+                                <h1 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                                    ArkCare AI Guide
+                                </h1>
                                 <span className="status-chip hidden sm:inline-flex">Care quest</span>
                             </div>
-                            <p className="text-xs text-muted-foreground">Private session • triage + specialist discovery</p>
+                            <p className="text-[11px] text-[var(--text-muted)]">
+                                Private session • triage + specialist discovery
+                            </p>
                         </div>
                     </div>
                 </div>
-                <Button onClick={() => setIsUploaderOpen(true)} variant="outline"
-                    className="bg-muted/70 text-zinc-200 border-border hover:bg-muted hover:text-white"
-                >Upload Reports</Button>
-                <PDFUploaderModal isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} />
+                <Button variant="outline" onClick={() => setIsUploaderOpen(true)}>
+                    <FileText className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                    Upload Reports
+                </Button>
+            </header>
+            <PDFUploaderModal isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} />
 
-            </div>
-
-            {/* Enhanced Chat Container */}
-            <div className="relative z-10 flex-1 flex flex-col bg-transparent max-h-full overflow-hidden">
-                <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
-                    {/* Messages Area with better styling */}
-                    <div
-                        ref={scrollAreaRef}
-                        className="flex-1 p-6 overflow-y-scroll"
-                        style={{
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: 'rgba(255,255,255,0.3) transparent'
-                        }}
-                    >
-                        {messages.length === 0 ? (
-                            <div className="flex items-center justify-center h-full">
-                                <div className="text-center py-12 max-w-md">
-                                    <div className="p-6 bg-green-500/10 rounded-full w-fit mx-auto mb-6 border border-green-500/15">
-                                        <Bot className="h-16 w-16 text-green-400" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white mb-3">
-                                        Start a care conversation
-                                    </h3>
-                                    <p className="text-muted-foreground mb-6 leading-relaxed">
-                                        Describe what you are experiencing. ArkCare can organize the concern, suggest an appropriate specialty, and surface bookable doctors when relevant.
-                                    </p>
-                                    <div className="grid grid-cols-1 gap-2 text-sm">
-                                        <div className="p-3 bg-muted rounded-2xl border border-border">
-                                            <span className="text-green-400">💡 Example: </span>
-                                            <span className="text-zinc-300">"I have a persistent headache and feel dizzy"</span>
-                                        </div>
-                                    </div>
+            {/* Chat area */}
+            <div className="relative flex min-h-0 flex-1 flex-col">
+                <div
+                    ref={scrollAreaRef}
+                    className="flex-1 overflow-y-auto py-2"
+                    style={{
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(116,116,121,0.35) transparent'
+                    }}
+                >
+                    {messages.length === 0 ? (
+                        <div className="cq-card flex h-full items-center justify-center p-8">
+                            <div className="max-w-md text-center">
+                                <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[var(--surface-subtle)] shadow-[var(--shadow-inset)]">
+                                    <Bot className="h-8 w-8 text-[var(--text-muted)]" strokeWidth={1.75} />
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-6 max-w-4xl mx-auto w-full">
-                                {messages.map((message, index) => (
-                                    <div
-                                        key={index}
-                                        className={`flex ${message.isUser ? "justify-end" : "justify-start"} group`}
-                                    >
-                                        <div
-                                            className={`max-w-[85%] rounded-2xl px-6 py-4  ${message.isUser
-                                                ? "bg-green-500/90 text-white border border-green-400/40 backdrop-blur-sm"
-                                                : message.isError
-                                                    ? "bg-green-900/40 text-green-300 border border-green-500/40 backdrop-blur-sm"
-                                                    : "bg-card text-zinc-100 border border-border"
-                                                } transition-all duration-200 group-hover:shadow-xl ${message.isUser
-                                                    ? "group-hover:shadow-green-500/20"
-                                                    : "group-hover:shadow-gray-500/10"
-                                                }`}
-                                        >
-                                            {/* Enhanced Message Header */}
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className={`p-1 rounded-full ${message.isUser
-                                                        ? "bg-white/20"
-                                                        : "bg-green-500/20"
-                                                        }`}>
-                                                        {message.isUser ?
-                                                            <User className="h-3 w-3" /> :
-                                                            <Bot className="h-3 w-3 text-green-400" />
-                                                        }
-                                                    </div>
-                                                    <span className="text-xs font-medium opacity-80">
-                                                        {message.isUser ? "You" : "AI Assistant"}
-                                                    </span>
-                                                </div>
-                                                <span className="text-xs opacity-60">
-                                                    {formatTime(message.timestamp)}
-                                                </span>
-                                            </div>
-
-                                            {/* Enhanced Message Text */}
-                                            <div className="leading-relaxed whitespace-pre-wrap text-sm">
-                                                {message.text}
-                                            </div>
-
-                                            {/* Enhanced Specialists Section */}
-                                            {message.specialists && message.specialists.length > 0 && (
-                                                <div className="mt-6 p-4 bg-card rounded-2xl border border-border">
-                                                    <div className="flex items-center space-x-2 mb-4">
-                                                        <div className="p-1 bg-green-500/15 rounded border border-green-400/20">
-                                                            <Stethoscope className="h-4 w-4 text-green-400" />
-                                                        </div>
-                                                        <span className="font-semibold text-sm text-white">Recommended Specialists</span>
-                                                        {message.doctorSource === "mongodb_live" && (
-                                                            <span className="cq-pixel-label cq-real-label ml-auto">
-                                                                LIVE DATABASE
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="grid gap-3">
-                                                        {message.specialists.map((specialist, specIndex) => (
-                                                            <div
-                                                                key={specialist.doctor_id || specIndex}
-                                                                data-doctor-id={specialist.doctor_id || ""}
-                                                                className="bg-muted rounded-2xl p-4 border border-border hover:bg-muted/80 transition-colors"
-                                                            >
-                                                                <div className="flex items-start justify-between">
-                                                                    <div className="flex-1">
-                                                                        <h4 className="font-semibold text-white">{specialist.name}</h4>
-                                                                        <p className="text-sm text-green-400 mb-2">{specialist.specialization}</p>
-                                                                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                                                            <span className="flex items-center space-x-1">
-                                                                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                                                                                <span>{specialist.experience} years exp</span>
-                                                                            </span>
-                                                                            {Number.isFinite(Number(specialist.consultationFee)) && (
-                                                                                <span>₹{Number(specialist.consultationFee).toLocaleString("en-IN")}</span>
-                                                                            )}
-                                                                            {specialist.phone && (
-                                                                                <div className="flex items-center space-x-1">
-                                                                                    <Phone className="h-3 w-3" />
-                                                                                    <span>{specialist.phone}</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        onClick={() => handleBookAppointment(specialist)}
-                                                                        className="ml-3 bg-green-500/90 hover:bg-green-400/90 text-white border border-green-400/40  hover:shadow-green-500/20 transition-all"
-                                                                    >
-                                                                        <Calendar className="h-3 w-3 mr-1" />
-                                                                        Book Now
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Enhanced Loading Message */}
-                                {loading && (
-                                    <div className="flex justify-start group">
-                                        <div className="bg-card border border-border rounded-2xl px-6 py-4 max-w-[85%] ">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="p-1 bg-green-500/15 rounded-full border border-green-400/20">
-                                                    <Bot className="h-3 w-3 text-green-400" />
-                                                </div>
-                                                <div className="flex space-x-1">
-                                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
-                                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                                </div>
-                                                <span className="text-sm text-zinc-300">AI is analyzing your symptoms...</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Enhanced Scroll to Bottom Button */}
-                    {messages.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={handleScrollToBottom}
-                            className="absolute right-6 bottom-32 z-20 bg-green-500/90 hover:bg-green-400/90 text-white rounded-full  p-3 transition-all duration-200 border border-green-400/30 hover:scale-105"
-                            aria-label="Scroll to bottom"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                    )}
-
-                    {/* Enhanced Input Area */}
-                    <div className="surface-panel m-3 mt-0 rounded-2xl border p-4 md:m-4 md:mt-0 md:p-5">
-                        <div className="max-w-4xl mx-auto">
-                            <form onSubmit={handleSubmit} className="flex space-x-4">
-                                <div className="flex-1 relative">
-                                    <Input
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        placeholder="Describe your symptoms or ask a health question..."
-                                        disabled={loading}
-                                        className="w-full bg-muted border-border text-zinc-100 placeholder:text-muted-foreground focus-visible:ring-green-400 focus-visible:border-green-400/60 h-14 text-base px-6 rounded-2xl  transition-all duration-200"
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    disabled={loading || !input.trim()}
-                                    className="h-14 w-14 bg-green-500/90 hover:bg-green-400/90 rounded-2xl  hover:shadow-green-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-green-400/40"
-                                >
-                                    <Send className="h-5 w-5" />
-                                </Button>
-                            </form>
-                            <div className="flex items-center justify-between mt-4">
-                                <p className="text-xs text-muted-foreground">
-                                    💡 Try: "I have chest pain and shortness of breath" or "What are the symptoms of diabetes?"
+                                <h3 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                                    Start a care conversation
+                                </h3>
+                                <p className="mt-2 text-[13px] leading-6 text-[var(--text-muted)]">
+                                    Describe what you are experiencing. ArkCare can organize the concern, suggest an appropriate specialty, and surface bookable doctors when relevant.
                                 </p>
-                                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                    <span>AI Assistant Online</span>
+                                <div className="mt-5">
+                                    <p className="text-[12px] leading-5 text-[var(--text-muted)]">
+                                        <span className="font-semibold text-[var(--text)]">Example:</span>{" "}
+                                        &ldquo;I have a persistent headache and feel dizzy&rdquo;
+                                    </p>
                                 </div>
                             </div>
                         </div>
+                    ) : (
+                        <div className="nm-stack-sm max-w-3xl">
+                            {messages.map((message, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+                                >
+                                    <div
+                                        className={
+                                            "max-w-[88%] rounded-[18px] px-4 py-3 " +
+                                            (message.isUser
+                                                ? "bg-[var(--primary)] text-white"
+                                                : message.isError
+                                                    ? "border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] text-[var(--destructive)]"
+                                                    : "cq-card text-[var(--text)]")
+                                        }
+                                    >
+                                        <div className="mb-2 flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2">
+                                                {message.isUser ? (
+                                                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white/15">
+                                                        <User className="h-3 w-3" strokeWidth={1.75} />
+                                                    </span>
+                                                ) : (
+                                                    <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px]">
+                                                        <Bot className="h-3 w-3" strokeWidth={1.75} />
+                                                    </span>
+                                                )}
+                                                <span className={
+                                                    "text-[11px] font-semibold " +
+                                                    (message.isUser ? "text-white/80" : "text-[var(--text-muted)]")
+                                                }>
+                                                    {message.isUser ? "You" : "AI Assistant"}
+                                                </span>
+                                            </div>
+                                            <span className={
+                                                "text-[11px] " +
+                                                (message.isUser ? "text-white/60" : "text-[var(--text-subtle)]")
+                                            }>
+                                                {formatTime(message.timestamp)}
+                                            </span>
+                                        </div>
+
+                                        <div className="whitespace-pre-wrap text-[13px] leading-6">
+                                            {message.text}
+                                        </div>
+
+                                        {message.specialists && message.specialists.length > 0 && (
+                                            <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
+                                                <div className="mb-3 flex items-center gap-2">
+                                                    <Stethoscope
+                                                        className="h-[18px] w-[18px] text-[var(--text-muted)]"
+                                                        strokeWidth={1.75}
+                                                    />
+                                                    <span className="nm-card-title">
+                                                        Recommended Specialists
+                                                    </span>
+                                                    {message.doctorSource === "mongodb_live" && (
+                                                        <span className="cq-pixel-label cq-real-label ml-auto">
+                                                            Live database
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="nm-stack-sm">
+                                                    {message.specialists.map((specialist, specIndex) => (
+                                                        <div
+                                                            key={specialist.doctor_id || specIndex}
+                                                            data-doctor-id={specialist.doctor_id || ""}
+                                                            className="cq-card-soft p-3"
+                                                        >
+                                                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <h4 className="nm-card-title">
+                                                                        {specialist.name}
+                                                                    </h4>
+                                                                    <p className="text-[12px] font-semibold text-[var(--text-muted)]">
+                                                                        {specialist.specialization}
+                                                                    </p>
+                                                                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--text-muted)]">
+                                                                        <span>{specialist.experience} years exp</span>
+                                                                        {Number.isFinite(Number(specialist.consultationFee)) && (
+                                                                            <span>₹{Number(specialist.consultationFee).toLocaleString("en-IN")}</span>
+                                                                        )}
+                                                                        {specialist.phone && (
+                                                                            <span className="flex items-center gap-1">
+                                                                                <Phone className="h-3 w-3" strokeWidth={1.75} />
+                                                                                {specialist.phone}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <Button
+                                                                    onClick={() => handleBookAppointment(specialist)}
+                                                                >
+                                                                    <Calendar className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                                                                    Book Now
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {loading && (
+                                <div className="flex justify-start">
+                                    <div className="cq-card px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="nm-stat-icon !h-6 !w-6 !rounded-[9px]">
+                                                <Bot className="h-3 w-3" strokeWidth={1.75} />
+                                            </span>
+                                            <span className="text-[13px] text-[var(--text-muted)]">
+                                                AI is analyzing your symptoms…
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Scroll to Bottom */}
+                {messages.length > 0 && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleScrollToBottom}
+                        className="absolute bottom-2 right-2"
+                        aria-label="Scroll to bottom"
+                        title="Scroll to bottom"
+                    >
+                        <ArrowDown className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                    </Button>
+                )}
+            </div>
+
+            {/* Input Area */}
+            <div className="cq-card p-4">
+                <form onSubmit={handleSubmit} className="flex gap-3">
+                    <div className="flex-1">
+                        <Input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Describe your symptoms or ask a health question…"
+                            disabled={loading}
+                            aria-label="Describe your symptoms or ask a health question"
+                            className="!h-12"
+                        />
                     </div>
+                    <Button
+                        type="submit"
+                        size="icon"
+                        disabled={loading || !input.trim()}
+                        aria-label="Send message"
+                    >
+                        <Send className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                    </Button>
+                </form>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                        Try: &ldquo;I have chest pain and shortness of breath&rdquo; or
+                        &ldquo;What are the symptoms of diabetes?&rdquo;
+                    </p>
+                    <span className="status-chip">AI Assistant online</span>
                 </div>
             </div>
 

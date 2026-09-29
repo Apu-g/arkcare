@@ -35,34 +35,46 @@ function SignInForm() {
     }
   };
 
-  const inputClass =
-    "w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 text-white placeholder:text-muted-foreground outline-none";
+  const inputClass = "nm-input";
 
   return (
-    <main className="ark-page flex min-h-screen items-center px-4 py-10 md:px-8">
+    <main className="flex min-h-screen items-center px-4 py-10 md:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[.9fr_1.1fr]">
-        <section className="surface-card hidden min-h-[650px] flex-col justify-between p-8 lg:flex">
+        <section className="nm-dark-card hidden min-h-[640px] flex-col justify-between p-8 lg:flex">
           <div>
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white">
-              <ArrowLeft className="h-4 w-4" />
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-[13px] font-semibold text-white/70 transition hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
               Back to ArkCare
             </Link>
             <div className="mt-16">
-              <span className="status-chip">Session checkpoint</span>
-              <h1 className="mt-6 text-5xl font-black leading-[1.02] tracking-[-.045em]">
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold text-white/80">
+                Session checkpoint
+              </span>
+              <h1 className="mt-6 text-[34px] font-bold leading-[1.1] tracking-[-0.02em] text-white">
                 Resume your
-                <span className="brand-text"> care journey.</span>
+                <span className="text-white/60"> care journey.</span>
               </h1>
-              <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
-                Your role, appointments, reports, conversations, and care tools continue from one secure session.
+              <p className="mt-4 max-w-md text-[13px] leading-relaxed text-[#B7B7BE]">
+                Your role, appointments, reports, conversations, and care tools continue
+                from one secure session.
               </p>
             </div>
           </div>
 
-          <div className="grid gap-3">
-            {["Identity-aware dashboards", "Private consultation channels", "Future reward rails ready"].map((item, index) => (
-              <div key={item} className="surface-panel flex items-center gap-3 rounded-xl border px-4 py-3 text-sm text-zinc-300">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-300/10 text-xs font-bold text-cyan-200">
+          <div className="grid gap-2.5">
+            {[
+              "Identity-aware dashboards",
+              "Private consultation channels",
+              "Future reward rails ready",
+            ].map((item, index) => (
+              <div
+                key={item}
+                className="flex min-h-12 items-center gap-3 rounded-[14px] bg-white/[.07] px-4 text-[13px] font-medium text-white/85"
+              >
+                <span className="grid size-7 shrink-0 place-items-center rounded-[10px] bg-white/10 text-[11px] font-bold text-white/80">
                   0{index + 1}
                 </span>
                 {item}
@@ -71,30 +83,44 @@ function SignInForm() {
           </div>
         </section>
 
-        <section className="surface-panel rounded-[1.75rem] border p-5 md:p-8 lg:p-10">
+        <section className="cq-card p-5 md:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
-                  <HeartPulse className="h-5 w-5 text-cyan-200" />
+                <div className="grid size-11 place-items-center rounded-[14px] bg-[var(--primary)] text-white shadow-[0_6px_14px_rgba(16,14,26,0.18)]">
+                  <HeartPulse className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <div>
-                  <div className="font-bold">ArkCare</div>
-                  <div className="text-xs text-muted-foreground">Identity gateway</div>
+                  <div className="text-[14px] font-semibold text-[var(--text-strong)]">
+                    ArkCare
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Identity gateway</div>
                 </div>
               </div>
-              <ShieldCheck className="h-5 w-5 text-cyan-200/70" />
+              <ShieldCheck
+                className="h-5 w-5 text-[var(--text-subtle)]"
+                strokeWidth={1.75}
+              />
             </div>
 
             <div className="mb-7">
-              <p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-200/70">Welcome back</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight">Enter your care space</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Use your account or jump into the hackathon demo below.</p>
+              <p className="cq-kicker">Welcome back</p>
+              <h2 className="mt-2 text-[22px] font-bold tracking-[-0.01em] text-[var(--text-strong)]">
+                Enter your care space
+              </h2>
+              <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-muted)]">
+                Use your account or jump into the hackathon demo below.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-semibold text-zinc-200">Email</label>
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-[12px] font-semibold text-[var(--text-strong)]"
+                >
+                  Email
+                </label>
                 <input
                   id="email"
                   name="email"
@@ -109,7 +135,12 @@ function SignInForm() {
               </div>
 
               <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-semibold text-zinc-200">Password</label>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-[12px] font-semibold text-[var(--text-strong)]"
+                >
+                  Password
+                </label>
                 <input
                   id="password"
                   name="password"
@@ -123,38 +154,40 @@ function SignInForm() {
                 />
               </div>
 
-              {error && (
-                <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+              {error ? (
+                <p
+                  role="alert"
+                  className="rounded-[14px] border border-[rgba(235,90,90,0.2)] bg-[rgba(235,90,90,0.12)] px-4 py-3 text-[13px] text-[var(--destructive)]"
+                >
                   {error}
                 </p>
-              )}
+              ) : null}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-xl bg-green-500 py-3 font-bold text-white disabled:opacity-60"
-              >
-                {submitting ? "Opening session..." : "Continue to ArkCare"}
+              <button type="submit" disabled={submitting} className="nm-btn-primary w-full">
+                {submitting ? "Opening session…" : "Continue to ArkCare"}
               </button>
             </form>
 
-            <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-white/10" />
-              <span>JUDGE ACCESS</span>
-              <span className="h-px flex-1 bg-white/10" />
+            <div className="my-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+              <span className="h-px flex-1 bg-[var(--border)]" />
+              Judge access
+              <span className="h-px flex-1 bg-[var(--border)]" />
             </div>
 
             <InstantSignIn compact />
 
-            <p className="mt-7 text-center text-sm text-muted-foreground">
+            <p className="mt-7 text-center text-[13px] text-[var(--text-muted)]">
               New to ArkCare?{" "}
-              <Link href="/sign-up" className="font-semibold text-cyan-200 hover:text-white">
+              <Link
+                href="/sign-up"
+                className="font-semibold text-[var(--text-strong)] hover:opacity-70"
+              >
                 Create an account
               </Link>
             </p>
 
-            <div className="mt-7 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
-              <Sparkles className="h-3 w-3" />
+            <div className="mt-7 flex items-center justify-center gap-2 text-[11px] text-[var(--text-subtle)]">
+              <Sparkles className="h-3 w-3" strokeWidth={1.75} />
               Hackathon demo profiles contain synthetic demo data only.
             </div>
           </div>

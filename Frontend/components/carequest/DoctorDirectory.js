@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, Video, Search } from "lucide-react";
+import { Search, Stethoscope, Video } from "lucide-react";
 
 /**
  * Browse every approved doctor grouped by their niche (specialty), so a patient
@@ -35,77 +35,86 @@ export default function DoctorDirectory({ doctors, organizationName }) {
   }, [filtered]);
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-4">
-      <section className="cq-card cq-reveal p-5 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="nm-stack">
+      <section className="nm-dark-card cq-reveal p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="cq-kicker">DOCTOR DIRECTORY</div>
-            <h1 className="mt-2 text-2xl font-black">Meet a clinician by niche</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            <div className="cq-kicker !text-white/60">Doctor directory</div>
+            <h1 className="mt-2 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+              Meet a clinician by niche
+            </h1>
+            <p className="mt-1 max-w-xl text-[13px] leading-6 text-[#B7B7BE]">
               Every approved doctor at {organizationName || "this hospital"}. Enter a
               niche, then book a slot to open a video consultation.
             </p>
           </div>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative w-full sm:w-72">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--text-subtle)]"
+              strokeWidth={1.75}
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search doctor or niche"
-              className="w-64 rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm"
+              aria-label="Search doctor or niche"
+              className="nm-input !pl-10"
             />
           </div>
         </div>
       </section>
 
       {byNiche.length === 0 ? (
-        <div className="cq-card border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="cq-card border-dashed p-8 text-center text-[13px] text-[var(--text-muted)]">
           No doctors match &ldquo;{query}&rdquo;.
         </div>
       ) : null}
 
       {byNiche.map(([niche, list]) => (
-        <section key={niche} className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Stethoscope className="h-4 w-4 text-primary" />
-            <h2 className="text-lg font-black">{niche}</h2>
+        <section key={niche} className="nm-stack-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Stethoscope
+              className="h-[18px] w-[18px] text-[var(--text-muted)]"
+              strokeWidth={1.75}
+            />
+            <h2 className="cq-section-title">{niche}</h2>
             <span className="cq-pixel-label">{list.length} doctor(s)</span>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="nm-grid-3">
             {list.map((doctor) => (
-              <article key={doctor.doctor_id} className="cq-card p-4">
+              <article key={doctor.doctor_id} className="cq-card cq-card-hover flex flex-col p-4">
                 <div className="flex items-start gap-3">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-                    <Stethoscope className="h-5 w-5" />
+                  <div className="nm-stat-icon shrink-0">
+                    <Stethoscope className="h-[18px] w-[18px]" strokeWidth={1.75} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="truncate font-bold">{doctor.name}</h3>
-                    <p className="text-xs font-semibold text-primary">
+                    <h3 className="nm-card-title truncate text-[14px]">{doctor.name}</h3>
+                    <p className="text-[12px] font-semibold text-[var(--text-muted)]">
                       {doctor.specialization}
                     </p>
                     {doctor.experience ? (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-[var(--text-subtle)]">
                         {doctor.experience} yrs experience
                       </p>
                     ) : null}
                   </div>
                 </div>
                 {doctor.qualifications?.length ? (
-                  <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                  <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[var(--text-muted)]">
                     {doctor.qualifications.join(" · ")}
                   </p>
                 ) : null}
-                <div className="mt-3 flex items-center justify-between">
+                <div className="mt-3 flex items-center justify-between gap-2">
                   <span className="cq-pixel-label">
                     {doctor.consultationFee ? `₹${doctor.consultationFee}` : "—"}
                   </span>
                   <Button
-                    size="sm"
                     onClick={() => {
                       window.location.href = "/patient?tab=find-doctors";
                     }}
                   >
-                    <Video className="mr-1.5 h-3.5 w-3.5" /> Book &amp; meet
+                    <Video className="h-[18px] w-[18px]" strokeWidth={1.75} /> Book
+                    &amp; meet
                   </Button>
                 </div>
               </article>
@@ -114,9 +123,9 @@ export default function DoctorDirectory({ doctors, organizationName }) {
         </section>
       ))}
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center text-[12px] text-[var(--text-muted)]">
         Booking a slot creates your appointment; open it from{" "}
-        <Link href="/patient" className="font-semibold text-primary">
+        <Link href="/patient" className="font-semibold text-[var(--text-strong)] underline underline-offset-4">
           My Appointments
         </Link>{" "}
         and press the video button to start a secure call.

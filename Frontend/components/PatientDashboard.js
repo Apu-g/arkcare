@@ -2,19 +2,21 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Calendar,
-    Star,
-    Clock,
-    User,
-    CreditCard,
-    MessageCircle,
     Activity,
-    Heart,
     Brain,
-    Shield,
+    Calendar,
+    CalendarClock,
+    CheckCircle2,
+    CreditCard,
     Eye,
-    Zap,
+    Heart,
+    MessageCircle,
+    Shield,
     Sparkles,
+    Star,
+    Stethoscope,
+    User,
+    Zap,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -26,237 +28,348 @@ import {
     getPatientAppointments,
 } from "@/actions/appointmentActions";
 
-const DashboardHeader = () => (
-    <div className="surface-frame mb-8 rounded-[1.5rem]">
-        <div className="surface-panel rounded-[1.5rem] border p-5 md:p-6">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
-                        <Zap className="h-6 w-6 text-cyan-200" />
-                    </div>
-                    <div>
-                        <div className="mb-2 flex flex-wrap gap-2">
-                            <span className="status-chip">Patient journey</span>
-                            <span className="status-chip">Care missions ready</span>
-                        </div>
-                        <h1 className="text-2xl font-black tracking-tight text-white md:text-3xl">
-                            Your care command center
-                        </h1>
-                        <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground md:text-base">
-                            Find doctors, complete consultations, understand reports, and build a continuous health journey.
-                        </p>
-                    </div>
+/* Status chips use the semantic palette (design spec §22). */
+const STATUS_TONE = {
+    pending: "warning",
+    confirmed: "success",
+    completed: "info",
+    cancelled: "destructive",
+};
+
+const STATUS_CLASS = {
+    pending: "bg-[rgba(244,198,78,0.18)] text-[#9A7316]",
+    confirmed: "bg-[rgba(49,185,120,0.12)] text-[#248A5A]",
+    completed: "bg-[rgba(79,110,247,0.12)] text-[#405BD0]",
+    cancelled: "bg-[rgba(235,90,90,0.12)] text-[#BF4343]",
+};
+
+const CATEGORY_ICON = {
+    cardiology: Heart,
+    neurology: Brain,
+    dermatology: Shield,
+    ophthalmology: Eye,
+    general: Activity,
+};
+
+/* Dark anchor card: the single strong visual anchor per screen (spec §12). */
+const DashboardHeader = ({ doctorCount, appointmentCount, nextAppointment }) => (
+    <section className="nm-dash">
+        <div className="nm-dash-col">
+            <div className="nm-dark-card p-6">
+                <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/80">
+                        Patient journey
+                    </span>
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/80">
+                        Care missions ready
+                    </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
+                <h1 className="mt-4 text-[22px] font-bold leading-tight tracking-[-0.01em] text-white md:text-[26px]">
+                    Your care command center
+                </h1>
+                <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-[#B7B7BE]">
+                    Find doctors, complete consultations, understand reports, and build a
+                    continuous health journey.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
                     <Link
                         href="/health"
-                        className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition hover:bg-white/10"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-4 text-[13px] font-semibold text-[#100E1A] transition hover:-translate-y-px"
                     >
-                        <Heart className="mr-2 h-4 w-4 text-cyan-200" />
+                        <Heart className="h-4 w-4" strokeWidth={1.75} />
                         Health Journey
                     </Link>
                     <Link
                         href="/chatbot"
-                        className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition hover:bg-white/10"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white/10 px-4 text-[13px] font-semibold text-white transition hover:bg-white/15"
                     >
-                        <Sparkles className="mr-2 h-4 w-4 text-violet-200" />
+                        <Sparkles className="h-4 w-4" strokeWidth={1.75} />
                         AI Guide
                     </Link>
-                    
+                </div>
+            </div>
+
+            <div className="nm-primary-row">
+                <div className="nm-stat">
+                    <div className="nm-stat-icon">
+                        <Stethoscope className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                    </div>
+                    <div className="nm-stat-value mt-3">{doctorCount}</div>
+                    <div className="nm-stat-label">Doctors available</div>
+                </div>
+                <div className="nm-stat">
+                    <div className="nm-stat-icon">
+                        <CalendarClock className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                    </div>
+                    <div className="nm-stat-value mt-3">{appointmentCount}</div>
+                    <div className="nm-stat-label">Your appointments</div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <aside className="nm-rail">
+            <div>
+                <div className="cq-kicker">Next up</div>
+                <h2 className="mt-1 text-[14px] font-semibold text-[var(--text-strong)]">
+                    {nextAppointment ? "Upcoming visit" : "Nothing booked"}
+                </h2>
+            </div>
+            {nextAppointment ? (
+                <div className="rounded-[18px] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
+                    <div className="text-[13px] font-semibold text-[var(--text-strong)]">
+                        {nextAppointment.doctor?.name || "Doctor"}
+                    </div>
+                    <div className="mt-0.5 text-[12px] text-[var(--text-muted)]">
+                        {nextAppointment.doctor?.specialization}
+                    </div>
+                    <div className="mt-3 flex items-start gap-2 text-[12px] leading-relaxed text-[var(--text-muted)]">
+                        <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                        {new Date(nextAppointment.appointmentDate).toLocaleString("en-US", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                        })}
+                    </div>
+                </div>
+            ) : (
+                <p className="text-[12px] leading-relaxed text-[var(--text-muted)]">
+                    Book a consultation and your next visit will appear here with the time
+                    and doctor.
+                </p>
+            )}
+
+            <div className="border-t border-[var(--border-subtle)] pt-4">
+                <div className="cq-kicker">Shortcuts</div>
+                <div className="mt-2 grid gap-1.5">
+                    {[
+                        { href: "/patient/carequest", label: "CareQuest missions", icon: Zap },
+                        { href: "/patient/care-plans", label: "My care plan", icon: CheckCircle2 },
+                        { href: "/reports", label: "Reports & prescriptions", icon: Activity },
+                        { href: "/patient/hospitals", label: "Hospitals", icon: Shield },
+                    ].map(({ href, label, icon: Icon }) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="flex min-h-10 items-center gap-2.5 rounded-[12px] px-2.5 text-[12px] font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-strong)]"
+                        >
+                            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                            {label}
+                        </Link>
+                    ))}
+                </div>
+            </div>
+        </aside>
+    </section>
 );
 
-const CategoryFilters = ({ categories, selectedCategory, setSelectedCategory }) => {
-    const getCategoryIcon = (category) => {
-        switch (category.toLowerCase()) {
-            case "cardiology": return <Heart className="h-4 w-4" />;
-            case "neurology": return <Brain className="h-4 w-4" />;
-            case "dermatology": return <Shield className="h-4 w-4" />;
-            case "ophthalmology": return <Eye className="h-4 w-4" />;
-            case "general":
-            default: return <Activity className="h-4 w-4" />;
-        }
-    };
-
-    return (
-        <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-white flex items-center space-x-2 text-xl font-semibold mb-4">
-                <Shield className="h-5 w-5 text-green-400" />
-                <span>Filter by Specialization</span>
-            </h2>
-            <div className="flex flex-wrap gap-3">
-                {categories.map((category) => (
-                    <button
-                        key={category}
-                        onClick={() => setSelectedCategory(category)}
-                        className={`capitalize transition-all duration-150 rounded-lg px-4 py-2 md:px-5 md:py-2 font-medium border text-sm md:text-base flex items-center space-x-2 ${selectedCategory === category
-                            ? "bg-green-500 text-white border-green-500"
-                            : "bg-muted hover:bg-muted text-zinc-300 hover:text-white border-border hover:border-green-500/30"
-                            }`}
-                    >
-                        {category !== "all" && getCategoryIcon(category)}
-                        <span>{category === "all" ? "All Doctors" : category}</span>
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
-};
+const CategoryFilters = ({ categories, selectedCategory, setSelectedCategory }) => (
+    <div className="flex flex-wrap items-center gap-2">
+        <span className="cq-kicker mr-1">Specialization</span>
+        {categories.map((category) => {
+            const Icon = category === "all" ? null : CATEGORY_ICON[category.toLowerCase()] || Activity;
+            const active = selectedCategory === category;
+            return (
+                <button
+                    key={category}
+                    type="button"
+                    onClick={() => setSelectedCategory(category)}
+                    aria-pressed={active}
+                    className="nm-pill inline-flex min-h-9 items-center gap-1.5 px-3.5"
+                    data-active={active ? "true" : "false"}
+                >
+                    {Icon ? <Icon className="h-3.5 w-3.5" strokeWidth={1.75} /> : null}
+                    <span className="capitalize">
+                        {category === "all" ? "All doctors" : category}
+                    </span>
+                </button>
+            );
+        })}
+    </div>
+);
 
 const DoctorCard = ({ doctor, onBookAppointment }) => (
-    <div className="group rounded-2xl border border-border bg-card hover:border-green-500/30 transition-all duration-150 flex flex-col">
-        <div className="p-6">
-            <h2 className="text-xl font-semibold text-white group-hover:text-green-300 transition-colors">
-                {doctor.name}
-            </h2>
-            <p className="font-medium text-green-400">{doctor.specialization}</p>
-        </div>
-        <div className="px-6 pb-6 space-y-4 flex-grow flex flex-col">
-            <div className="flex items-center text-sm text-muted-foreground space-x-4">
-                <span className="flex items-center"><Star className="h-4 w-4 mr-1.5 text-green-400" /> {doctor.experience} years exp</span>
-                <span className="flex items-center">₹{doctor.consultationFee}</span>
+    <article className="cq-card cq-card-hover flex flex-col p-5">
+        <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+                <h3 className="truncate text-[15px] font-semibold text-[var(--text-strong)]">
+                    {doctor.name}
+                </h3>
+                <p className="mt-0.5 text-[12px] font-medium text-[var(--text-muted)]">
+                    {doctor.specialization}
+                </p>
             </div>
-            {doctor.qualifications?.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {doctor.qualifications.slice(0, 2).map((qual, index) => (
-                        <span key={index} className="text-xs bg-muted text-zinc-300 border border-border font-semibold px-2.5 py-1 rounded-full">
-                            {qual}
-                        </span>
-                    ))}
-                    {doctor.qualifications.length > 2 && (
-                        <span className="text-xs bg-muted text-zinc-300 border border-border font-semibold px-2.5 py-1 rounded-full">
-                            +{doctor.qualifications.length - 2} more
-                        </span>
-                    )}
-                </div>
-            )}
-            <button
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg py-3 mt-auto inline-flex items-center justify-center transition-all transform hover:-translate-y-0.5"
-                onClick={() => onBookAppointment(doctor)}
-            >
-                <Calendar className="h-5 w-5 mr-2" />
-                Book Appointment
-            </button>
+            <div className="nm-stat-icon h-9 w-9 shrink-0 rounded-[12px]">
+                <Stethoscope className="h-4 w-4" strokeWidth={1.75} />
+            </div>
         </div>
-    </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[var(--text-muted)]">
+            <span className="inline-flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 text-[var(--accent-gold)]" strokeWidth={1.75} />
+                {doctor.experience} yrs
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5" strokeWidth={1.75} />₹
+                {doctor.consultationFee}
+            </span>
+        </div>
+
+        {doctor.qualifications?.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+                {doctor.qualifications.slice(0, 2).map((qual, index) => (
+                    <span
+                        key={index}
+                        className="rounded-full bg-[var(--surface-muted)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--text-muted)]"
+                    >
+                        {qual}
+                    </span>
+                ))}
+                {doctor.qualifications.length > 2 ? (
+                    <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--text-muted)]">
+                        +{doctor.qualifications.length - 2} more
+                    </span>
+                ) : null}
+            </div>
+        ) : null}
+
+        <button
+            type="button"
+            onClick={() => onBookAppointment(doctor)}
+            className="nm-btn-primary mt-5 w-full"
+        >
+            <Calendar className="h-4 w-4" strokeWidth={1.75} />
+            Book appointment
+        </button>
+    </article>
 );
 
-const AppointmentCard = ({
-    appointment,
-    onOpenChat,
-    onCancel,
-    cancelling,
-}) => {
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "pending": return "bg-yellow-500/10 text-yellow-400 border-yellow-400/20";
-            case "confirmed": return "bg-green-500/10 text-green-400 border-green-400/20";
-            case "completed": return "bg-blue-500/10 text-blue-400 border-blue-400/20";
-            case "cancelled": return "bg-red-500/10 text-red-300 border-red-400/20";
-            default: return "bg-muted/20 text-muted-foreground border-zinc-500/40";
-        }
-    };
-
+const AppointmentCard = ({ appointment, onOpenChat, onCancel, cancelling }) => {
+    const tone = STATUS_CLASS[appointment.status] || STATUS_CLASS.pending;
     return (
-        <div className="rounded-2xl border border-border bg-card p-6 space-y-4 hover:border-green-500/30 transition-all duration-150">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                <div>
-                    <h2 className="text-lg font-semibold text-white">{appointment.doctor?.name || "N/A"}</h2>
-                    <p className="text-green-400 text-sm">{appointment.doctor?.specialization || "N/A"}</p>
+        <article className="cq-card cq-card-hover p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                    <h3 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                        {appointment.doctor?.name || "N/A"}
+                    </h3>
+                    <p className="mt-0.5 text-[12px] text-[var(--text-muted)]">
+                        {appointment.doctor?.specialization || "N/A"}
+                    </p>
                 </div>
-                <span className={`${getStatusColor(appointment.status)} border font-medium text-xs px-2.5 py-1 rounded-full self-start`}>
+                <span
+                    className={
+                        "inline-flex shrink-0 items-center self-start rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize " +
+                        tone
+                    }
+                >
                     {appointment.status}
                 </span>
             </div>
 
-            <div className="border-t border-border pt-4 space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center"><Calendar className="h-4 w-4 mr-3 text-green-400" />{new Date(appointment.appointmentDate).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</div>
-                {appointment.payment ? (
-                    <div className="rounded-lg border border-border bg-white/5 p-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <CreditCard className="h-4 w-4 text-green-400" />
-                            <span className="font-semibold text-zinc-200">
-                                {appointment.payment.provider === "razorpay"
-                                    ? "Razorpay"
-                                    : "Demo payment"}
-                            </span>
-                            <span className="cq-pixel-label">
-                                {String(appointment.payment.status || "unknown").toUpperCase()}
-                            </span>
-                        </div>
-                        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                            {appointment.payment.provider === "razorpay" ? (
-                                <>
-                                    <div>
-                                        Paid: ₹{Number(appointment.payment.grossAmount || 0).toLocaleString("en-IN")}
-                                        {appointment.payment.paymentMethod
-                                            ? ` · ${String(appointment.payment.paymentMethod).toUpperCase()}`
-                                            : ""}
-                                        {Number(appointment.payment.refundAmount || 0) > 0
-                                            ? ` · Refunded ₹${Number(appointment.payment.refundAmount).toLocaleString("en-IN")}`
-                                            : ""}
-                                    </div>
-                                    {appointment.payment.paymentId ? (
-                                        <div className="break-all font-mono">
-                                            Payment {appointment.payment.paymentId}
-                                        </div>
-                                    ) : null}
-                                    {appointment.payment.orderId ? (
-                                        <div className="break-all font-mono">
-                                            Order {appointment.payment.orderId}
-                                        </div>
-                                    ) : null}
-                                </>
-                            ) : (
-                                <div>Synthetic demo booking · no money charged</div>
-                            )}
-                        </div>
-                    </div>
-                ) : appointment.paymentId ? (
-                    <div className="flex items-center">
-                        <CreditCard className="h-4 w-4 mr-3 text-green-400" />
-                        Paid: ₹{appointment.amount}
-                    </div>
-                ) : null}
+            <div className="mt-4 flex items-start gap-2 border-t border-[var(--border-subtle)] pt-4 text-[12px] leading-relaxed text-[var(--text-muted)]">
+                <Calendar className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+                {new Date(appointment.appointmentDate).toLocaleString("en-US", {
+                    dateStyle: "full",
+                    timeStyle: "short",
+                })}
             </div>
 
-            {appointment.reason && <p className="text-sm bg-muted rounded-lg p-3"><span className="font-medium text-zinc-300">Reason: </span><span className="text-muted-foreground">{appointment.reason}</span></p>}
-            {appointment.notes && <p className="text-sm bg-muted rounded-lg p-3"><span className="font-medium text-zinc-300">Doctor's Notes: </span><span className="text-muted-foreground">{appointment.notes}</span></p>}
+            {appointment.payment ? (
+                <div className="mt-3 rounded-[16px] bg-[var(--surface-subtle)] p-3.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.75} />
+                        <span className="text-[12px] font-semibold text-[var(--text-strong)]">
+                            {appointment.payment.provider === "razorpay"
+                                ? "Razorpay"
+                                : "Demo payment"}
+                        </span>
+                        <span className="cq-pixel-label">
+                            {String(appointment.payment.status || "unknown").toUpperCase()}
+                        </span>
+                    </div>
+                    <div className="mt-2 space-y-1 text-[11px] leading-relaxed text-[var(--text-muted)]">
+                        {appointment.payment.provider === "razorpay" ? (
+                            <>
+                                <div>
+                                    Paid: ₹
+                                    {Number(appointment.payment.grossAmount || 0).toLocaleString("en-IN")}
+                                    {appointment.payment.paymentMethod
+                                        ? ` · ${String(appointment.payment.paymentMethod).toUpperCase()}`
+                                        : ""}
+                                    {Number(appointment.payment.refundAmount || 0) > 0
+                                        ? ` · Refunded ₹${Number(
+                                              appointment.payment.refundAmount
+                                          ).toLocaleString("en-IN")}`
+                                        : ""}
+                                </div>
+                                {appointment.payment.paymentId ? (
+                                    <div className="break-all font-mono">
+                                        Payment {appointment.payment.paymentId}
+                                    </div>
+                                ) : null}
+                                {appointment.payment.orderId ? (
+                                    <div className="break-all font-mono">
+                                        Order {appointment.payment.orderId}
+                                    </div>
+                                ) : null}
+                            </>
+                        ) : (
+                            <div>Synthetic demo booking · no money charged</div>
+                        )}
+                    </div>
+                </div>
+            ) : appointment.paymentId ? (
+                <div className="mt-3 flex items-center gap-2 text-[12px] text-[var(--text-muted)]">
+                    <CreditCard className="h-4 w-4" strokeWidth={1.75} />Paid: ₹
+                    {appointment.amount}
+                </div>
+            ) : null}
 
-            {appointment.status === "confirmed" && (
-                <div className="grid gap-2 sm:grid-cols-2">
+            {appointment.reason ? (
+                <p className="mt-3 rounded-[14px] bg-[var(--surface-subtle)] p-3 text-[12px] leading-relaxed text-[var(--text-muted)]">
+                    <span className="font-semibold text-[var(--text-strong)]">Reason: </span>
+                    {appointment.reason}
+                </p>
+            ) : null}
+            {appointment.notes ? (
+                <p className="mt-2 rounded-[14px] bg-[var(--surface-subtle)] p-3 text-[12px] leading-relaxed text-[var(--text-muted)]">
+                    <span className="font-semibold text-[var(--text-strong)]">Doctor&apos;s notes: </span>
+                    {appointment.notes}
+                </p>
+            ) : null}
+
+            {appointment.status === "confirmed" ? (
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     <button
+                        type="button"
                         onClick={() => onOpenChat(appointment)}
-                        className="w-full bg-muted hover:bg-muted text-zinc-300 hover:text-white border border-border hover:border-green-500/30 transition-all rounded-lg h-10 px-3 inline-flex items-center justify-center text-sm mt-2"
+                        className="nm-btn-secondary w-full"
                     >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Chat with Doctor
+                        <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+                        Chat with doctor
                     </button>
                     {new Date(appointment.appointmentDate) > new Date() ? (
                         <button
+                            type="button"
                             onClick={() => onCancel(appointment)}
                             disabled={cancelling}
-                            className="w-full rounded-lg border border-red-300/20 bg-red-500/5 px-3 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50 sm:mt-2"
+                            className="inline-flex min-h-10 w-full items-center justify-center rounded-[14px] bg-[rgba(235,90,90,0.12)] px-4 text-[13px] font-semibold text-[var(--destructive)] transition hover:brightness-95 disabled:opacity-50"
                         >
                             {cancelling
                                 ? "Cancelling..."
                                 : appointment.payment?.provider === "razorpay"
-                                    ? "Cancel & Refund"
-                                    : "Cancel Appointment"}
+                                  ? "Cancel & refund"
+                                  : "Cancel appointment"}
                         </button>
                     ) : null}
                 </div>
-            )}
+            ) : null}
 
             {appointment.status === "cancelled" && appointment.cancellationReason ? (
-                <p className="rounded-lg border border-red-300/10 bg-red-500/5 p-3 text-xs text-red-200/80">
+                <p className="mt-3 rounded-[14px] bg-[rgba(235,90,90,0.12)] p-3 text-[12px] leading-relaxed text-[var(--destructive)]">
                     Cancelled: {appointment.cancellationReason}
                 </p>
             ) : null}
-        </div>
+        </article>
     );
 };
 
@@ -343,94 +456,148 @@ export default function PatientDashboard({ doctors }) {
     }, {});
 
     const categories = ["all", ...Object.keys(doctorsByCategory)];
-    const filteredDoctors = selectedCategory === "all" ? doctors : doctorsByCategory[selectedCategory] || [];
+    const filteredDoctors =
+        selectedCategory === "all" ? doctors : doctorsByCategory[selectedCategory] || [];
+
+    // The next visit drives the insight rail, so the patient sees what is
+    // coming without hunting through the appointment list.
+    const nextAppointment = appointments
+        .filter(
+            (item) =>
+                ["confirmed", "pending"].includes(item.status) &&
+                new Date(item.appointmentDate) >= new Date()
+        )
+        .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))[0];
 
     return (
-        <div className="ark-page min-h-screen p-4 md:p-8">
-            <main className="max-w-7xl mx-auto">
-                <DashboardHeader />
+        <div className="nm-stack">
+            <DashboardHeader
+                doctorCount={doctors.length}
+                appointmentCount={appointments.length}
+                nextAppointment={nextAppointment}
+            />
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                    <div className="bg-card border border-border rounded-lg p-2 md:p-3">
-                        <TabsList className="grid w-full grid-cols-2 bg-transparent gap-2 md:gap-3 h-auto">
-                            <TabsTrigger value="find-doctors" className="data-[state=active]:bg-green-500 data-[state=active]:text-primary-foreground text-muted-foreground hover:text-white rounded-lg py-3 px-2 md:py-4 md:px-6 font-medium text-sm md:text-base">
-                                <Calendar className="h-5 w-5 mr-2" /> Find Doctors
-                            </TabsTrigger>
-                            <TabsTrigger value="my-appointments" className="data-[state=active]:bg-green-500 data-[state=active]:text-primary-foreground text-muted-foreground hover:text-white rounded-lg py-3 px-2 md:py-4 md:px-6 font-medium text-sm md:text-base">
-                                <User className="h-5 w-5 mr-2" /> My Appointments
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="nm-stack">
+                <div className="flex flex-wrap gap-2">
+                    <TabsList className="flex w-auto gap-2 border-0 bg-transparent p-0">
+                        <TabsTrigger
+                            value="find-doctors"
+                            className="nm-pill inline-flex min-h-9 items-center gap-1.5 border-0 px-3.5 data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--surface-subtle)] data-[state=inactive]:text-[var(--text-muted)]"
+                        >
+                            <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            Find doctors
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="my-appointments"
+                            className="nm-pill inline-flex min-h-9 items-center gap-1.5 border-0 px-3.5 data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--surface-subtle)] data-[state=inactive]:text-[var(--text-muted)]"
+                        >
+                            <User className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            My appointments
+                            {appointments.length ? (
+                                <span className="ml-0.5 rounded-full bg-[var(--surface-muted)] px-1.5 text-[10px] font-semibold data-[state=active]:bg-white/20">
+                                    {appointments.length}
+                                </span>
+                            ) : null}
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-                    <TabsContent value="find-doctors" className="space-y-8">
-                        <CategoryFilters categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredDoctors.length > 0 ? (
-                                filteredDoctors.map((doctor) => (
-                                    <DoctorCard key={doctor._id} doctor={doctor} onBookAppointment={handleBookAppointment} />
-                                ))
-                            ) : (
-                                <p className="col-span-full text-center text-muted-foreground py-12">No doctors found for this category.</p>
-                            )}
+                <TabsContent value="find-doctors" className="nm-stack">
+                    <CategoryFilters
+                        categories={categories}
+                        selectedCategory={selectedCategory}
+                        setSelectedCategory={setSelectedCategory}
+                    />
+                    {filteredDoctors.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                            {filteredDoctors.map((doctor) => (
+                                <DoctorCard
+                                    key={doctor._id}
+                                    doctor={doctor}
+                                    onBookAppointment={handleBookAppointment}
+                                />
+                            ))}
                         </div>
-                    </TabsContent>
+                    ) : (
+                        <p className="py-12 text-center text-[13px] text-[var(--text-muted)]">
+                            No doctors found for this category.
+                        </p>
+                    )}
+                </TabsContent>
 
-                    <TabsContent value="my-appointments" className="space-y-8">
-                        {appointmentMessage ? (
-                            <div className="rounded-xl border border-border bg-white/5 px-4 py-3 text-sm text-zinc-300">
-                                {appointmentMessage}
+                <TabsContent value="my-appointments" className="nm-stack">
+                    {appointmentMessage ? (
+                        <div
+                            role="status"
+                            className="rounded-[16px] border border-white/70 bg-[var(--surface)] px-4 py-3 text-[13px] text-[var(--text-muted)] shadow-[var(--shadow-card)]"
+                        >
+                            {appointmentMessage}
+                        </div>
+                    ) : null}
+                    {loading ? (
+                        <p className="py-12 text-center text-[13px] text-[var(--text-muted)]">
+                            Loading appointments…
+                        </p>
+                    ) : appointments.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                            {appointments.map((appointment) => (
+                                <AppointmentCard
+                                    key={appointment._id}
+                                    appointment={appointment}
+                                    onOpenChat={handleOpenChat}
+                                    onCancel={handleCancelAppointment}
+                                    cancelling={cancellingId === appointment._id}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="cq-card px-6 py-16 text-center">
+                            <div className="mx-auto grid h-14 w-14 place-items-center rounded-[18px] bg-[var(--surface-subtle)] shadow-[var(--shadow-card)]">
+                                <User className="h-6 w-6 text-[var(--text-subtle)]" strokeWidth={1.5} />
                             </div>
-                        ) : null}
-                        {loading ? (
-                            <p className="text-center text-muted-foreground py-12">Loading appointments...</p>
-                        ) : appointments.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {appointments.map((appointment) => (
-                                    <AppointmentCard
-                                        key={appointment._id}
-                                        appointment={appointment}
-                                        onOpenChat={handleOpenChat}
-                                        onCancel={handleCancelAppointment}
-                                        cancelling={cancellingId === appointment._id}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-16">
-                                <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                                <h3 className="text-xl font-semibold text-white">No Appointments Yet</h3>
-                                <p className="text-muted-foreground mb-6">Book your first appointment to see it here.</p>
-                                <button onClick={() => setActiveTab("find-doctors")} className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-6 py-2.5">Find Doctors</button>
-                            </div>
-                        )}
-                    </TabsContent>
-                </Tabs>
+                            <h3 className="mt-4 text-[16px] font-semibold text-[var(--text-strong)]">
+                                No appointments yet
+                            </h3>
+                            <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+                                Book your first consultation to see it here.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("find-doctors")}
+                                className="nm-btn-primary mt-5"
+                            >
+                                <Calendar className="h-4 w-4" strokeWidth={1.75} />
+                                Find doctors
+                            </button>
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
 
-                {selectedDoctor && (
-                    <BookAppointmentModal
-                        doctor={selectedDoctor}
-                        isOpen={isBookingModalOpen}
-                        onClose={() => {
-                            setIsBookingModalOpen(false);
-                            setSelectedDoctor(null);
-                            fetchAppointments();
-                        }}
-                        onViewAppointments={() => {
-                            setActiveTab("my-appointments");
-                            setIsBookingModalOpen(false);
-                            setSelectedDoctor(null);
-                            void fetchAppointments();
-                        }}
-                    />
-                )}
-                {selectedAppointmentForChat && (
-                    <ChatModal
-                        appointment={selectedAppointmentForChat}
-                        isOpen={isChatModalOpen}
-                        onClose={() => setIsChatModalOpen(false)}
-                    />
-                )}
-            </main>
+            {selectedDoctor ? (
+                <BookAppointmentModal
+                    doctor={selectedDoctor}
+                    isOpen={isBookingModalOpen}
+                    onClose={() => {
+                        setIsBookingModalOpen(false);
+                        setSelectedDoctor(null);
+                        fetchAppointments();
+                    }}
+                    onViewAppointments={() => {
+                        setActiveTab("my-appointments");
+                        setIsBookingModalOpen(false);
+                        setSelectedDoctor(null);
+                        void fetchAppointments();
+                    }}
+                />
+            ) : null}
+            {selectedAppointmentForChat ? (
+                <ChatModal
+                    appointment={selectedAppointmentForChat}
+                    isOpen={isChatModalOpen}
+                    onClose={() => setIsChatModalOpen(false)}
+                />
+            ) : null}
         </div>
     );
 }

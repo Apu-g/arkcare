@@ -70,12 +70,12 @@ export default function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border bg-muted hover:bg-muted transition-colors"
+        className="flex min-h-10 items-center gap-2 rounded-[14px] border border-white/70 bg-[var(--surface)] px-2 py-1.5 shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-hover)]"
       >
-        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white text-xs font-semibold">
+        <span className="grid size-8 place-items-center rounded-full bg-[var(--primary)] text-[11px] font-semibold text-white">
           {initials(user.fullName)}
         </span>
-        <span className="hidden sm:block text-sm text-zinc-200 max-w-[10rem] truncate">
+        <span className="hidden max-w-[10rem] truncate text-[13px] font-semibold text-[var(--text-strong)] sm:block">
           {user.fullName}
         </span>
       </button>
@@ -83,18 +83,18 @@ export default function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-60 rounded-lg border border-border bg-card shadow-xl overflow-hidden"
+          className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-[16px] border border-white/10 bg-[#15151C] shadow-[var(--shadow-dark-float)]"
         >
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-sm font-medium text-white truncate">
+          <div className="border-b border-white/10 px-4 py-3">
+            <p className="truncate text-[13px] font-semibold text-white">
               {user.fullName}
             </p>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
+            <p className="mt-0.5 truncate text-[11px] text-[#B7B7BE]">
               {user.primaryEmailAddress?.emailAddress}
             </p>
             {user.publicMetadata?.role && (
-              <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 text-[11px] font-medium capitalize">
-                <UserIcon className="h-3 w-3" />
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold capitalize text-white/90">
+                <UserIcon className="h-3 w-3" strokeWidth={2} />
                 {user.publicMetadata.role}
               </span>
             )}
@@ -105,9 +105,9 @@ export default function UserMenu() {
             role="menuitem"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="w-full flex items-center gap-2 px-4 py-3 text-sm text-zinc-200 hover:bg-muted transition-colors disabled:opacity-60"
+            className="flex min-h-[42px] w-full items-center gap-2 px-4 text-[13px] font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
           >
-            <LogOut className="h-4 w-4 text-green-400" />
+            <LogOut className="h-4 w-4" strokeWidth={1.75} />
             {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </div>

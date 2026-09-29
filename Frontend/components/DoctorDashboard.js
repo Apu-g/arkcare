@@ -3,7 +3,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -18,7 +17,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Activity, Calendar, Clock, User, MessageCircle, Sparkles } from "lucide-react";
+import {
+  Activity,
+  Calendar,
+  CalendarCheck2,
+  CheckCircle2,
+  Clock,
+  User,
+  Users,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import {
   getDoctorAppointments,
@@ -189,18 +198,20 @@ export default function DoctorDashboard({ doctor }) {
     setIsChatModalOpen(true);
   };
 
-  const getAppointmentStatusColor = (status) => {
+  // Status is carried by a semantic Badge variant *and* the visible status
+  // word, so it never depends on colour alone (spec §24).
+  const getAppointmentStatusVariant = (status) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500/10 text-yellow-400 border-yellow-400/20";
+        return "warning";
       case "confirmed":
-        return "bg-green-500/10 text-green-400 border-green-400/20";
+        return "info";
       case "completed":
-        return "bg-blue-500/10 text-blue-400 border-blue-400/20";
+        return "success";
       case "cancelled":
-        return "bg-green-500/10 text-green-400 border-green-400/20";
+        return "destructive";
       default:
-        return "bg-muted/20 text-muted-foreground border-border/40";
+        return "secondary";
     }
   };
 
@@ -209,181 +220,191 @@ export default function DoctorDashboard({ doctor }) {
     return new Date(apt.appointmentDate).toDateString() === today;
   });
 
+  const confirmedCount = appointments.filter(
+    (apt) => apt.status === "confirmed"
+  ).length;
+  const pendingCount = appointments.filter(
+    (apt) => apt.status === "pending"
+  ).length;
+
   return (
-    <div className="relative space-y-6 pb-24 lg:pb-4">
-      <div className="space-y-6">
-        <div className="surface-frame mb-8 rounded-[1.5rem]">
-          <div className="surface-panel rounded-[1.5rem] border p-5 md:p-6">
-            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-300/10">
-                  <Activity className="h-6 w-6 text-violet-200" />
-                </div>
-                <div>
-                  <div className="mb-2 flex flex-wrap gap-2">
-                    <span className="status-chip">Doctor workspace</span>
-                    <span className="status-chip">{doctor.status === "approved" ? "Profile verified" : "Review pending"}</span>
-                  </div>
-                  <h1 className="text-2xl font-black tracking-tight text-white md:text-3xl">
-                    Care operations
-                  </h1>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground md:text-base">
-                    Welcome back, {doctor.name}. Manage consultations, notes, conversations, and your care schedule.
-                  </p>
-                </div>
+    <div className="nm-dash">
+      <div className="nm-dash-col">
+        {/* ------------------------------------------- dark anchor: today at a glance */}
+        <section className="nm-dark-card p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="nm-stat-icon shrink-0">
+                <Activity className="h-5 w-5" strokeWidth={1.75} />
               </div>
-              <div className="flex items-center gap-3">
-                <NotificationBell />
-                <span className="hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-zinc-300 sm:inline-flex sm:items-center sm:gap-2">
-                  <Sparkles className="h-4 w-4 text-cyan-200" />
-                  Milestone layer ready
-                </span>
+              <div>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  <span className="cq-pixel-label bg-[rgba(255,255,255,0.10)] text-[rgba(255,255,255,0.88)]">
+                    Doctor workspace
+                  </span>
+                  <span
+                    className={
+                      doctor.status === "approved"
+                        ? "cq-pixel-label cq-real-label"
+                        : "cq-pixel-label cq-sim-label"
+                    }
+                  >
+                    {doctor.status === "approved"
+                      ? "Profile verified"
+                      : "Review pending"}
+                  </span>
+                </div>
+                <h1 className="text-[20px] font-bold leading-tight tracking-[-0.01em] text-[#fff] md:text-[22px]">
+                  Care operations
+                </h1>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--dark-muted)]">
+                  Welcome back, {doctor.name}. Manage consultations, notes,
+                  conversations, and your care schedule.
+                </p>
               </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="hidden items-center gap-2 rounded-[14px] bg-[rgba(255,255,255,0.10)] px-3.5 py-2.5 text-[11px] font-semibold text-[rgba(255,255,255,0.92)] sm:inline-flex">
+                <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+                Milestone layer ready
+              </span>
+              <NotificationBell />
             </div>
           </div>
-        </div>
+        </section>
 
         {doctor.status === "approved" ? (
-          <Tabs defaultValue="appointments" className="space-y-8">
-            <div className="bg-card border border-border rounded-2xl p-3 ">
-              <TabsList className="grid w-full grid-cols-2 bg-transparent gap-3 h-auto">
-                <TabsTrigger
-                  value="appointments"
-                  className="data-[state=active]:bg-green-600 data-[state=active]:text-primary-foreground data-[state=active]:border-green-500 data-[state=active]: data-[state=active]:shadow-green-500/20 text-zinc-300 hover:text-white hover:bg-muted/80 transition-all duration-150 border border-border rounded-2xl py-4 px-6 font-medium bg-muted text-lg"
-                >
-                  Appointments
-                </TabsTrigger>
-                <TabsTrigger
-                  value="profile"
-                  className="data-[state=active]:bg-green-600 data-[state=active]:text-primary-foreground data-[state=active]:border-green-500 data-[state=active]: data-[state=active]:shadow-green-500/20 text-zinc-300 hover:text-white hover:bg-muted/80 transition-all duration-150 border border-border rounded-2xl py-4 px-6 font-medium bg-muted text-lg"
-                >
-                  Profile
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          <Tabs defaultValue="appointments" className="nm-stack">
+            <TabsList
+              className="h-auto w-auto gap-1 rounded-[var(--radius-pill)] border-0
+                bg-[var(--surface-subtle)] p-1 shadow-[var(--shadow-inset)]
+                data-[orientation=horizontal]:flex-row"
+            >
+              <TabsTrigger
+                value="appointments"
+                className="h-9 rounded-[var(--radius-pill)] px-4 text-[12px] font-semibold
+                  text-[var(--text-muted)] hover:text-[var(--text-strong)]
+                  data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[#fff]
+                  data-[state=active]:shadow-[0_6px_14px_rgba(16,14,26,0.16)]"
+              >
+                Appointments
+              </TabsTrigger>
+              <TabsTrigger
+                value="profile"
+                className="h-9 rounded-[var(--radius-pill)] px-4 text-[12px] font-semibold
+                  text-[var(--text-muted)] hover:text-[var(--text-strong)]
+                  data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[#fff]
+                  data-[state=active]:shadow-[0_6px_14px_rgba(16,14,26,0.16)]"
+              >
+                Profile
+              </TabsTrigger>
+            </TabsList>
 
-            <TabsContent value="appointments" className="space-y-8">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-card border border-border  rounded-2xl">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-white flex items-center space-x-3">
-                      <Calendar className="h-6 w-6 text-green-400" />
-                      <span>Today&apos;s Appointments</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-4xl font-bold text-green-300">
-                      {todayAppointments.length}
-                    </div>
-                    <p className="text-md text-muted-foreground">
-                      {todayAppointments.length === 0
-                        ? "No appointments today"
-                        : "scheduled for today"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card border border-border  rounded-2xl">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-white flex items-center space-x-3">
-                      <User className="h-6 w-6 text-green-400" />
-                      <span>Total Appointments</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-4xl font-bold text-green-300">
-                      {appointments.length}
-                    </div>
-                    <p className="text-md text-muted-foreground">All time</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card border border-border  rounded-2xl">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-white flex items-center space-x-3">
-                      <Clock className="h-6 w-6 text-green-400" />
-                      <span>Confirmed Consults</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-4xl font-bold text-green-300">
-                      {
-                        appointments.filter((apt) => apt.status === "confirmed")
-                          .length
-                      }
-                    </div>
-                    <p className="text-md text-muted-foreground">
-                      Ready for consultation
-                    </p>
-                  </CardContent>
-                </Card>
+            <TabsContent value="appointments" className="nm-stack">
+              {/* metric tiles */}
+              <div className="nm-primary-row">
+                <div className="nm-stat">
+                  <div className="nm-stat-icon">
+                    <CalendarCheck2 className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="mt-3 nm-stat-value">{todayAppointments.length}</div>
+                  <div className="nm-stat-label">
+                    {todayAppointments.length === 0
+                      ? "No appointments today"
+                      : "scheduled today"}
+                  </div>
+                </div>
+                <div className="nm-stat">
+                  <div className="nm-stat-icon">
+                    <Users className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="mt-3 nm-stat-value">{appointments.length}</div>
+                  <div className="nm-stat-label">Total appointments</div>
+                </div>
+                <div className="nm-stat">
+                  <div className="nm-stat-icon">
+                    <CheckCircle2 className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="mt-3 nm-stat-value">{confirmedCount}</div>
+                  <div className="nm-stat-label">Confirmed consults</div>
+                </div>
               </div>
 
-              {/* Appointments List */}
-              <Card className="bg-card border border-border  rounded-2xl">
-                <CardHeader>
-                  <CardTitle className="text-white">All Appointments</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Manage your patient appointments
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      Loading appointments...
-                    </div>
-                  ) : appointments.length > 0 ? (
-                    <div className="space-y-6">
-                      {appointments.map((appointment) => (
-                        <div
-                          key={appointment._id}
-                          className="bg-card border border-border rounded-2xl p-6 space-y-6"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-3">
-                              <div className="flex items-center space-x-3">
-                                <User className="h-5 w-5 text-muted-foreground" />
-                                <span className="font-medium text-white">
-                                  {appointment.patient?.name ||
-                                    "Patient not available"}
-                                </span>
-                                <Badge
-                                  className={`${getAppointmentStatusColor(
-                                    appointment.status
-                                  )} border`}
-                                >
-                                  {appointment.status}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center space-x-4 text-md text-muted-foreground">
-                                <div className="flex items-center">
-                                  <Calendar className="h-5 w-5 mr-2 text-green-400" />
-                                  <span>
-                                    {new Date(
-                                      appointment.appointmentDate
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <div className="flex items-center">
-                                  <Clock className="h-5 w-5 mr-2 text-green-400" />
-                                  <span>
-                                    {new Date(
-                                      appointment.appointmentDate
-                                    ).toLocaleTimeString("en-US", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-                              {appointment.reason && (
-                                <p className="text-md text-zinc-300">
-                                  <span className="font-medium">Reason: </span>
-                                  {appointment.reason}
-                                </p>
-                              )}
+              {/* appointments */}
+              <section className="nm-stack">
+                <header className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <div className="cq-kicker">Schedule</div>
+                    <h2 className="cq-section-title mt-1">All appointments</h2>
+                  </div>
+                  <p className="text-[12px] text-muted-foreground">
+                    Status saves immediately &middot; notes save on blur
+                  </p>
+                </header>
+
+                {loading ? (
+                  <div className="cq-card p-10 text-center text-[13px] text-muted-foreground">
+                    Loading appointments...
+                  </div>
+                ) : appointments.length > 0 ? (
+                  <div className="nm-stack-sm">
+                    {appointments.map((appointment) => (
+                      <article
+                        key={appointment._id}
+                        className="cq-card cq-card-hover p-5"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <User
+                                className="h-4 w-4 shrink-0 text-[var(--text-muted)]"
+                                strokeWidth={1.75}
+                              />
+                              <span className="nm-card-title text-[14px]">
+                                {appointment.patient?.name ||
+                                  "Patient not available"}
+                              </span>
+                              <Badge
+                                variant={getAppointmentStatusVariant(
+                                  appointment.status
+                                )}
+                              >
+                                {appointment.status}
+                              </Badge>
                             </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-muted-foreground">
+                              <span className="inline-flex items-center gap-1.5">
+                                <Calendar
+                                  className="h-4 w-4"
+                                  strokeWidth={1.75}
+                                />
+                                {new Date(
+                                  appointment.appointmentDate
+                                ).toLocaleDateString()}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5">
+                                <Clock className="h-4 w-4" strokeWidth={1.75} />
+                                {new Date(
+                                  appointment.appointmentDate
+                                ).toLocaleTimeString("en-US", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            {appointment.reason ? (
+                              <p className="mt-2 text-[13px] leading-relaxed text-[var(--text)]">
+                                <span className="font-semibold text-[var(--text-strong)]">
+                                  Reason:{" "}
+                                </span>
+                                {appointment.reason}
+                              </p>
+                            ) : null}
                           </div>
-                          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                        </div>
+
+                        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-start">
+                          <div className="flex w-full flex-wrap items-center gap-2.5 md:w-auto">
                             <Select
                               value={appointment.status}
                               // No notes argument here on purpose: a status change
@@ -394,31 +415,22 @@ export default function DoctorDashboard({ doctor }) {
                               }
                               disabled={updatingAppointment === appointment._id}
                             >
-                              <SelectTrigger className="w-full md:w-48 bg-muted border-border text-white hover:bg-muted">
-                                <SelectValue className="text-white" />
+                              <SelectTrigger className="h-10 w-full rounded-[14px] border border-transparent bg-[var(--surface-subtle)] px-3.5 text-[13px] font-semibold text-[var(--text)] shadow-[var(--shadow-inset)] focus-visible:ring-2 focus-visible:ring-ring/40 md:w-[190px]">
+                                <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-card border-border text-white">
+                              <SelectContent>
                                 {appointment.status === "pending" && (
                                   <SelectItem value="pending" disabled>
                                     Pending
                                   </SelectItem>
                                 )}
-                                <SelectItem
-                                  value="confirmed"
-                                  className="hover:bg-muted focus:bg-muted"
-                                >
+                                <SelectItem value="confirmed">
                                   Confirmed
                                 </SelectItem>
-                                <SelectItem
-                                  value="completed"
-                                  className="hover:bg-muted focus:bg-muted"
-                                >
+                                <SelectItem value="completed">
                                   Completed
                                 </SelectItem>
-                                <SelectItem
-                                  value="cancelled"
-                                  className="hover:bg-muted focus:bg-muted"
-                                >
+                                <SelectItem value="cancelled">
                                   Cancelled
                                 </SelectItem>
                               </SelectContent>
@@ -428,148 +440,136 @@ export default function DoctorDashboard({ doctor }) {
                             ) && (
                               <Button
                                 variant="outline"
-                                size="sm"
                                 onClick={() => handleOpenChat(appointment)}
-                                className="bg-muted hover:bg-muted text-white border-border hover:border-green-500 h-10 px-4"
+                                aria-label={`Chat with ${
+                                  appointment.patient?.name || "patient"
+                                }`}
                               >
-                                <MessageCircle className="h-5 w-5 mr-2" />
+                                <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
                                 Chat
                                 {appointment.status === "completed" ? (
-                                  <span className="ml-2 text-[10px] text-emerald-300">
+                                  <span className="text-[10px] font-semibold text-[var(--text-muted)]">
                                     + Report
                                   </span>
                                 ) : null}
                               </Button>
                             )}
-                            <div className="flex-1 w-full">
-                              <Textarea
-                                placeholder="Add notes for this appointment..."
-                                value={appointment.notes || ""}
-                                onChange={(e) => {
-                                  setAppointments((prev) =>
-                                    prev.map((apt) =>
-                                      apt._id === appointment._id
-                                        ? { ...apt, notes: e.target.value }
-                                        : apt
-                                    )
+                          </div>
+                          <div className="w-full flex-1">
+                            <Textarea
+                              placeholder="Add notes for this appointment..."
+                              value={appointment.notes || ""}
+                              onChange={(e) => {
+                                setAppointments((prev) =>
+                                  prev.map((apt) =>
+                                    apt._id === appointment._id
+                                      ? { ...apt, notes: e.target.value }
+                                      : apt
+                                  )
+                                );
+                              }}
+                              onBlur={(e) => {
+                                if (
+                                  e.target.value !== appointment.originalNotes
+                                ) {
+                                  handleStatusUpdate(
+                                    appointment._id,
+                                    appointment.status,
+                                    e.target.value
                                   );
-                                }}
-                                onBlur={(e) => {
-                                  if (
-                                    e.target.value !== appointment.originalNotes
-                                  ) {
-                                    handleStatusUpdate(
-                                      appointment._id,
-                                      appointment.status,
-                                      e.target.value
-                                    );
-                                  }
-                                }}
-                                rows={3}
-                                disabled={appointment.status === "cancelled"}
-                                className="bg-muted/80 border-border text-white focus:border-green-500/50 focus:ring-green-500/20 placeholder-zinc-500 text-md h-24 disabled:opacity-60"
-                              />
-                            </div>
+                                }
+                              }}
+                              rows={3}
+                              disabled={appointment.status === "cancelled"}
+                              className="text-[13px]"
+                            />
                           </div>
                         </div>
-                      ))}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="cq-card p-10 text-center">
+                    <div className="nm-stat-icon mx-auto">
+                      <Calendar className="h-5 w-5" strokeWidth={1.75} />
                     </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-muted-foreground mb-2">
-                        No Appointments Yet
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Patients will be able to book appointments with you once
-                        your profile is approved.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <h3 className="mt-4 nm-card-title text-[14px]">
+                      No appointments yet
+                    </h3>
+                    <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-muted-foreground">
+                      Patients will be able to book appointments with you once
+                      your profile is approved.
+                    </p>
+                  </div>
+                )}
+              </section>
             </TabsContent>
 
-            <TabsContent value="profile" className="space-y-8">
-              <Card className="bg-card border border-border  rounded-2xl">
+            <TabsContent value="profile" className="nm-stack">
+              <Card className="cq-card gap-0 p-0">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-3">
-                    <User className="h-6 w-6 text-green-400" />
-                    <span>Profile Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="text-md font-medium text-muted-foreground">
-                        Specialization
-                      </label>
-                      <p className="text-xl text-white mt-1">
-                        {doctor.specialization}
-                      </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="nm-stat-icon">
+                      <User className="h-5 w-5" strokeWidth={1.75} />
                     </div>
-                    <div>
-                      <label className="text-md font-medium text-muted-foreground">
-                        Category
-                      </label>
-                      <p className="text-xl text-white mt-1">
-                        {doctor.category}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-md font-medium text-muted-foreground">
-                        Experience
-                      </label>
-                      <p className="text-xl text-white mt-1">
-                        {doctor.experience} years
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-md font-medium text-muted-foreground">
-                        Consultation Fee
-                      </label>
-                      <p className="text-xl text-white mt-1 flex items-center">
-                        ₹{doctor.consultationFee}
-                      </p>
-                    </div>
+                    <CardTitle>Profile information</CardTitle>
                   </div>
+                </CardHeader>
+                <CardContent className="nm-stack pb-6">
+                  <div className="nm-grid-2">
+                    {[
+                      ["Specialization", doctor.specialization],
+                      ["Category", doctor.category],
+                      ["Experience", `${doctor.experience} years`],
+                      ["Consultation fee", `₹${doctor.consultationFee}`],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="rounded-[18px] bg-[var(--surface-subtle)] p-4 shadow-[var(--shadow-inset)]"
+                      >
+                        <div className="cq-kicker">{label}</div>
+                        <p className="mt-1.5 text-[15px] font-semibold text-[var(--text-strong)]">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
                   <div>
-                    <label className="text-md font-medium text-muted-foreground">
-                      Qualifications
-                    </label>
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    <div className="cq-kicker">Qualifications</div>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
                       {doctor.qualifications?.map((qual, index) => (
-                        <Badge
-                          key={index}
-                          className="bg-muted text-white border-border text-md"
-                        >
+                        <Badge key={index} variant="secondary">
                           {qual}
                         </Badge>
                       ))}
                     </div>
                   </div>
+
                   <div>
-                    <label className="text-md font-medium text-muted-foreground">
-                      Availability
-                    </label>
-                    <div className="mt-3 space-y-4">
+                    <div className="cq-kicker">Availability</div>
+                    <div className="mt-2.5 nm-stack-sm">
                       {doctor.availability?.map((avail, index) => (
-                        <div key={index} className="flex items-start space-x-4">
-                          <Calendar className="h-6 w-6 text-green-400 mt-1" />
-                          <div>
-                            <span className="font-medium text-white text-lg">
-                              {avail.day}:
-                            </span>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {avail.slots?.map((slot, slotIndex) => (
-                                <Badge
-                                  key={slotIndex}
-                                  className="bg-muted text-white border-border text-sm"
-                                >
-                                  {slot}
-                                </Badge>
-                              ))}
-                            </div>
+                        <div
+                          key={index}
+                          className="flex flex-wrap items-start gap-3 border-b border-[var(--border-subtle)] pb-3 last:border-0 last:pb-0"
+                        >
+                          <Calendar
+                            className="mt-0.5 h-4 w-4 shrink-0 text-[var(--text-muted)]"
+                            strokeWidth={1.75}
+                          />
+                          <span className="w-24 shrink-0 text-[13px] font-semibold text-[var(--text-strong)]">
+                            {avail.day}
+                          </span>
+                          <div className="flex flex-1 flex-wrap gap-1.5">
+                            {avail.slots?.map((slot, slotIndex) => (
+                              <span
+                                key={slotIndex}
+                                className="cq-pixel-label"
+                              >
+                                {slot}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       ))}
@@ -580,32 +580,31 @@ export default function DoctorDashboard({ doctor }) {
             </TabsContent>
           </Tabs>
         ) : (
-          <Card className="bg-card border border-border  rounded-2xl">
-            <CardContent className="text-center py-12">
-              <div className="mx-auto p-4 bg-yellow-500/10 rounded-full w-fit border border-yellow-400/20 mb-4">
-                <AlertCircle className="h-12 w-12 text-yellow-400" />
+          <Card className="cq-card gap-0 p-0">
+            <CardContent className="p-10 text-center">
+              <div className="nm-stat-icon mx-auto">
+                <AlertCircle className="h-5 w-5" strokeWidth={1.75} />
               </div>
-              <h3 className="text-2xl font-semibold text-white mb-3">
-                Profile Under Review
+              <h3 className="mt-4 text-[15px] font-semibold text-[var(--text-strong)]">
+                Profile under review
               </h3>
-              <p className="text-zinc-300 text-lg mb-6">
+              <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-relaxed text-muted-foreground">
                 Thank you for submitting your profile. Our team is reviewing
                 your application and will notify you once it&apos;s approved.
               </p>
-              <div className="flex flex-col items-center gap-3">
+              <div className="mt-6 flex flex-col items-center gap-3">
                 <Button
                   variant="outline"
                   onClick={handleContactSupport}
                   disabled={supportSending}
-                  className="bg-muted hover:bg-muted text-white border-border hover:border-green-500 px-8 py-3 text-md disabled:opacity-60"
                 >
                   {supportSending ? "Sending request..." : "Contact Support"}
                 </Button>
 
                 {supportResult && (
-                  <p className="text-sm text-emerald-300">
+                  <p className="text-[12px] text-[var(--success)]">
                     Support request sent. Reference{" "}
-                    <span className="font-mono text-xs">
+                    <span className="font-mono text-[11px]">
                       {supportResult.requestHash?.slice(0, 12)}
                     </span>
                     {supportResult.notifiedStaff > 0
@@ -617,7 +616,9 @@ export default function DoctorDashboard({ doctor }) {
                   </p>
                 )}
                 {supportError && (
-                  <p className="text-sm text-rose-300">{supportError}</p>
+                  <p className="text-[12px] text-[var(--destructive)]">
+                    {supportError}
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -635,6 +636,69 @@ export default function DoctorDashboard({ doctor }) {
           />
         )}
       </div>
+
+      {/* --------------------------------------------- right insight rail */}
+      <aside className="nm-rail">
+        <div>
+          <div className="cq-kicker">Today</div>
+          <div className="mt-1.5 nm-metric-xl">{todayAppointments.length}</div>
+          <p className="mt-1 text-[12px] text-muted-foreground">
+            {todayAppointments.length === 0
+              ? "Nothing scheduled today."
+              : `consultation${
+                  todayAppointments.length === 1 ? "" : "s"
+                } scheduled today.`}
+          </p>
+        </div>
+
+        <div className="h-px w-full bg-[var(--border)]" />
+
+        <div>
+          <div className="cq-kicker">Queue health</div>
+          <div className="mt-2 nm-stack-sm">
+            <div className="nm-row grid-cols-[1fr_auto]">
+              <span className="text-[12px] text-muted-foreground">
+                Awaiting confirmation
+              </span>
+              <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+                {pendingCount}
+              </span>
+            </div>
+            <div className="nm-row grid-cols-[1fr_auto]">
+              <span className="text-[12px] text-muted-foreground">
+                Ready to consult
+              </span>
+              <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+                {confirmedCount}
+              </span>
+            </div>
+            <div className="nm-row grid-cols-[1fr_auto]">
+              <span className="text-[12px] text-muted-foreground">
+                All appointments
+              </span>
+              <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+                {appointments.length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-px w-full bg-[var(--border)]" />
+
+        <div>
+          <div className="cq-kicker">Clinical workspace</div>
+          <div className="mt-2.5 nm-stack-sm">
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
+              Mark an appointment confirmed before the consultation so chat,
+              calls and the report flow unlock.
+            </p>
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
+              Notes save when you leave the field. A status change never
+              rewrites the clinical record.
+            </p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -129,10 +129,10 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
           return;
         }
 
-        const module = await import("agora-rtc-sdk-ng");
+        const agoraModule = await import("agora-rtc-sdk-ng");
         if (disposed || session.stopping) return;
 
-        const AgoraRTC = module.default;
+        const AgoraRTC = agoraModule.default;
         session.agora = AgoraRTC;
         session.autoplayHandler = () => {
           if (!disposed) setAutoplayBlocked(true);
@@ -377,13 +377,13 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col overflow-hidden bg-background text-white">
-      <div className="surface-panel m-3 flex items-center justify-between rounded-2xl border px-4 py-3">
+    <div className="absolute inset-0 z-50 flex flex-col overflow-hidden bg-[var(--surface-shell)] text-[var(--text)]">
+      <div className="m-3 flex items-center justify-between gap-3 rounded-[20px] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-card)]">
         <div>
-          <div className="text-sm font-bold">
+          <div className="text-[13px] font-semibold text-[var(--text-strong)]">
             {isVideo ? "Video consultation" : "Voice consultation"}
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
+          <div className="mt-0.5 text-[11px] text-muted-foreground">
             {connectionState === "connected"
               ? remotePresent
                 ? "Connected"
@@ -395,12 +395,12 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
                   : "Connecting securely..."}
           </div>
         </div>
-        <span className="status-chip">Agora RTC</span>
+        <span className="status-chip shrink-0">Agora RTC</span>
       </div>
 
       {errorMessage && (
-        <div className="mx-3 mb-3 flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <div className="mx-3 mb-3 flex items-center gap-2 rounded-[16px] bg-[var(--destructive-soft)] px-4 py-3 text-[12px] leading-relaxed text-[var(--destructive)]">
+          <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           {errorMessage}
         </div>
       )}
@@ -409,7 +409,7 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         <button
           type="button"
           onClick={resumeAudio}
-          className="mx-3 mb-3 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm font-semibold text-cyan-100 hover:bg-cyan-300/15"
+          className="mx-3 mb-3 min-h-10 rounded-[16px] bg-[var(--accent)] px-4 py-2.5 text-left text-[12px] font-semibold text-[var(--accent-foreground)] shadow-[var(--shadow-card)]"
         >
           Tap to enable call audio
         </button>
@@ -418,18 +418,15 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
       <div className="relative flex-1 overflow-hidden">
         {isVideo ? (
           <>
-            <div
-              ref={remoteVideoRef}
-              className="absolute inset-0 bg-card"
-            />
+            <div ref={remoteVideoRef} className="absolute inset-0 bg-[var(--surface-subtle)]" />
 
             {!remotePresent && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-white/5">
-                    <Video className="h-11 w-11 text-muted-foreground" />
+                  <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-[var(--primary)] text-[#fff] shadow-[var(--shadow-dark-float)]">
+                    <Video className="h-8 w-8" strokeWidth={1.75} />
                   </div>
-                  <p className="font-semibold text-zinc-300">
+                  <p className="text-[13px] font-semibold text-[var(--text-muted)]">
                     Waiting for other participant
                   </p>
                 </div>
@@ -438,17 +435,19 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
 
             <div
               ref={localVideoRef}
-              className="absolute right-4 top-4 h-32 w-44 overflow-hidden rounded-2xl border border-white/15 bg-card shadow-2xl md:h-40 md:w-56"
+              className="absolute right-4 top-4 h-32 w-44 overflow-hidden rounded-[20px] bg-[var(--surface)] shadow-[0_16px_30px_rgba(16,14,26,0.24)] md:h-40 md:w-56"
             />
           </>
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-5 flex h-32 w-32 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/10">
-                <Mic className="h-14 w-14 text-cyan-200" />
+              <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-[var(--primary)] text-[#fff] shadow-[var(--shadow-dark-float)]">
+                <Mic className="h-10 w-10" strokeWidth={1.75} />
               </div>
-              <h3 className="text-xl font-bold">Voice consultation</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h3 className="text-[15px] font-semibold text-[var(--text-strong)]">
+                Voice consultation
+              </h3>
+              <p className="mt-1.5 text-[12px] text-muted-foreground">
                 {remotePresent ? "Participant connected" : "Waiting for participant..."}
               </p>
             </div>
@@ -456,46 +455,58 @@ export default function VideoCallComponent({ callData, isVideo, onCallEnd }) {
         )}
       </div>
 
-      <div className="surface-panel m-3 flex items-center justify-center gap-4 rounded-2xl border p-4">
+      <div className="m-3 flex items-center justify-center gap-3 rounded-[20px] bg-[var(--surface)] p-3.5 shadow-[var(--shadow-card)]">
         <Button
           type="button"
           onClick={toggleMic}
-          size="lg"
-          variant="outline"
+          size="icon"
+          variant="secondary"
           disabled={!sessionRef.current?.audioTrack || connectionState === "ending"}
-          className={`h-12 w-12 rounded-full p-0 ${
-            micOn ? "bg-white/5 text-white" : "bg-red-500/20 text-red-200"
-          }`}
+          className={
+            micOn
+              ? undefined
+              : "bg-[var(--destructive-soft)] text-[var(--destructive)]"
+          }
           aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
         >
-          {micOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+          {micOn ? (
+            <Mic className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          ) : (
+            <MicOff className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          )}
         </Button>
 
         {isVideo && (
           <Button
             type="button"
             onClick={toggleCamera}
-            size="lg"
-            variant="outline"
+            size="icon"
+            variant="secondary"
             disabled={!sessionRef.current?.videoTrack || connectionState === "ending"}
-            className={`h-12 w-12 rounded-full p-0 ${
-              cameraOn ? "bg-white/5 text-white" : "bg-red-500/20 text-red-200"
-            }`}
+            className={
+              cameraOn
+                ? undefined
+                : "bg-[var(--destructive-soft)] text-[var(--destructive)]"
+            }
             aria-label={cameraOn ? "Turn camera off" : "Turn camera on"}
           >
-            {cameraOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+            {cameraOn ? (
+              <Video className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            ) : (
+              <VideoOff className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            )}
           </Button>
         )}
 
         <Button
           type="button"
           onClick={handleEndCall}
-          size="lg"
+          size="icon"
+          variant="destructive"
           disabled={connectionState === "ending"}
-          className="h-12 w-12 rounded-full bg-red-600 p-0 text-white hover:bg-red-500"
           aria-label="End call"
         >
-          <PhoneOff className="h-5 w-5" />
+          <PhoneOff className="h-[18px] w-[18px]" strokeWidth={1.75} />
         </Button>
       </div>
     </div>

@@ -24,12 +24,14 @@ function relativeTime(value) {
   return `${Math.round(hours / 24)}d ago`;
 }
 
+/* Sparse semantic accents (design spec §22). The type name is always shown
+   alongside, so colour is never the only signal. */
 const TYPE_ACCENT = {
-  appointment_booked: "bg-emerald-500/15 text-emerald-300",
-  appointment_completed: "bg-sky-500/15 text-sky-300",
-  appointment_cancelled: "bg-amber-500/15 text-amber-300",
-  report_published: "bg-violet-500/15 text-violet-300",
-  carequest_alert: "bg-rose-500/15 text-rose-300",
+  appointment_booked: "bg-[rgba(49,185,120,0.12)] text-[#248A5A]",
+  appointment_completed: "bg-[rgba(79,110,247,0.12)] text-[#405BD0]",
+  appointment_cancelled: "bg-[rgba(244,198,78,0.18)] text-[#9A7316]",
+  report_published: "bg-[rgba(139,109,246,0.12)] text-[#6B4FD6]",
+  carequest_alert: "bg-[rgba(235,90,90,0.12)] text-[#BF4343]",
 };
 
 /**
@@ -150,30 +152,32 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
           unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
         }
         aria-expanded={open}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted text-white transition-colors hover:border-green-500 hover:bg-muted/80"
+        className="relative flex size-10 items-center justify-center rounded-[14px] border border-white/70 bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-hover)]"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent-red)] px-1 text-[10px] font-bold text-white">
             {unread > MAX_BADGE ? `${MAX_BADGE}+` : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <span className="text-sm font-semibold text-white">Notifications</span>
+        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-[20px] border border-white/70 bg-[var(--surface)] shadow-[0_24px_60px_rgba(16,14,26,0.20),0_6px_18px_rgba(16,14,26,0.10)]">
+          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3">
+            <span className="text-[13px] font-semibold text-[var(--text-strong)]">
+              Notifications
+            </span>
             <button
               type="button"
               onClick={handleMarkAllRead}
               disabled={marking || unread === 0}
-              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-emerald-300 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex min-h-9 items-center gap-1.5 rounded-[12px] px-2.5 text-[12px] font-semibold text-[var(--success)] transition hover:bg-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {marking ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
               ) : (
-                <Check className="h-3.5 w-3.5" />
+                <Check className="h-3.5 w-3.5" strokeWidth={2} />
               )}
               Mark all read
             </button>
@@ -181,44 +185,45 @@ export default function NotificationBell({ pollMs = POLL_MS }) {
 
           <div className="max-h-80 overflow-y-auto">
             {loading && notifications.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                Loading notifications...
+              <p className="px-4 py-6 text-center text-[13px] text-[var(--text-muted)]">
+                Loading notifications…
               </p>
             ) : notifications.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              <p className="px-4 py-6 text-center text-[13px] text-[var(--text-muted)]">
                 You are all caught up.
               </p>
             ) : (
               notifications.map((item) => (
                 <div
                   key={item._id}
-                  className={`border-b border-border/60 px-4 py-3 last:border-b-0 ${
+                  className={`border-b border-[var(--border-subtle)] px-4 py-3 last:border-b-0 ${
                     item.readAt ? "opacity-70" : ""
                   }`}
                 >
                   <div className="flex items-start gap-2">
                     {!item.readAt && (
-                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--accent-blue)]" />
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-medium text-white">
+                        <p className="truncate text-[13px] font-semibold text-[var(--text-strong)]">
                           {item.title}
                         </p>
                         <span
-                          className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${
-                            TYPE_ACCENT[item.type] || "bg-muted text-muted-foreground"
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            TYPE_ACCENT[item.type] ||
+                            "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                           }`}
                         >
                           {String(item.type || "").replace(/_/g, " ")}
                         </span>
                       </div>
                       {item.body && (
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-muted)]">
                           {item.body}
                         </p>
                       )}
-                      <p className="mt-1 text-[10px] text-zinc-500">
+                      <p className="mt-1 text-[10px] text-[var(--text-subtle)]">
                         {relativeTime(item.createdAt)}
                       </p>
                     </div>

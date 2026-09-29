@@ -33,9 +33,7 @@ export default function InstantSignIn({ compact = false }) {
     }
   };
 
-  const buttonClass =
-    "inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white text-foreground font-semibold hover:border-[#c4d4cb] hover:bg-primary-soft disabled:opacity-60 " +
-    (compact ? "px-3 py-2.5 text-sm" : "px-4 py-2.5 text-sm");
+  const buttonClass = "nm-btn-secondary w-full";
 
   const entries = [
     ["patient", UserRound, "Demo Patient"],
@@ -46,7 +44,11 @@ export default function InstantSignIn({ compact = false }) {
 
   return (
     <div className={compact ? "" : "mt-4"}>
-      {!compact ? <p className="mb-3 text-center text-xs text-muted-foreground">Synthetic judge accounts only.</p> : null}
+      {!compact ? (
+        <p className="mb-3 text-center text-[12px] text-[var(--text-muted)]">
+          Synthetic judge accounts only.
+        </p>
+      ) : null}
       <div className="grid gap-2 sm:grid-cols-2">
         {entries.map(([role, Icon, label]) => (
           <button
@@ -56,13 +58,20 @@ export default function InstantSignIn({ compact = false }) {
             disabled={pending !== null}
             className={buttonClass}
           >
-            {pending === role ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4 text-primary" />}
-            {pending === role ? "Starting..." : label}
+            {pending === role ? (
+              <Loader2 className="h-[18px] w-[18px] animate-spin" strokeWidth={1.75} />
+            ) : (
+              <Icon className="h-[18px] w-[18px] text-[var(--primary)]" strokeWidth={1.75} />
+            )}
+            {pending === role ? "Starting…" : label}
           </button>
         ))}
       </div>
       {error ? (
-        <p role="alert" className="mt-3 rounded-lg border border-[#eccccc] bg-destructive-soft px-3 py-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="mt-3 rounded-[14px] border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] px-3 py-2 text-[13px] text-[var(--destructive)]"
+        >
           {error}
         </p>
       ) : null}

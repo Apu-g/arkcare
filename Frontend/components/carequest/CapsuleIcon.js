@@ -26,12 +26,12 @@ export default function CapsuleIcon({ size = 16, className = "", title = "Capsul
           rx="5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="2.4"
         />
         <path
           d="M6 16h20"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="2.4"
           strokeLinecap="round"
         />
       </g>

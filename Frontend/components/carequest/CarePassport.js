@@ -4,66 +4,81 @@ import { Building2, Gift, WalletCards } from "lucide-react";
 import PixelCharacter from "@/components/carequest/PixelCharacter";
 
 export default function CarePassport({ passport, selectedProgramId, onSelect }) {
+  const programs = passport?.programs || [];
+
   return (
-    <section>
-      <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+    <section className="nm-stack-sm">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <div className="cq-kicker">YOUR CARE PASSPORT</div>
-          <h2 className="mt-1 text-2xl font-black tracking-tight">Hospital programs</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h2 className="cq-section-title mt-1">Hospital programs</h2>
+          <p className="mt-1 text-[12px] text-[var(--text-muted)]">
             Each hospital keeps its own Capsule balance, benefits and program terms.
           </p>
         </div>
-        <PixelCharacter variant="guide" mood="idle" size={58} />
+        <PixelCharacter variant="guide" mood="idle" size={54} />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {(passport?.programs || []).map((card) => {
+      <div className="nm-grid-2">
+        {programs.map((card) => {
           const selected = String(card.program._id) === String(selectedProgramId);
           return (
             <button
               type="button"
               key={card.program._id}
               onClick={() => onSelect(card.program._id)}
+              aria-pressed={selected}
               className={
-                "cq-card overflow-hidden p-5 text-left " +
-                (selected ? "border-[#9db6aa] ring-2 ring-[#dce9e2]" : "")
+                "cq-card cq-card-hover overflow-hidden p-5 text-left " +
+                (selected
+                  ? "ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[var(--surface-shell)]"
+                  : "")
               }
             >
               <div
                 className={
-                  "-mx-5 -mt-5 mb-4 h-2 " +
+                  "-mx-5 -mt-5 mb-4 h-1.5 " +
                   (card.program.visualTheme?.accent === "lavender"
-                    ? "bg-[#ded9e8]"
-                    : "bg-[#d9e8e0]")
+                    ? "bg-[var(--lavender)]"
+                    : "bg-[var(--sky)]")
                 }
               />
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    {card.organization.name}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--text-muted)]">
+                    <Building2
+                      className="h-[16px] w-[16px] shrink-0 text-[var(--text-strong)]"
+                      strokeWidth={1.75}
+                    />
+                    <span className="truncate">{card.organization.name}</span>
                   </div>
-                  <h3 className="mt-2 text-lg font-bold">{card.program.name}</h3>
+                  <h3 className="nm-card-title mt-2 text-[14px]">{card.program.name}</h3>
                 </div>
                 <span className="cq-pixel-label">{card.program.capsuleSymbol}</span>
               </div>
 
-              <div className="mt-5 flex items-end justify-between gap-4">
+              <div className="mt-4 flex items-end justify-between gap-4">
                 <div>
-                  <div className="text-4xl font-black tracking-tight">{card.balance}</div>
-                  <div className="mt-1 text-[11px] font-bold text-muted-foreground">
-                    {card.program.capsuleSymbol} CAPSULES
+                  <div className="nm-metric-xl text-[26px] tabular-nums">{card.balance}</div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {card.program.capsuleSymbol} capsules
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-                  <Gift className="h-4 w-4" />
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--text-muted)]">
+                  <Gift className="h-[16px] w-[16px]" strokeWidth={1.75} />
                   {card.catalog?.length || 0} benefits
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-primary">
-                <WalletCards className="h-4 w-4" />
+              <div
+                className={
+                  "mt-4 flex items-center gap-2 text-[11px] font-semibold " +
+                  (selected
+                    ? "text-[var(--text-strong)]"
+                    : "text-[var(--text-muted)]")
+                }
+              >
+                <WalletCards className="h-[16px] w-[16px]" strokeWidth={1.75} />
                 {selected ? "Current hospital context" : "Open this hospital journey"}
               </div>
             </button>

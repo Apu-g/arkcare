@@ -113,19 +113,19 @@ export default function PDFUploader() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <Card className="bg-card border-border">
+        <div className="mx-auto grid max-w-4xl gap-6">
+            <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-white">
-                        <Upload className="h-5 w-5 text-green-400" />
+                    <CardTitle className="flex items-center gap-2">
+                        <Upload className="h-[18px] w-[18px]" strokeWidth={1.75} />
                         <span>Upload Medical Reports</span>
                     </CardTitle>
-                    <CardDescription className="text-muted-foreground">
+                    <CardDescription>
                         Upload PDF files of your medical reports for AI analysis and structured data extraction
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                <CardContent className="grid gap-4 pb-6">
+                    <div className="rounded-[18px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-subtle)] p-8 text-center">
                         <input
                             id="pdf-input"
                             type="file"
@@ -137,39 +137,48 @@ export default function PDFUploader() {
                         />
                         <label
                             htmlFor="pdf-input"
-                            className="cursor-pointer flex flex-col items-center space-y-2"
+                            className="flex cursor-pointer flex-col items-center gap-2"
                         >
-                            <Upload className="h-12 w-12 text-muted-foreground" />
-                            <p className="text-lg font-medium text-zinc-300">
+                            <Upload
+                                className="h-9 w-9 text-[var(--text-subtle)]"
+                                strokeWidth={1.75}
+                            />
+                            <p className="text-[14px] font-semibold text-[var(--text-strong)]">
                                 Click to upload PDF files
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[12px] text-[var(--text-muted)]">
                                 Up to 5 PDFs, maximum 15MB each
                             </p>
                         </label>
                     </div>
 
                     {selectedFiles.length > 0 && (
-                        <div className="space-y-2">
-                            <h3 className="font-medium text-zinc-300">Selected Files ({selectedFiles.length})</h3>
-                            <ScrollArea className="h-32 border border-border rounded-lg p-2">
+                        <div className="grid gap-2">
+                            <h3 className="nm-card-title">Selected Files ({selectedFiles.length})</h3>
+                            <ScrollArea className="h-32 rounded-[14px] border border-[var(--border)] bg-[var(--surface-subtle)] p-2">
                                 {selectedFiles.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-2 hover:bg-muted rounded">
-                                        <div className="flex items-center space-x-2">
-                                            <FileText className="h-4 w-4 text-green-400" />
-                                            <span className="text-sm font-medium text-zinc-300">{file.name}</span>
-                                            <Badge variant="outline" className="text-xs border-border text-muted-foreground">
-                                                {formatFileSize(file.size)}
-                                            </Badge>
+                                    <div
+                                        key={index}
+                                        className="flex items-center justify-between gap-2 rounded-[12px] p-2 transition-colors hover:bg-[var(--surface-muted)]"
+                                    >
+                                        <div className="flex min-w-0 items-center gap-2">
+                                            <FileText
+                                                className="h-[18px] w-[18px] shrink-0 text-[var(--text-muted)]"
+                                                strokeWidth={1.75}
+                                            />
+                                            <span className="truncate text-[13px] font-medium text-[var(--text)]">
+                                                {file.name}
+                                            </span>
+                                            <Badge variant="outline">{formatFileSize(file.size)}</Badge>
                                         </div>
                                         <Button
                                             variant="ghost"
-                                            size="sm"
+                                            size="icon"
                                             onClick={() => removeFile(index)}
                                             disabled={uploading}
-                                            className="text-muted-foreground hover:text-white hover:bg-muted"
+                                            aria-label={`Remove ${file.name}`}
                                         >
-                                            <Trash2 className="h-3 w-3" />
+                                            <Trash2 className="h-[15px] w-[15px]" strokeWidth={1.75} />
                                         </Button>
                                     </div>
                                 ))}
@@ -178,37 +187,44 @@ export default function PDFUploader() {
                     )}
 
                     {uploading && (
-                        <div className="space-y-2">
+                        <div className="grid gap-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Processing files...</span>
-                                <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                                <span className="text-[12px] text-[var(--text-muted)]">
+                                    Processing files…
+                                </span>
+                                <span className="text-[12px] font-semibold text-[var(--text)]">
+                                    {uploadProgress}%
+                                </span>
                             </div>
-                            <Progress value={uploadProgress} className="w-full" />
+                            <Progress value={uploadProgress} aria-label="Upload progress" />
                         </div>
                     )}
 
                     {error && (
-                        <div className="flex items-center space-x-2 text-green-400 bg-green-500/10 border border-green-500/20 p-3 rounded-lg">
-                            <XCircle className="h-4 w-4" />
-                            <span className="text-sm">{error}</span>
+                        <div
+                            role="alert"
+                            className="flex items-center gap-2 rounded-[14px] border border-[rgba(191,67,67,0.3)] bg-[rgba(235,90,90,0.08)] p-3 text-[var(--destructive)]"
+                        >
+                            <XCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
+                            <span className="text-[13px]">{error}</span>
                         </div>
                     )}
 
                     <Button
                         onClick={uploadFiles}
                         disabled={selectedFiles.length === 0 || uploading}
-                        className="w-full bg-green-500 hover:bg-green-600 text-white"
                         size="lg"
+                        className="w-full"
                     >
                         {uploading ? (
                             <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Processing {selectedFiles.length} files...
+                                <Loader2 className="h-[18px] w-[18px] animate-spin" strokeWidth={1.75} />
+                                Processing {selectedFiles.length} files…
                             </>
                         ) : (
                             <>
-                                <Upload className="h-4 w-4 mr-2" />
-                                Upload & Process {selectedFiles.length} PDFs
+                                <Upload className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                                Upload &amp; Process {selectedFiles.length} PDFs
                             </>
                         )}
                     </Button>
@@ -216,50 +232,66 @@ export default function PDFUploader() {
             </Card>
 
             {results && (
-                <Card className="bg-card border-border">
+                <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center space-x-2 text-white">
-                            <CheckCircle className="h-5 w-5 text-green-400" />
+                        <CardTitle className="flex items-center gap-2">
+                            <CheckCircle
+                                className="h-[18px] w-[18px] text-[var(--success)]"
+                                strokeWidth={1.75}
+                            />
                             <span>Processing Complete</span>
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground">
+                        <CardDescription>
                             Successfully processed {results.total_files_processed} PDF files
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-muted p-4 rounded-lg border border-border">
-                                <div className="text-2xl font-bold text-green-400">{results.parsed_json?.length || 0}</div>
-                                <div className="text-sm text-muted-foreground">Reports Analyzed</div>
+                    <CardContent className="grid gap-4 pb-6">
+                        <div className="nm-grid-3">
+                            <div className="nm-stat">
+                                <div className="nm-stat-value">
+                                    {results.parsed_json?.length || 0}
+                                </div>
+                                <div className="nm-stat-label">Reports Analyzed</div>
                             </div>
-                            <div className="bg-muted p-4 rounded-lg border border-border">
-                                <div className="text-2xl font-bold text-green-400">{results.total_files_processed}</div>
-                                <div className="text-sm text-muted-foreground">Files Processed</div>
+                            <div className="nm-stat">
+                                <div className="nm-stat-value">
+                                    {results.total_files_processed}
+                                </div>
+                                <div className="nm-stat-label">Files Processed</div>
                             </div>
-                            <div className="bg-muted p-4 rounded-lg border border-border">
-                                <div className="text-2xl font-bold text-green-400">{results.pdf_download_urls?.length || 0}</div>
-                                <div className="text-sm text-muted-foreground">Downloads Available</div>
+                            <div className="nm-stat">
+                                <div className="nm-stat-value">
+                                    {results.pdf_download_urls?.length || 0}
+                                </div>
+                                <div className="nm-stat-label">Downloads Available</div>
                             </div>
                         </div>
 
                         {results.pdf_download_urls && results.pdf_download_urls.length > 0 && (
-                            <div className="space-y-2">
-                                <h3 className="font-medium text-zinc-300">Download Processed Reports</h3>
-                                <div className="space-y-2">
+                            <div className="grid gap-2">
+                                <h3 className="nm-card-title">Download Processed Reports</h3>
+                                <div className="grid gap-2">
                                     {results.pdf_download_urls.map((item, index) => (
-                                        <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                                            <div className="flex items-center space-x-2">
-                                                <FileText className="h-4 w-4 text-green-400" />
-                                                <span className="text-sm font-medium text-zinc-300">{item.filename}</span>
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between gap-3 rounded-[14px] bg-[var(--surface-subtle)] p-3"
+                                        >
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <FileText
+                                                    className="h-[18px] w-[18px] shrink-0 text-[var(--text-muted)]"
+                                                    strokeWidth={1.75}
+                                                />
+                                                <span className="truncate text-[13px] font-medium text-[var(--text)]">
+                                                    {item.filename}
+                                                </span>
                                             </div>
                                             <Button
                                                 variant="outline"
-                                                size="sm"
+                                                size="default"
                                                 onClick={() => handleDownload(item.download_url, item.filename)}
                                                 disabled={!item.download_url}
-                                                className="border-border text-zinc-300 hover:bg-muted hover:text-white"
                                             >
-                                                <Download className="h-3 w-3 mr-1" />
+                                                <Download className="h-[15px] w-[15px]" strokeWidth={1.75} />
                                                 {!item.download_url ? 'N/A' : 'Download'}
                                             </Button>
                                         </div>
@@ -269,12 +301,15 @@ export default function PDFUploader() {
                         )}
 
                         {results.parsed_json && results.parsed_json.length > 0 && (
-                            <div className="space-y-2">
-                                <h3 className="font-medium text-zinc-300">Extracted Data Preview</h3>
-                                <ScrollArea className="h-48 border border-border rounded-lg p-4">
+                            <div className="grid gap-2">
+                                <h3 className="nm-card-title">Extracted Data Preview</h3>
+                                <ScrollArea className="h-48 rounded-[14px] border border-[var(--border)] bg-[var(--surface-subtle)] p-4">
                                     {results.parsed_json.map((report, index) => (
-                                        <div key={index} className="mb-4 p-3 bg-muted rounded-lg">
-                                            <div className="grid grid-cols-2 gap-2 text-sm text-zinc-300">
+                                        <div
+                                            key={index}
+                                            className="mb-4 rounded-[14px] bg-[var(--surface)] p-3"
+                                        >
+                                            <div className="grid grid-cols-2 gap-2 text-[13px] text-[var(--text)]">
                                                 <div><strong>Patient:</strong> {report.patient_info?.name || 'N/A'}</div>
                                                 <div><strong>Age:</strong> {report.patient_info?.age || 'N/A'}</div>
                                                 <div><strong>Report Type:</strong> {report.report_type || 'N/A'}</div>
@@ -282,8 +317,12 @@ export default function PDFUploader() {
                                             </div>
                                             {report.summary && (
                                                 <div className="mt-2">
-                                                    <strong className="text-zinc-300">Summary:</strong>
-                                                    <p className="text-xs text-muted-foreground mt-1">{report.summary}</p>
+                                                    <strong className="text-[13px] text-[var(--text)]">
+                                                        Summary:
+                                                    </strong>
+                                                    <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+                                                        {report.summary}
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>

@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Send, MessageCircle, User, Stethoscope,
   Image as ImageIcon, Loader2, X, Phone, Video,
-  PhoneIncoming, FileText
+  PhoneIncoming, FileText, AlertTriangle
 } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import {
@@ -522,21 +522,27 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
         className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
       >
         <div
-          className={`max-w-[70%] rounded-lg px-3 py-2 ${isOwnMessage
-            ? "bg-green-600 text-white"
-            : "bg-muted text-zinc-300"
-            }`}
+          className={`max-w-[76%] rounded-[18px] px-3.5 py-2.5 ${
+            isOwnMessage
+              ? "rounded-br-[6px] bg-[var(--primary)] text-[#fff] shadow-[0_8px_18px_rgba(16,14,26,0.15)]"
+              : "rounded-bl-[6px] border border-[rgba(255,255,255,0.72)] bg-[var(--surface-subtle)] text-[var(--text)] shadow-[var(--shadow-card)]"
+          }`}
         >
-          <div className="flex items-center space-x-1 mb-1">
+          <div
+            className={`mb-1 flex items-center gap-1.5 text-[10px] ${
+              isOwnMessage
+                ? "text-[rgba(255,255,255,0.72)]"
+                : "text-[var(--text-muted)]"
+            }`}
+          >
             {message.senderType === "doctor" ? (
-              <Stethoscope className="h-3 w-3" />
+              <Stethoscope className="h-3 w-3" strokeWidth={1.75} />
             ) : (
-              <User className="h-3 w-3" />
+              <User className="h-3 w-3" strokeWidth={1.75} />
             )}
-            <span className="text-xs font-medium">{message.senderName}</span>
-            <span className="text-xs text-muted-foreground">
-              {formatTime(message.createdAt)}
-            </span>
+            <span className="font-semibold">{message.senderName}</span>
+            <span>·</span>
+            <span>{formatTime(message.createdAt)}</span>
           </div>
 
           {message.imageUrl ? (
@@ -544,13 +550,13 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
               <img
                 src={message.imageUrl}
                 alt="Uploaded image"
-                className="max-w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity"
+                className="max-w-full h-auto rounded-[12px] cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => window.open(message.imageUrl, '_blank')}
                 loading="lazy"
               />
             </div>
           ) : (
-            <p className="text-sm">{message.message}</p>
+            <p className="text-[13px] leading-relaxed">{message.message}</p>
           )}
         </div>
       </div>
@@ -561,7 +567,7 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
   if (callState === 'connected' && callData) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl h-[80vh] p-0 bg-card border-border">
+        <DialogContent className="max-w-4xl h-[80vh] overflow-hidden border-0 bg-card p-0">
           <VideoCallComponent
             callData={callData}
             isVideo={isVideo}
@@ -575,21 +581,23 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-2xl h-[600px] flex flex-col p-0 bg-card border-border">
-          <DialogHeader className="flex-shrink-0 border-b border-border p-4 pr-14">
-            <DialogTitle className="flex items-center justify-between text-white">
-              <div className="flex items-center space-x-2">
-                <MessageCircle className="h-5 w-5 text-green-400" />
-                <span>
+        <DialogContent className="flex h-[620px] max-w-2xl flex-col overflow-hidden border-0 bg-card p-0">
+          <DialogHeader className="shrink-0 gap-2 border-b border-[var(--border-subtle)] px-5 py-4 pr-16">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="nm-stat-icon shrink-0">
+                  <MessageCircle className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <DialogTitle className="truncate text-[14px]">
                   Chat with{" "}
                   {isDoctor
                     ? otherUser?.name || "Patient"
                     : otherUser?.name || "Doctor"}
-                </span>
+                </DialogTitle>
               </div>
 
               {/* Call Controls */}
-              <div className="flex items-center space-x-2">
+              <div className="flex shrink-0 items-center gap-2">
                 {isDoctor ? (
                   <Button
                     size="sm"
@@ -597,35 +605,32 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                     onClick={() => setReportOpen(true)}
                     aria-label="Open consultation report"
                     title="File the consultation report (AI parses it into a care plan)"
-                    className="bg-muted hover:bg-muted"
                   >
-                    <FileText className="h-4 w-4" />
-                    <span className="ml-1.5 text-xs">Report</span>
+                    <FileText className="h-4 w-4" strokeWidth={1.75} />
+                    <span>Report</span>
                   </Button>
                 ) : null}
                 <Button
-                  size="sm"
-                  variant="outline"
+                  size="icon"
+                  variant="secondary"
                   onClick={() => initiateCall('audio')}
                   aria-label="Start audio call"
-                  className="bg-muted hover:bg-muted"
                   disabled={callState !== 'idle' || !realtimeReady}
                 >
-                  <Phone className="h-4 w-4" />
+                  <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </Button>
                 <Button
-                  size="sm"
-                  variant="outline"
+                  size="icon"
+                  variant="secondary"
                   onClick={() => initiateCall('video')}
                   aria-label="Start video call"
-                  className="bg-muted hover:bg-muted"
                   disabled={callState !== 'idle' || !realtimeReady}
                 >
-                  <Video className="h-4 w-4" />
+                  <Video className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </Button>
               </div>
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            </div>
+            <DialogDescription>
               Appointment on{" "}
               {new Date(appointment.appointmentDate).toLocaleDateString()}
               {" · "}
@@ -634,49 +639,52 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
           </DialogHeader>
 
           {rtcNotice ? (
-            <div className="border-b border-amber-300/30 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <strong className="font-semibold">Calls unavailable in this browser context.</strong>
-              <span className="ml-1">{rtcNotice}</span>
+            <div className="flex shrink-0 items-start gap-2 border-b border-[var(--border-subtle)] bg-[var(--warning-soft)] px-5 py-3 text-[12px] leading-relaxed text-[var(--warning)]">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <span>
+                <strong className="font-semibold">Calls unavailable in this browser context.</strong>
+                <span className="ml-1">{rtcNotice}</span>
+              </span>
             </div>
           ) : null}
 
           {/* Call Status */}
           {(callState === "initiating" || callState === "calling") && (
-            <div className="flex items-center justify-between bg-cyan-500/10 border-b border-cyan-300/20 px-4 py-3 text-sm text-cyan-100">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-[var(--surface-subtle)] px-5 py-3 text-[12px] font-medium text-[var(--text)]">
               <span>{callState === "initiating" ? "Preparing secure call..." : "Calling — waiting for answer..."}</span>
               {callState === "calling" && (
-                <button
-                  type="button"
-                  onClick={cancelOutgoingCall}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-semibold hover:bg-white/10"
-                >
+                <Button size="sm" variant="secondary" onClick={cancelOutgoingCall}>
                   Cancel
-                </button>
+                </Button>
               )}
             </div>
           )}
 
           {/* Messages Area */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 overflow-hidden">
               <ScrollArea className="h-full w-full">
-                <div className="p-4">
+                <div className="p-5">
                   {loading ? (
                     <div className="flex items-center justify-center h-full min-h-[300px]">
-                      <div className="text-muted-foreground">Loading chat...</div>
+                      <div className="text-[13px] text-muted-foreground">Loading chat...</div>
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full min-h-[300px] text-center">
                       <div className="space-y-2">
-                        <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto" />
-                        <p className="text-muted-foreground">No messages yet</p>
-                        <p className="text-sm text-muted-foreground">
+                        <div className="nm-stat-icon mx-auto">
+                          <MessageCircle className="h-5 w-5" strokeWidth={1.75} />
+                        </div>
+                        <p className="text-[13px] font-semibold text-[var(--text-strong)]">
+                          No messages yet
+                        </p>
+                        <p className="text-[12px] text-muted-foreground">
                           Start the conversation!
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {messages.map((message, index) => renderMessage(message, index))}
                       <div ref={messagesEndRef} />
                     </div>
@@ -687,33 +695,36 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
 
             {/* Image Preview Area */}
             {previewUrl && (
-              <div className="flex-shrink-0 border-t border-border p-4 bg-muted">
-                <div className="flex items-start space-x-3">
+              <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-4">
+                <div className="flex items-start gap-3">
                   <div className="relative">
                     <img
                       src={previewUrl}
                       alt="Preview"
-                      className="w-20 h-20 object-cover rounded"
+                      className="h-20 w-20 rounded-[14px] object-cover"
                     />
                     <button
+                      type="button"
                       onClick={handleCancelImageUpload}
-                      className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 hover:bg-green-600"
+                      aria-label="Remove attached image"
+                      className="absolute -right-3 -top-3 grid size-10 place-items-center rounded-full bg-[var(--primary)] text-[#fff] shadow-[var(--shadow-cta)]"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
                   </div>
                   <div className="flex-1 space-y-2">
-                    <p className="text-sm text-zinc-300">Ready to send image</p>
-                    <div className="flex space-x-2">
+                    <p className="text-[13px] font-semibold text-[var(--text-strong)]">
+                      Ready to send image
+                    </p>
+                    <div className="flex gap-2">
                       <Button
                         onClick={handleImageUpload}
                         disabled={uploading}
-                        className="bg-green-600 hover:bg-green-700"
                         size="sm"
                       >
                         {uploading ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             Uploading...
                           </>
                         ) : (
@@ -722,9 +733,8 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
                       </Button>
                       <Button
                         onClick={handleCancelImageUpload}
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        className="bg-muted hover:bg-zinc-600"
                       >
                         Cancel
                       </Button>
@@ -735,8 +745,8 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
             )}
 
             {/* Message Input */}
-            <div className="flex-shrink-0 border-t border-border p-4">
-              <form onSubmit={handleSendMessage} className="flex space-x-2">
+            <div className="shrink-0 border-t border-[var(--border-subtle)] p-4">
+              <form onSubmit={handleSendMessage} className="flex gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -747,30 +757,30 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
 
                 <Button
                   type="button"
-                  size="sm"
-                  variant="outline"
+                  size="icon"
+                  variant="secondary"
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-muted hover:bg-muted"
+                  aria-label="Attach an image"
                   disabled={loading || uploading || !!selectedImage || callState !== 'idle'}
                 >
-                  <ImageIcon className="h-4 w-4" />
+                  <ImageIcon className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </Button>
 
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 bg-muted border-border text-white placeholder-zinc-500 focus:border-green-400 focus:ring-green-400"
+                  className="flex-1 text-[13px]"
                   disabled={loading || sending || !!selectedImage || callState !== 'idle'}
                 />
 
                 <Button
                   type="submit"
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="icon"
+                  aria-label="Send message"
                   disabled={!newMessage.trim() || loading || sending || !!selectedImage || callState !== 'idle'}
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </Button>
               </form>
             </div>
@@ -781,26 +791,25 @@ export default function ChatModal({ appointment, isOpen, onClose }) {
       {/* Incoming Call Modal */}
       {incomingCall && (
         <Dialog open={true}>
-          <DialogContent className="max-w-md bg-card border-border">
-            <DialogHeader>
-              <DialogTitle className="text-white text-center flex items-center justify-center space-x-2">
-                <PhoneIncoming className="h-6 w-6 text-green-500" />
-                <span>Incoming {incomingCall.callType} call</span>
+          <DialogContent className="max-w-md">
+            <DialogHeader className="items-center text-center">
+              <div className="nm-stat-icon mx-auto">
+                <PhoneIncoming className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              <DialogTitle className="mt-2 text-[15px]">
+                Incoming {incomingCall.callType} call
               </DialogTitle>
-              <DialogDescription className="text-center text-muted-foreground">
+              <DialogDescription className="text-center">
                 From {incomingCall.initiatorName}
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-center space-x-4 mt-4">
-              <Button
-                onClick={acceptCall}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
+            <div className="mt-4 flex justify-center gap-3">
+              <Button onClick={acceptCall}>
                 Accept
               </Button>
               <Button
                 onClick={declineCall}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                variant="outline"
               >
                 Decline
               </Button>

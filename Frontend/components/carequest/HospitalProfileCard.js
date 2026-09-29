@@ -12,117 +12,146 @@ import CapsuleIcon from "@/components/carequest/CapsuleIcon";
 export default function HospitalProfileCard({ profile }) {
   if (!profile) {
     return (
-      <div className="cq-card border-dashed p-8 text-center text-sm text-muted-foreground">
+      <div className="cq-card border-dashed p-8 text-center text-[13px] text-[var(--text-muted)]">
         No hospital is assigned to this admin account yet.
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-4">
-      <section className="cq-card cq-reveal p-5 md:p-6">
-        <div className="grid items-center gap-5 lg:grid-cols-[1fr_auto]">
-          <div>
-            <div className="cq-kicker">HOSPITAL REPUTATION</div>
-            <h1 className="mt-3 flex items-center gap-2 text-3xl font-black">
-              <Building2 className="h-7 w-7 text-primary" /> {profile.name}
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Your hospital&apos;s reputation is the participation its own patients have
-              generated. It reflects engagement and trust — it is never a claimable
-              balance, and Capsules remain hospital-specific, non-transferable units.
-            </p>
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-success-soft px-3 py-2 text-sm font-bold text-success">
-              <CapsuleIcon size={16} />
-              {profile.reputationLabel} · reputation {profile.reputationScore}/100
-            </p>
-          </div>
-          <PixelCharacter
-            variant="guardian"
-            mood="wave"
-            size={90}
-            speech="Every patient engagement counts toward your trust score."
-          />
-        </div>
-      </section>
-
-      <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <div className="cq-card p-5">
-          <CapsuleIcon size={20} className="text-primary" />
-          <div className="mt-3 flex items-end gap-2">
-            <span className="text-4xl font-black">{profile.totalCapsules}</span>
-            <span className="pb-1 text-xs font-bold text-muted-foreground">
-              {profile.symbol}
+    <div className="nm-dash">
+      <div className="nm-dash-col">
+        <section className="nm-dark-card cq-reveal p-5 md:p-6">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-[18px] w-[18px] text-white/70" strokeWidth={1.75} />
+            <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80">
+              Hospital reputation
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            earned by your patients (participation)
+          <h1 className="mt-4 text-[20px] font-bold leading-tight tracking-[-0.01em] text-white">
+            {profile.name}
+          </h1>
+          <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[#B7B7BE]">
+            Your hospital&apos;s reputation is the participation its own patients have
+            generated. It reflects engagement and trust — it is never a claimable
+            balance, and Capsules remain hospital-specific, non-transferable units.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">
+              <CapsuleIcon size={15} />
+              {profile.reputationLabel}
+            </span>
+            <span className="text-[13px] text-[#B7B7BE]">
+              reputation {profile.reputationScore}/100
+            </span>
+            <PixelCharacter
+              variant="guardian"
+              mood="wave"
+              size={64}
+              speech="Every patient engagement counts toward your trust score."
+            />
+          </div>
+        </section>
+
+        <section className="nm-grid-3">
+          <div className="nm-stat">
+            <div className="nm-stat-icon">
+              <CapsuleIcon size={18} />
+            </div>
+            <div className="nm-stat-value mt-3">{profile.totalCapsules}</div>
+            <div className="nm-stat-label">
+              {profile.symbol} earned by your patients
+            </div>
+            <p className="mt-1 text-[11px] leading-4 text-[var(--text-subtle)]">
+              Participation, not a claimable balance
+            </p>
+          </div>
+          <div className="nm-stat">
+            <div className="nm-stat-icon">
+              <Users className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </div>
+            <div className="nm-stat-value mt-3">{profile.patientCount}</div>
+            <div className="nm-stat-label">enrolled patients</div>
+          </div>
+          <div className="nm-stat">
+            <div className="nm-stat-icon">
+              <Stethoscope className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </div>
+            <div className="nm-stat-value mt-3">{profile.doctorCount}</div>
+            <div className="nm-stat-label">doctors on your roster</div>
+          </div>
+        </section>
+
+        <section className="cq-card p-5 md:p-6">
+          <div className="cq-kicker">Patient engagement</div>
+          <h2 className="cq-section-title mt-1">Top participating patients</h2>
+          <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+            Recognising consistent participation — not health outcomes.
+          </p>
+          <div className="mt-3">
+            {profile.leaderboard.map((row, index) => (
+              <div key={row.patientId} className="nm-row text-[13px]">
+                <div className="flex items-center gap-2">
+                  <span className="cq-pixel-label">#{index + 1}</span>
+                  <span className="font-semibold text-[var(--text)]">
+                    {row.patientName}
+                  </span>
+                </div>
+                <span className="flex items-center justify-end gap-1 font-semibold text-[var(--text)]">
+                  <CapsuleIcon size={14} className="text-[var(--primary)]" />
+                  {row.capsules} {profile.symbol}
+                </span>
+              </div>
+            ))}
+            {!profile.leaderboard.length ? (
+              <p className="text-[13px] text-[var(--text-muted)]">
+                No capsule activity recorded yet.
+              </p>
+            ) : null}
+          </div>
+        </section>
+      </div>
+
+      <aside className="nm-rail">
+        <div>
+          <div className="cq-kicker">Independent audit</div>
+          <h2 className="mt-1 text-[14px] font-semibold text-[var(--text-strong)]">
+            This hospital&apos;s chain
+          </h2>
+          <p className="mt-2 text-[12px] leading-5 text-[var(--text-muted)]">
+            Every hospital verifies its own append-only audit chain, separate from all
+            other hospitals.
           </p>
         </div>
-        <div className="cq-card p-5">
-          <Users className="h-5 w-5 text-primary" />
-          <div className="mt-3 text-4xl font-black">{profile.patientCount}</div>
-          <p className="mt-1 text-xs text-muted-foreground">enrolled patients</p>
-        </div>
-        <div className="cq-card p-5">
-          <Stethoscope className="h-5 w-5 text-primary" />
-          <div className="mt-3 text-4xl font-black">{profile.doctorCount}</div>
-          <p className="mt-1 text-xs text-muted-foreground">doctors on your roster</p>
-        </div>
-        <div className="cq-card p-5">
-          <ShieldCheck className="h-5 w-5 text-success" />
-          <div className="mt-3 text-4xl font-black">
+
+        <div className="rounded-[18px] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
+          {profile.chainValid ? (
+            <span className="cq-pixel-label cq-real-label">
+              <ShieldCheck className="h-[13px] w-[13px]" strokeWidth={1.75} />
+              chain valid
+            </span>
+          ) : (
+            <span className="cq-pixel-label cq-sim-label">chain check</span>
+          )}
+          <div className="nm-metric-xl mt-2">
             {profile.chainValid ? "VALID" : "CHECK"}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            your audit chain ({profile.chainChecked} events)
+          <div className="nm-stat-label">your audit chain</div>
+        </div>
+
+        <div className="cq-card-soft px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <Link2 className="h-[14px] w-[14px] text-[var(--text-muted)]" strokeWidth={1.75} />
+            <span className="cq-kicker">Chain head hash</span>
+          </div>
+          <div className="mt-1.5 select-all break-all font-mono text-[12px] leading-5 text-[var(--text)]">
+            {profile.headHash || "—"}
+          </div>
+          <p className="mt-2 text-[11px] leading-4 text-[var(--text-muted)]">
+            {profile.chainChecked} event hash(es) recomputed for this hospital.
           </p>
         </div>
-      </section>
-
-      <section className="cq-card p-5 md:p-6">
-        <div className="cq-kicker">PATIENT ENGAGEMENT</div>
-        <h2 className="mt-1 text-xl font-black">Top participating patients</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Recognising consistent participation — not health outcomes.
-        </p>
-        <div className="mt-4 space-y-2">
-          {profile.leaderboard.map((row, index) => (
-            <div
-              key={row.patientId}
-              className="flex items-center justify-between rounded-lg border border-border bg-white p-3 text-sm"
-            >
-              <span className="flex items-center gap-2">
-                <span className="cq-pixel-label">#{index + 1}</span>
-                <span className="font-semibold">{row.patientName}</span>
-              </span>
-              <span className="flex items-center gap-1 font-bold">
-                <CapsuleIcon size={14} className="text-primary" />
-                {row.capsules} {profile.symbol}
-              </span>
-            </div>
-          ))}
-          {!profile.leaderboard.length ? (
-            <p className="text-sm text-muted-foreground">
-              No capsule activity recorded yet.
-            </p>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="cq-card p-5 md:p-6">
-        <div className="cq-kicker">INDEPENDENT AUDIT</div>
-        <h2 className="mt-1 text-xl font-black">This hospital&apos;s chain</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every hospital verifies its own append-only audit chain, separate from all
-          other hospitals.
-        </p>
-        <div className="mt-3 break-all rounded-lg border border-border bg-[#fafbf8] p-3 font-mono text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-1 font-bold text-foreground">
-            <Link2 className="h-3 w-3" /> head {profile.headHash || "—"}
-          </span>
-        </div>
-      </section>
+      </aside>
     </div>
   );
 }
